@@ -1,4 +1,4 @@
-<img width="705" height="434" alt="image" src="https://github.com/user-attachments/assets/0ce0ca8b-494c-45ae-99e8-95beb9eefba3" /># Propuesta TP DSW
+Propuesta TP DSW
 
 ## Grupo
 ### Integrantes
@@ -11,6 +11,7 @@
 ### Repositorios
   https://github.com/AlejoFernandezAlcantara/Desarrollo-TP
 
+<img width="705" height="434" alt="image" src="https://github.com/user-attachments/assets/0ce0ca8b-494c-45ae-99e8-95beb9eefba3" /># 
 
 ## Tema
 ### Descripción
