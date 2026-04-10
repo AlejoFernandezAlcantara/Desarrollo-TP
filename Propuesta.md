@@ -11,14 +11,14 @@ Propuesta TP DSW
 ### Repositorios
   https://github.com/AlejoFernandezAlcantara/Desarrollo-TP
 
-<img width="705" height="434" alt="image" src="https://github.com/user-attachments/assets/0ce0ca8b-494c-45ae-99e8-95beb9eefba3" /># 
+
 
 ## Tema
 ### Descripción
 Sistema de gestión de restaurantes que se centraliza en  el manejo de mesas, clientes, productos y pedidos en una interfaz simple e intuitiva. Buscando agilizar cada etapa del servicio, desde que el cliente asiste hasta que se retira, mejorando tanto el manejo interno del restaurante como la experiencia del cliente.
 
 ### Modelo
-  <img width="705" height="434" alt="image" src="https://github.com/user-attachments/assets/1b857934-3909-4169-b77c-1a7876b20ff5" />
+https://app.diagrams.net/?src=about#G1ykwDR5jfFqt6A9WPDxQebTJC06Fh3MzD#%7B%22pageId%22%3A%22U16Np_kju9VaJ5zfGIP3%22%7D
 
 
 ## Alcance Funcional 
