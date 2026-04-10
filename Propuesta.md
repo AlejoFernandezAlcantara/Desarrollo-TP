@@ -1,4 +1,4 @@
-# Propuesta TP DSW
+<img width="705" height="434" alt="image" src="https://github.com/user-attachments/assets/0ce0ca8b-494c-45ae-99e8-95beb9eefba3" /># Propuesta TP DSW
 
 ## Grupo
 ### Integrantes
@@ -17,9 +17,8 @@
 Sistema de gestión de restaurantes que se centraliza en  el manejo de mesas, clientes, productos y pedidos en una interfaz simple e intuitiva. Buscando agilizar cada etapa del servicio, desde que el cliente asiste hasta que se retira, mejorando tanto el manejo interno del restaurante como la experiencia del cliente.
 
 ### Modelo
-![imagen del modelo]()
+  <img width="705" height="434" alt="image" src="https://github.com/user-attachments/assets/1b857934-3909-4169-b77c-1a7876b20ff5" />
 
-*Nota*: incluir un link con la imagen de un modelo, puede ser modelo de dominio, diagrama de clases, DER. Si lo prefieren pueden utilizar diagramas con [Mermaid](https://mermaid.js.org) en lugar de imágenes.
 
 ## Alcance Funcional 
 
