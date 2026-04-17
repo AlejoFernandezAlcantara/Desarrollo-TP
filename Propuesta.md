@@ -31,14 +31,14 @@ Regularidad:
 |CRUD simple|1. CRUD Tipo Practica<br>2. CRUD Estado turno<br>3. CRUD Tipo Cliente<br>4. CRUD Especialidad|
 |CRUD dependiente|1. CRUD Turno {depende de} CRUD Tipo Practica<br>2. CRUD Cliente {depende de} CRUD Tipo Cliente<br>3. CRUD Odontologo {depende de} CRUD Especialidad|
 |Listado<br>+<br>detalle| 1. Listado de odontologos filtrado por especialidad, muestra datos del especialista, sus especialidades y practicas que realiza=> detalle CRUD Odontologo<br> 2. Listado de turnos filtrado por rango de fecha, muestra practica realizada, fecha inicio y fin atencion, estado del turno y nombre del cliente => detalle muestra datos completos del turno y del cliente|
-|CUU/Epic|1. Reservar un turno para una especialidad<br>2. Realizar cobro de la atencion al cliente|
+|CUU/Epic|1. Reservar un turno para una especialidad<br>2. Calcular cobro de la atencion al cliente|
 
 
 Adicionales para Aprobación
 |Req|Detalle|
 |:-|:-|
-|CRUD |1. CRUD Tipo Habitacion<br>2. CRUD Servicio<br>3. CRUD Localidad<br>4. CRUD Provincia<br>5. CRUD Habitación<br>6. CRUD Empleado<br>7. CRUD Cliente|
-|CUU/Epic|1. Reservar una habitación para la estadía<br>2. Realizar el check-in de una reserva<br>3. Realizar el check-out y facturación de estadía y servicios|
+|CRUD |1. CRUD Tipo Practica<br>2. CRUD Estado Turno<br>3. CRUD Tipo Cliente<br>4. CRUD Especialidad<br>5. CRUD Consultorio<br>6. CRUD Odontologo<br>7. CRUD Cliente<br>8. CRUD Practica|
+|CUU/Epic|1. Reservar un turno para una especialidad<br>2. Calcular cobro de la atencion al cliente<br>2. Realizar facturacion del cobro al cliente|
 
 
 ### Alcance Adicional Voluntario
