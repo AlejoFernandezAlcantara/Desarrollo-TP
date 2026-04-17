@@ -15,7 +15,7 @@ Propuesta TP DSW
 
 ## Tema
 ### Descripción
-Sistema de gestión de restaurantes que se centraliza en  el manejo de mesas, clientes, productos y pedidos en una interfaz simple e intuitiva. Buscando agilizar cada etapa del servicio, desde que el cliente asiste hasta que se retira, mejorando tanto el manejo interno del restaurante como la experiencia del cliente.
+Sistema de gestión de turnos en un consultorio odontologico que se centraliza en  el manejo de clientes, consultas y especialidades en una interfaz simple e intuitiva. Buscando agilizar cada etapa del servicio, desde que el cliente solicita el turno hasta que se realiza la atencion, mejorando tanto el manejo interno del consultorio como la experiencia del cliente.
 
 ### Modelo
 https://app.diagrams.net/?src=about#G1ykwDR5jfFqt6A9WPDxQebTJC06Fh3MzD#%7B%22pageId%22%3A%22U16Np_kju9VaJ5zfGIP3%22%7D
@@ -25,15 +25,13 @@ https://app.diagrams.net/?src=about#G1ykwDR5jfFqt6A9WPDxQebTJC06Fh3MzD#%7B%22pag
 
 ### Alcance Mínimo
 
-*Nota*: el siguiente es un ejemplo para un grupo de 3 integrantes para un sistema de hotel. El 
-
 Regularidad:
 |Req|Detalle|
 |:-|:-|
-|CRUD simple|1. CRUD Tipo Habitacion<br>2. CRUD Servicio<br>3. CRUD Localidad|
-|CRUD dependiente|1. CRUD Habitación {depende de} CRUD Tipo Habitacion<br>2. CRUD Cliente {depende de} CRUD Localidad|
-|Listado<br>+<br>detalle| 1. Listado de habitaciones filtrado por tipo de habitación, muestra nro y tipo de habitación => detalle CRUD Habitacion<br> 2. Listado de reservas filtrado por rango de fecha, muestra nro de habitación, fecha inicio y fin estadía, estado y nombre del cliente => detalle muestra datos completos de la reserva y del cliente|
-|CUU/Epic|1. Reservar una habitación para la estadía<br>2. Realizar el check-in de una reserva|
+|CRUD simple|1. CRUD Tipo Consulta<br>2. CRUD Odontologo<br>3. CRUD Tipo Cliente<br>4. CRUD Especialidad|
+|CRUD dependiente|1. CRUD Turno {depende de} CRUD Tipo Consulta<br>2. CRUD Cliente {depende de} CRUD Tipo Cliente|
+|Listado<br>+<br>detalle| 1. Listado de Consultas filtrado por tipo de consulta, muestra nro, tipo de consulta y especialidad solicitada => detalle CRUD Consultas<br> 2. Listado de turnos filtrado por rango de fecha, muestra nro de consulta, fecha inicio y fin atencion, estado del turno y nombre del cliente => detalle muestra datos completos de la consulta y del cliente|
+|CUU/Epic|1. Reservar un turno para una especialidad<br>2. Realizar cobro de la atencion al cliente|
 
 
 Adicionales para Aprobación
