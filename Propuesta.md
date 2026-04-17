@@ -28,9 +28,9 @@ https://app.diagrams.net/?src=about#G1ykwDR5jfFqt6A9WPDxQebTJC06Fh3MzD#%7B%22pag
 Regularidad:
 |Req|Detalle|
 |:-|:-|
-|CRUD simple|1. CRUD Tipo Consulta<br>2. CRUD Odontologo<br>3. CRUD Tipo Cliente<br>4. CRUD Especialidad|
-|CRUD dependiente|1. CRUD Turno {depende de} CRUD Tipo Consulta<br>2. CRUD Cliente {depende de} CRUD Tipo Cliente|
-|Listado<br>+<br>detalle| 1. Listado de odontologos filtrado por especialidad, muestra datos del especialista y sus especialidades => detalle CRUD Consultas<br> 2. Listado de turnos filtrado por rango de fecha, muestra nro de consulta, fecha inicio y fin atencion, estado del turno y nombre del cliente => detalle muestra datos completos de la consulta y del cliente|
+|CRUD simple|1. CRUD Tipo Consulta<br>2. CRUD Estado turno<br>3. CRUD Tipo Cliente<br>4. CRUD Especialidad|
+|CRUD dependiente|1. CRUD Turno {depende de} CRUD Tipo Consulta<br>2. CRUD Cliente {depende de} CRUD Tipo Cliente<br>3. CRUD Odontologo {depende de} CRUD Especialidad|
+|Listado<br>+<br>detalle| 1. Listado de odontologos filtrado por especialidad, muestra datos del especialista y sus especialidades => detalle CRUD Odontologo<br> 2. Listado de turnos filtrado por rango de fecha, muestra nro de consulta, fecha inicio y fin atencion, estado del turno y nombre del cliente => detalle muestra datos completos de la consulta y del cliente|
 |CUU/Epic|1. Reservar un turno para una especialidad<br>2. Realizar cobro de la atencion al cliente|
 
 
