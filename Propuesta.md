@@ -49,6 +49,6 @@ Adicionales para Aprobación
 |:-|:-|
 |Listados |1. Historial del Paciente muestra turnos atendidos, fecha turno y practicas realizadas <br>2. Reservas filtradas por estado muestra fecha reserva y datos del paciente|
 |CUU/Epic|1. Realizar facturacion del cobro al paciente<br>2. Cancelación de reserva|
-|Otros|1. Solicitud de cambio de turno por email|
+|Otros|1. Solicitud de cambio de turno|
 
 
