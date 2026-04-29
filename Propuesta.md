@@ -28,17 +28,18 @@ https://app.diagrams.net/#G1z93UDN1OUiycHQpA3MJCTfX8HWOygKV8#%7B%22pageId%22%3A%
 Regularidad:
 |Req|Detalle|
 |:-|:-|
-|CRUD simple|1. CRUD Practica<br>2. CRUD Paciente<br>3. CRUD Odontologo<br>4. CRUD Turno|
-|CRUD dependiente|1. CRUD Consulta {depende de} CRUD Paciente y CRUD Odontologo<br>2. CRUD Reserva {depende de} CRUD Consuta|
-|Listado<br>+<br>detalle| 1. Listado de odontologos filtrado por obra social, muestra nombre del odontologo y sus especialidades => detalle  muestra datos completos del odontologo<br>2. Listado de los próximos turnos disponibles por odontólogo => Detalle: muestra Fecha y hora y duración.<br>3. Listado de Mutuales disponibles => Detalle: Muestra nombres de las mutuales con sus respectivos planes<br>4. Listado de reservas => Detalle: Se le muestra al paciente todas las reservas que tiene, con su respectiva fecha de creacion,su estado, fecha y hora de consulta, nombre y apellido del odontologo, nombre y apellido del paciente y cualquier observacion pertinente<br>5. Listado de practicas realizadas en una consulta => detalle: Al terminar la consulta se guardan todas las practicas realizadas, quedando disponibles el codigo, el valor y el detalle de cada una, asi como el subtotal de la consulta ya calculado|
-|CUU/Epic|1. Reservar un turno con un Odontolo<br>2. Mostrar informacion del profesional <br>3. Realizar consulta<br>4. Cargar mutuales<br>5. Asignar turno/s a una reserva<br>6. Asignar practica/s a una consulta<br>7. Cargar informacion de mutuales |
+|CRUD simple|1. CRUD Practica<br>2. CRUD Mutual<br>3. CRUD Odontologo<br>4. CRUD Diente|
+|CRUD dependiente|1. CRUD paciente {depende de} CRUD Mutual<br>2. CRUD Cara {depende de} CRUD Diente|
+|Listado<br>+<br>detalle| 1. Listado de odontologos filtrado por obra social, muestra nombre del odontologo y sus especialidades => detalle  muestra datos completos del odontologo<br>2. Listado de los próximos turnos disponibles por odontólogo => Detalle: muestra Fecha y hora y duración.|
+|CUU/Epic|1. Reservar un turno con un Odontolo<br>2. Registrar practicas realizadas en una consulta |
 
 
 Adicionales para Aprobación
 |Req|Detalle|
 |:-|:-|
 |CRUD |1. CRUD Practica<br>2. CRUD Paciente<br>3. CRUD Odontologo<br>4. CRUD Turno<br>5. CRUD Reserva<br>6. CRUD Mutual<br>7. CRUD Diente <br>8. CRUD Cara <br>9. CRUD Consulta |
-|CUU/Epic|1. Mostrar historia clinica del paciente<br>2. Registrar practica realizada<br>3. Calcular cobro de la atencion al paciente<br>4. Actualizar el precio de las practica<br>5. Realizar facturacion del cobro al paciente|
+|Listado<br>+<br>detalle|<br>1. Listado de Mutuales disponibles => Detalle: Muestra nombres de las mutuales con sus respectivos planes<br>2. Listado de reservas => Detalle: Se le muestra al paciente todas las reservas que tiene, con su respectiva fecha de creacion,su estado, fecha y hora de consulta, nombre y apellido del odontologo, nombre y apellido del paciente y cualquier observacion pertinente<br>3. Listado de practicas realizadas en una consulta => detalle: Al terminar la consulta se guardan todas las practicas realizadas, quedando disponibles el codigo, el valor y el detalle de cada una, asi como el subtotal de la consulta ya calculado |
+|CUU/Epic|1. Calcular cobro de la atencion al paciente<br>2. Actualizar el precio de las practica<br>3. Realizar facturacion del cobro al paciente |
 
 
 ### Alcance Adicional Voluntario
