@@ -1,0 +1,29 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    display: flex;
+    flex-direction: row ;
+    height: 100vh;
+}   
+
+.container-left {
+    width: 20%;
+    background-color: white;
+    padding: 1rem;
+
+}
+
+.container-right {
+    width: 100%;
+    background-color: antiqueWhite;
+    padding: 1rem;
+    border-left-style: solid;
+    border-left-width: 1px;
+    border-left-color: black;
+    border-left-width: 2px;
+    
+
+}
