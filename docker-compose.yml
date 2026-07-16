@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/usr/src/app
+      - /usr/src/app/node_modules
+    environment:
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=secreto
+      - DB_NAME=mi_base_datos
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=secreto
+      - MYSQL_DATABASE=mi_base_datos
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  mysql_data:
