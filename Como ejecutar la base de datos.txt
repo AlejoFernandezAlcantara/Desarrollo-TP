@@ -1,0 +1,13 @@
+¿Cómo deben ejecutarlo tus compañeros en MySQL Workbench?
+
+1. Guarda el contenido de la Opción 1 en un archivo dentro de tu repositorio (por ejemplo en database/01_schema.sql) y pásales estas instrucciones simples: 
+
+2.Abrir el script en MySQL Workbench:
+
+3.Tus compañeros deben clonar el repositorio, abrir MySQL Workbench e ir al menú superior: File $\rightarrow$ Open SQL Script... (o presionar Ctrl + O).
+Seleccionar el archivo 01_schema.sql.3.
+
+4.Ejecutar el Script: Hacer clic en el icono del Rayo (o presionar Ctrl + Shift + Enter).
+MySQL procesará todo automáticamente, creará el esquema desarrollobd e instalará las 14 tablas sin ningún error de claves foráneas.
+
+5.Actualizar la vista: Ir al panel izquierdo (Schemas), hacer clic derecho sobre la lista de bases de datos y seleccionar Refresh All. ¡Listo!
