@@ -1,6 +1,6 @@
 -- MySQL dump 10.13  Distrib 8.0.46, for Win64 (x86_64)
 --
--- Host: localhost    Database: desarrollobd
+-- Host: localhost    Database: consultorioBdd
 -- ------------------------------------------------------
 -- Server version	8.0.46
 
@@ -18,6 +18,8 @@
 --
 -- Table structure for table `administrador`
 --
+CREATE DATABASE IF NOT EXISTS consultorioBdd;
+USE consultorioBdd;
 
 DROP TABLE IF EXISTS `administrador`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;

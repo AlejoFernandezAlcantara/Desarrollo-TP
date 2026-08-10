@@ -12,9 +12,10 @@ services:
       - DB_HOST=db
       - DB_USER=root
       - DB_PASSWORD=admin
-      - DB_NAME=mi_base_datos
+      - DB_NAME=consultorioBdd
     depends_on:
-      - db
+      db:
+        condition: service_healthy
 
   db:
     image: mysql:8.0
@@ -23,9 +24,15 @@ services:
       - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=admin
-      - MYSQL_DATABASE=mi_base_datos
+      - MYSQL_DATABASE=consultorioBdd
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-padmin"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   mysql_data:
