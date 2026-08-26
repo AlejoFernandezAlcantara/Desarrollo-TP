@@ -1,10 +1,8 @@
-version: '3.8'
-
 services:
   app:
     build: ./REACT-FULLSTACK/server
     ports:
-      - "3000:3000"
+      - "3001:3001"
     volumes:
       - ./REACT-FULLSTACK/server:/usr/src/app
       - /usr/src/app/node_modules
@@ -13,6 +11,7 @@ services:
       - DB_USER=root
       - DB_PASSWORD=admin
       - DB_NAME=consultorioBdd
+      - PORT=3001
     depends_on:
       db:
         condition: service_healthy
@@ -27,6 +26,7 @@ services:
       - MYSQL_DATABASE=consultorioBdd
     volumes:
       - mysql_data:/var/lib/mysql
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-padmin"]
       interval: 5s
