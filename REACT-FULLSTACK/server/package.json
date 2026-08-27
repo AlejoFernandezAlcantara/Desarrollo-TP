@@ -9,22 +9,22 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "tsc",
-    "start": "tsx index.js",
-    "dev": "nodemon --exec tsx index.js"
+    "start": "tsx src/server.ts",
+    "dev": "nodemon --exec tsx src/server.ts"
   },
   "dependencies": {
+    "@prisma/client": "^6.4.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mysql2": "^3.23.0",
-    "sequelize": "^6.37.8",
-    "sequelize-cli": "^6.6.5"
+    "mysql2": "^3.23.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
     "nodemon": "^3.1.14",
+    "prisma": "^6.4.1",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
   }

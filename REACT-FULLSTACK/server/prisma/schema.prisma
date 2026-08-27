@@ -1,0 +1,222 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum TipoDocumento {
+  DNI
+  Pasaporte
+}
+
+enum EstadoReserva {
+  pendiente
+  confirmada
+  cancelada
+  realizada
+}
+
+enum ResultadoReserva {
+  exitoso
+  requiere_seguimiento @map("requiere seguimiento")
+  no_asistio           @map("no asistió")
+}
+
+model Usuario {
+  id            Int            @id @default(autoincrement())
+  nombre        String         @db.VarChar(50)
+  apellido      String         @db.VarChar(50)
+  email         String         @unique @db.VarChar(100)
+  password_hash String         @db.VarChar(255)
+  activo        Int            @default(1) @db.TinyInt
+  paciente      Paciente?
+  odontologo    Odontologo?
+  administrador Administrador?
+
+  @@map("usuario")
+}
+
+model Administrador {
+  id      Int     @id
+  usuario Usuario @relation(fields: [id], references: [id], onDelete: Cascade)
+
+  @@map("administrador")
+}
+
+model Paciente {
+  id           Int              @id
+  nro_paciente Int              @unique
+  direccion    String           @db.VarChar(100)
+  telefono     String?          @db.VarChar(20)
+  nroDocumento String           @db.VarChar(20)
+  tipoDoc      TipoDocumento
+  usuario      Usuario          @relation(fields: [id], references: [id], onDelete: Cascade)
+  reservas     Reserva[]
+  odontograma  Odontograma?
+  mutuales     PacienteMutual[]
+
+  @@map("paciente")
+}
+
+model Odontologo {
+  id            Int                @id
+  nro_Matricula Int                @unique
+  especialidad  String             @db.VarChar(50)
+  telefono      String?            @db.VarChar(20)
+  nroDocumento  String             @db.VarChar(20)
+  tipoDoc       TipoDocumento
+  usuario       Usuario            @relation(fields: [id], references: [id], onDelete: Cascade)
+  reservas      Reserva[]
+  turnos        Turno[]
+  mutuales      OdontologoMutual[]
+
+  @@map("odontologo")
+}
+
+model Mutual {
+  id          Int                @id @default(autoincrement())
+  cuit        String             @unique @db.Char(11)
+  nombre      String             @db.VarChar(100)
+  reservas    Reserva[]
+  odontologos OdontologoMutual[]
+  pacientes   PacienteMutual[]
+
+  @@map("mutual")
+}
+
+model OdontologoMutual {
+  odontologo_id Int
+  mutual_id     Int
+  nroAfiliado   String     @db.VarChar(30)
+  odontologo    Odontologo @relation(fields: [odontologo_id], references: [id], onDelete: Cascade)
+  mutual        Mutual     @relation(fields: [mutual_id], references: [id], onDelete: Cascade)
+
+  @@id([odontologo_id, mutual_id])
+  @@map("odontologo_mutual")
+}
+
+model PacienteMutual {
+  paciente_id Int
+  mutual_id   Int
+  nroAfiliado String   @db.VarChar(30)
+  cubre       Int      @default(0) @db.TinyInt
+  paciente    Paciente @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  mutual      Mutual   @relation(fields: [mutual_id], references: [id], onDelete: Cascade)
+
+  @@id([paciente_id, mutual_id])
+  @@map("paciente_mutual")
+}
+
+model Practica {
+  id       Int       @id @default(autoincrement())
+  codigo   String    @unique @db.VarChar(20)
+  detalle  String    @db.VarChar(100)
+  precio   Decimal   @db.Decimal(10, 2)
+  detalles Detalle[]
+
+  @@map("practica")
+}
+
+model Odontograma {
+  id             Int       @id @default(autoincrement())
+  fecha_creacion DateTime  @default(now())
+  estado         String    @default("Activo") @db.VarChar(30)
+  paciente_id    Int       @unique
+  paciente       Paciente  @relation(fields: [paciente_id], references: [id], onDelete: Cascade)
+  detalles       Detalle[]
+
+  @@map("odontograma")
+}
+
+model Diente {
+  id       Int          @id @default(autoincrement())
+  numero   Int          @unique @db.TinyInt
+  nombre   String?      @db.VarChar(50)
+  tipo     String       @db.VarChar(30)
+  caras    DienteCara[]
+  detalles Detalle[]
+
+  @@map("diente")
+}
+
+model Cara {
+  id      Int          @id @default(autoincrement())
+  nombre  String       @db.VarChar(30)
+  detalle String?      @db.VarChar(100)
+  dientes DienteCara[]
+
+  @@map("cara")
+}
+
+model DienteCara {
+  diente_id Int
+  cara_id   Int
+  diente    Diente @relation(fields: [diente_id], references: [id], onDelete: Cascade)
+  cara      Cara   @relation(fields: [cara_id], references: [id], onDelete: Cascade)
+
+  @@id([diente_id, cara_id])
+  @@map("diente_cara")
+}
+
+model Reserva {
+  id_reserva       Int               @id @default(autoincrement())
+  paciente_id      Int
+  odontologo_id    Int
+  mutual_id        Int?
+  fecha_creacion   DateTime          @default(now())
+  estado           EstadoReserva     @default(pendiente)
+  observaciones    String?           @db.VarChar(255)
+  coseguro         Decimal?          @db.Decimal(10, 2)
+  fechaRealizacion DateTime?
+  resultado        ResultadoReserva?
+  paciente         Paciente          @relation(fields: [paciente_id], references: [id])
+  odontologo       Odontologo        @relation(fields: [odontologo_id], references: [id])
+  mutual           Mutual?           @relation(fields: [mutual_id], references: [id])
+  turnos           Turno[]
+  detalles         Detalle[]
+
+  @@map("reserva")
+}
+
+model Turno {
+  codigo            Int        @id @default(autoincrement())
+  fecha_hora_inicio DateTime
+  duracion          Int
+  estado            String     @default("libre") @db.VarChar(50)
+  odontologo_id     Int
+  reserva_id        Int?
+  odontologo        Odontologo @relation(fields: [odontologo_id], references: [id])
+  reserva           Reserva?   @relation(fields: [reserva_id], references: [id_reserva])
+
+  @@map("turno")
+}
+
+model Detalle {
+  id                Int         @id @default(autoincrement())
+  fecha_realizacion DateTime    @default(now())
+  observaciones     String?     @db.Text
+  odontograma_id    Int
+  practica_id       Int
+  diente_id         Int?
+  reserva_id        Int
+  odontograma       Odontograma @relation(fields: [odontograma_id], references: [id])
+  practica          Practica    @relation(fields: [practica_id], references: [id])
+  diente            Diente?     @relation(fields: [diente_id], references: [id])
+  reserva           Reserva     @relation(fields: [reserva_id], references: [id_reserva])
+
+  @@map("detalle")
+}
+
+model Posts {
+  id        Int      @id @default(autoincrement())
+  title     String   @db.VarChar(255)
+  postsText String   @db.VarChar(255)
+  username  String   @db.VarChar(255)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("posts")
+}
