@@ -7,6 +7,8 @@ import dienteRoutes from './diente.routes';
 import pacienteRoutes from './paciente.routes';
 import caraRoutes from './cara.routes';
 import turnoRoutes from './turno.routes';
+import reservaRoutes from './reserva.routes';
+import detalleRoutes from './detalle.routes';
 
 const router = Router();
 
@@ -21,7 +23,9 @@ router.get('/', (req, res) => {
       '/api/dientes',
       '/api/pacientes',
       '/api/caras',
-      '/api/turnos'
+      '/api/turnos',
+      '/api/reservas',
+      '/api/detalles'
     ]
   });
 });
@@ -35,5 +39,7 @@ router.use('/dientes', dienteRoutes);
 router.use('/pacientes', pacienteRoutes);
 router.use('/caras', caraRoutes);
 router.use('/turnos', turnoRoutes);
+router.use('/reservas', reservaRoutes);
+router.use('/detalles', detalleRoutes);
 
 export default router;

@@ -211,4 +211,70 @@ GET {{baseUrl}}/turnos/disponibles?odontologoId=1
 ### 7. Detalle del Turno por Código
 GET {{baseUrl}}/turnos/1
 
+### -----------------------------------------------------------------------
+### FASE 4: CASOS DE USO CORE (CUU / Epics)
+### -----------------------------------------------------------------------
+
+### CUU 1: Reservar un Turno con un Odontólogo (Transaccional)
+# Pasa el turno especificado a 'ocupado' y crea la Reserva vinculando Paciente y Odontólogo
+POST {{baseUrl}}/reservas
+Content-Type: application/json
+
+{
+  "paciente_id": 2,
+  "turno_codigo": 1,
+  "mutual_id": 1,
+  "observaciones": "Control y limpieza general",
+  "coseguro": 1500.00
+}
+
+### Obtener Reserva por ID (con Paciente, Odontólogo, Turnos y Prácticas)
+GET {{baseUrl}}/reservas/1
+
+### Verificar que el turno reservado ya no aparece en turnos disponibles
+GET {{baseUrl}}/turnos/disponibles?odontologoId=1
+
+### CUU 2: Registrar Prácticas realizadas en la consulta / Odontograma
+# Registra la práctica realizada (PR-01) en la consulta (Reserva 1) vinculada al diente 1 (opcional)
+POST {{baseUrl}}/detalles
+Content-Type: application/json
+
+{
+  "reserva_id": 1,
+  "practica_id": 1,
+  "diente_id": 1,
+  "observaciones": "Se realizó limpieza profunda en el incisivo superior"
+}
+
+### Registrar otra práctica en la misma consulta (ej. Práctica general sin diente específico)
+POST {{baseUrl}}/detalles
+Content-Type: application/json
+
+{
+  "reserva_id": 1,
+  "practica_id": 1,
+  "observaciones": "Aplicación tópica de flúor"
+}
+
+### Obtener historial de prácticas realizadas en la consulta
+GET {{baseUrl}}/detalles?reservaId=1
+
+### Finalizar la Consulta / Reserva
+PUT {{baseUrl}}/reservas/1/finalizar
+Content-Type: application/json
+
+{
+  "resultado": "exitoso",
+  "observaciones": "Consulta completada exitosamente sin complicaciones"
+}
+
+### (Opcional) Cancelar una reserva y liberar automáticamente el turno
+# PUT {{baseUrl}}/reservas/1/cancelar
+# Content-Type: application/json
+# 
+# {
+#   "motivo": "Paciente avisó que no puede asistir por motivos personales"
+# }
+
+
 
