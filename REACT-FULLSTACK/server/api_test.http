@@ -2,6 +2,45 @@
 @baseUrl = http://localhost:3001/api
 
 ### -----------------------------------------------------------------------
+### AUTENTICACIÓN (LOGIN, ME, LOGOUT)
+### -----------------------------------------------------------------------
+
+### 1. Iniciar sesión como ADMINISTRADOR
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@consultorio.com",
+  "password": "Admin123!"
+}
+
+### 2. Iniciar sesión como ODONTÓLOGO
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "odonto@consultorio.com",
+  "password": "Odonto123!"
+}
+
+### 3. Iniciar sesión como PACIENTE
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "paciente@consultorio.com",
+  "password": "Paciente123!"
+}
+
+### 4. Obtener perfil del usuario autenticado (Lee la cookie HttpOnly 'token')
+GET {{baseUrl}}/auth/me
+
+### 5. Cerrar sesión (Limpia la cookie)
+POST {{baseUrl}}/auth/logout
+
+
+
+### -----------------------------------------------------------------------
 ### PRÁCTICAS
 ### -----------------------------------------------------------------------
 
@@ -61,10 +100,10 @@ Content-Type: application/json
 
 {
   "nombre": "Juan",
-  "apellido": "Pérez",
-  "email": "juan.perez@ejemplo.com",
-  "password_hash": "hash_temporal_123",
-  "nro_Matricula": 12345,
+  "apellido": "alejowachin123",
+  "email": "juan.alejowachin123@ejemplo.com",
+  "password": "Odonto123!",
+  "nro_Matricula": 676967,
   "especialidad": "Ortodoncia",
   "telefono": "3511234567",
   "nroDocumento": "30123456",
@@ -107,10 +146,10 @@ Content-Type: application/json
 
 {
   "nombre": "Maria",
-  "apellido": "Gonzalez",
-  "email": "maria.gonzalez@ejemplo.com",
-  "password_hash": "hash_temporal_456",
-  "nro_paciente": 1001,
+  "apellido": "perez",
+  "email": "maria.perez@ejemplo.com",
+  "password": "Paciente123!",
+  "nro_paciente": 1003,
   "direccion": "Av. Siempreviva 742",
   "telefono": "3519876543",
   "nroDocumento": "35987654",

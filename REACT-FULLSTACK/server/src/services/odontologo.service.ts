@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { TipoDocumento } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 export const odontologoService = {
   async getAll(mutualId?: number) {
@@ -85,13 +86,23 @@ export const odontologoService = {
     nombre: string;
     apellido: string;
     email: string;
-    password_hash: string;
+    password?: string;
+    password_hash?: string;
     nro_Matricula: number;
     especialidad: string;
     telefono?: string;
     nroDocumento: string;
     tipoDoc: TipoDocumento;
   }) {
+    let hashToStore = data.password_hash;
+    if (data.password) {
+      hashToStore = await bcrypt.hash(data.password, 10);
+    }
+
+    if (!hashToStore) {
+      throw new Error('Debes proporcionar una contraseña (password) para el odontólogo');
+    }
+
     return await prisma.$transaction(async (tx) => {
       // 1. Crear usuario
       const usuario = await tx.usuario.create({
@@ -99,7 +110,7 @@ export const odontologoService = {
           nombre: data.nombre,
           apellido: data.apellido,
           email: data.email,
-          password_hash: data.password_hash
+          password_hash: hashToStore
         }
       });
 

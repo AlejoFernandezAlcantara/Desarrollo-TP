@@ -289,6 +289,10 @@ CREATE TABLE `turno` (
 --
 -- Table structure for table `usuario`
 --
+-- NOTA DE SEGURIDAD:
+-- La columna `password_hash` almacena únicamente el hash criptográfico unidireccional (bcrypt/argon2).
+-- NUNCA debe almacenarse la contraseña en texto plano ni tokens de sesión (JWT).
+--
 
 DROP TABLE IF EXISTS `usuario`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
@@ -298,12 +302,46 @@ CREATE TABLE `usuario` (
   `nombre` varchar(50) NOT NULL,
   `apellido` varchar(50) NOT NULL,
   `email` varchar(100) NOT NULL,
-  `password_hash` varchar(255) NOT NULL,
+  `password_hash` varchar(255) NOT NULL COMMENT 'Hash bcrypt/argon2 de la contraseña',
   `activo` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_usuario_email` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Volcado de datos de prueba con hashes bcrypt reales para desarrollo
+-- Contraseñas en texto plano de prueba:
+--   - admin@consultorio.com     -> Admin123!
+--   - odonto@consultorio.com    -> Odonto123!
+--   - paciente@consultorio.com  -> Paciente123!
+--
+LOCK TABLES `usuario` WRITE;
+/*!40000 ALTER TABLE `usuario` DISABLE KEYS */;
+INSERT INTO `usuario` (`id`, `nombre`, `apellido`, `email`, `password_hash`, `activo`) VALUES
+(1, 'Admin', 'Sistema', 'admin@consultorio.com', '$2b$10$gypx4tyAiRh4PgBE7sMOxuPlyDrhubAi8KSIx.8DSv9dbJwZ3q8Vm', 1),
+(2, 'Juan', 'Pérez', 'odonto@consultorio.com', '$2b$10$8qIIOKC0Fj91fg4xYZvwzuneVjdTpy6ehUMVPBWzANvzHHmlSBxkS', 1),
+(3, 'María', 'Gómez', 'paciente@consultorio.com', '$2b$10$g6Ctwd7W74qShQpNcovHkeCGzSkwuZaMneKwmA16QLOrxZDajPhs2', 1);
+/*!40000 ALTER TABLE `usuario` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Volcado de roles vinculados a los usuarios de prueba
+--
+LOCK TABLES `administrador` WRITE;
+INSERT INTO `administrador` (`id`) VALUES (1);
+UNLOCK TABLES;
+
+LOCK TABLES `odontologo` WRITE;
+INSERT INTO `odontologo` (`id`, `nro_Matricula`, `especialidad`, `telefono`, `nroDocumento`, `tipoDoc`) VALUES
+(2, 45890, 'Ortodoncia', '1145678901', '30111222', 'DNI');
+UNLOCK TABLES;
+
+LOCK TABLES `paciente` WRITE;
+INSERT INTO `paciente` (`id`, `nro_paciente`, `direccion`, `telefono`, `nroDocumento`, `tipoDoc`) VALUES
+(3, 1001, 'Av. Corrientes 1234', '1198765432', '35999888', 'DNI');
+UNLOCK TABLES;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

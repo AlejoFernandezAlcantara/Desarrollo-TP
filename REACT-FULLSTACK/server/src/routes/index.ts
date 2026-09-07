@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import authRoutes from './auth.routes';
 import usuarioRoutes from './usuario.routes';
 import practicaRoutes from './practica.routes';
 import mutualRoutes from './mutual.routes';
@@ -16,6 +17,9 @@ router.get('/', (req, res) => {
   res.json({
     status: 'API funcionando correctamente',
     endpoints: [
+      '/api/auth/login',
+      '/api/auth/logout',
+      '/api/auth/me',
       '/api/usuarios',
       '/api/practicas',
       '/api/mutuales',
@@ -31,6 +35,7 @@ router.get('/', (req, res) => {
 });
 
 // Montar las rutas bajo su prefijo
+router.use('/auth', authRoutes);
 router.use('/usuarios', usuarioRoutes);
 router.use('/practicas', practicaRoutes);
 router.use('/mutuales', mutualRoutes);

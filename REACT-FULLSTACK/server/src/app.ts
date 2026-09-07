@@ -1,11 +1,18 @@
 import express, { Application } from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser';
 import routes from './routes';
 
 const app: Application = express();
 
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: clientUrl,
+  credentials: true
+}));
+app.use(cookieParser());
 app.use(express.json()); // Para parsear el body como JSON
 
 // Rutas principales

@@ -1,5 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { TipoDocumento } from '@prisma/client';
+import bcrypt from 'bcryptjs';
 
 export const pacienteService = {
   async getAll() {
@@ -34,7 +35,8 @@ export const pacienteService = {
     nombre: string;
     apellido: string;
     email: string;
-    password_hash: string;
+    password?: string;
+    password_hash?: string;
     nro_paciente: number;
     direccion: string;
     telefono?: string;
@@ -49,6 +51,15 @@ export const pacienteService = {
       throw new Error('El porcentaje de cobertura debe estar entre 0 y 100');
     }
 
+    let hashToStore = data.password_hash;
+    if (data.password) {
+      hashToStore = await bcrypt.hash(data.password, 10);
+    }
+
+    if (!hashToStore) {
+      throw new Error('Debes proporcionar una contraseña (password) para el paciente');
+    }
+
     return await prisma.$transaction(async (tx) => {
       // 1. Crear usuario base
       const usuario = await tx.usuario.create({
@@ -56,7 +67,7 @@ export const pacienteService = {
           nombre: data.nombre,
           apellido: data.apellido,
           email: data.email,
-          password_hash: data.password_hash
+          password_hash: hashToStore
         }
       });
 
