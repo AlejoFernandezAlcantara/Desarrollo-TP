@@ -1,0 +1,23 @@
+Cómo ejecutar el proyecto
+ 
+1. Tener Docker Desktop instalado.
+2. Clonar el repositorio.
+3. Desde la carpeta Desarrollo-TP ejecutar:
+ 
+docker compose up -d
+docker compose down (para finalizar)
+ 
+4. La base de datos consultorioBdd se crea automáticamente usando:
+database/init.sql
+ 
+5. El backend queda disponible en:
+ 
+http://localhost:3001
+
+Para levantar el Front: (se puede levantar con docker si se configura)
+
+abrir una nueva terminal: (en cd REACT-FULLSTACK/client)
+
+npm run dev
+
+El frontend quedará disponible en: http://localhost:5173
