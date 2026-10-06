@@ -18,6 +18,6 @@ Para levantar el Front: (se puede levantar con docker si se configura)
 
 abrir una nueva terminal: (en cd REACT-FULLSTACK/client)
 
-npm run dev
+npm run dev (sino se hizo, ejecutar antes npm install)
 
 El frontend quedará disponible en: http://localhost:5173
