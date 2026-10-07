@@ -2,6 +2,8 @@ import express, { Application } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes';
+import { errorHandler } from './middlewares/error.middleware';
+import { env } from './config/env';
 
 const app: Application = express();
 
@@ -22,5 +24,14 @@ app.use('/api', routes);
 app.get('/', (req, res) => {
   res.send('¡El servidor backend (con Prisma) está funcionando correctamente!');
 });
-
+app.use(errorHandler);
+app.use(
+  cors({
+    origin: env.ALLOWED_ORIGINS,
+    credentials: true,
+  })
+);
 export default app;
+
+
+
