@@ -75,9 +75,9 @@ export const AgendaPage: React.FC = () => {
     <div>
       <div className="page-header">
         <div>
-          <h1 className="page-header-title">Agenda General de Turnos</h1>
+          <h1 className="page-header-title">Agenda de Turnos</h1>
           <p className="page-header-desc">
-            Visualización y control de reservas programadas, cancelaciones y derivación a consultorio.
+            Reservas programadas, cancelaciones y derivación a consultorio.
           </p>
         </div>
         <div style={{ display: 'flex', gap: '0.75rem' }}>
@@ -130,7 +130,6 @@ export const AgendaPage: React.FC = () => {
         <div className="card empty-state">
           <CalendarIcon className="empty-state-icon" />
           <h3>No hay reservas de turnos registradas</h3>
-          <p>Utiliza el botón superior para realizar la primera reserva guiada con un paciente.</p>
           <div style={{ marginTop: '1rem' }}>
             <Link to="/agenda/reservar" className="btn btn-primary">
               <Plus size={16} />

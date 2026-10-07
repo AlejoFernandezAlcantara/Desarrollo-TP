@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { pacientesApi, reservasApi, odontologosApi, mutualesApi } from '../services/api';
 import './Home.css';
+import { useAuth } from '../contexts/AuthContext';
 
 export const Home: React.FC = () => {
   const [stats, setStats] = useState({
@@ -22,6 +23,9 @@ export const Home: React.FC = () => {
     mutualesCount: 0,
     loading: true
   });
+
+const { user } = useAuth();
+const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -67,9 +71,9 @@ export const Home: React.FC = () => {
             <ShieldCheck size={16} />
             <span>Sistema Integral Odontológico</span>
           </div>
-          <h1 className="home-hero-title">Gestión Clínica y Turnos Simplificada</h1>
+          <h1 className="home-hero-title">Gestión Clínica y Turnos </h1>
           <p className="home-hero-desc">
-            Plataforma centralizada para odontólogos, recepción y administración. Control integral de historias clínicas, odontograma interactivo y flujo guiado de turnos.
+            Recepción y administración online. Control de historias clínicas, odontograma y turnos.
           </p>
           <div className="home-hero-actions">
             <Link to="/agenda/reservar" className="btn btn-hero-primary">
@@ -131,7 +135,7 @@ export const Home: React.FC = () => {
       <div className="page-header">
         <div>
           <h2 className="page-header-title" style={{ fontSize: '1.4rem' }}>Módulos del Sistema</h2>
-          <p className="page-header-desc">Accede directamente a los flujos operativos requeridos por la cátedra</p>
+          <p className="page-header-desc">Accede directamente a los flujos operativos</p>
         </div>
       </div>
 
@@ -141,7 +145,7 @@ export const Home: React.FC = () => {
           <div className="action-icon-circle" style={{ backgroundColor: '#F3E7CC', color: '#B08028' }}>
             <Calendar size={24} />
           </div>
-          <h3 className="quick-action-title">: Reservar Turno Odontológico</h3>
+          <h3 className="quick-action-title">Reservar Turno Odontológico</h3>
           <p className="quick-action-desc">
             Flujo guiado para agendar turnos: filtra por odontólogo, consulta horarios disponibles, vincula al paciente y mutual, y confirma la reserva.
           </p>
@@ -152,49 +156,62 @@ export const Home: React.FC = () => {
         </Link>
 
         {/* Card CUU 2: Consultorio Clínico */}
+        {esStaff && (
         <Link to="/consultorio" className="quick-action-card">
-          <div className="action-icon-circle" style={{ backgroundColor: '#FBF5E8', color: '#604828' }}>
-            <Activity size={24} />
-          </div>
-          <h3 className="quick-action-title"> Atención Clínica & Odontograma</h3>
-          <p className="quick-action-desc">
-            Vista de pacientes citados para hoy. Permite al odontólogo ingresar a la consulta, registrar prácticas aplicadas en el odontograma y finalizar la sesión.
-          </p>
-          <div className="quick-action-link">
-            <span>Ir a Consultorio</span>
-            <ArrowRight size={16} />
-          </div>
+          <Link to="/consultorio" className="quick-action-card">
+            <div className="action-icon-circle" style={{ backgroundColor: '#FBF5E8', color: '#604828' }}>
+              <Activity size={24} />
+            </div>
+            <h3 className="quick-action-title"> Atención Clínica & Odontograma</h3>
+            <p className="quick-action-desc">
+              Vista de pacientes citados para hoy. Permite al odontólogo ingresar a la consulta, registrar prácticas aplicadas en el odontograma y finalizar la sesión.
+            </p>
+            <div className="quick-action-link">
+              <span>Ir a Consultorio</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
         </Link>
+        )}  
 
         {/* Card Recepción */}
+        {user?.rol === 'ADMINISTRADOR' && (
         <Link to="/recepcion" className="quick-action-card">
-          <div className="action-icon-circle" style={{ backgroundColor: '#f5f3ff', color: '#6366f1' }}>
-            <Users size={24} />
-          </div>
-          <h3 className="quick-action-title">Módulo de Pacientes</h3>
-          <p className="quick-action-desc">
-            Búsqueda rápida de pacientes, creación de ficha médica completa con mutuales vinculadas y acceso directo al historial clínico.
-          </p>
-          <div className="quick-action-link">
-            <span>Gestionar pacientes</span>
-            <ArrowRight size={16} />
-          </div>
+          <Link to="/recepcion" className="quick-action-card">
+            <div className="action-icon-circle" style={{ backgroundColor: '#f5f3ff', color: '#6366f1' }}>
+              <Users size={24} />
+            </div>
+            <h3 className="quick-action-title">Módulo de Pacientes</h3>
+            <p className="quick-action-desc">
+              Búsqueda rápida de pacientes, creación de ficha médica completa con mutuales vinculadas y acceso directo al historial clínico.
+            </p>
+            <div className="quick-action-link">
+              <span>Gestionar pacientes</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
         </Link>
+        )}
 
+        
         {/* Card Administración */}
-        <Link to="/admin" className="quick-action-card">
-          <div className="action-icon-circle" style={{ backgroundColor: '#fff7ed', color: '#ea580c' }}>
-            <Settings size={24} />
-          </div>
-          <h3 className="quick-action-title">Módulo de Administración</h3>
-          <p className="quick-action-desc">
-            ABM de Mutuales (Obras Sociales), catálogo de Prácticas Odontológicas con tarifario en tiempo real y registro de profesionales.
-          </p>
-          <div className="quick-action-link">
-            <span>Abrir administración</span>
-            <ArrowRight size={16} />
-          </div>
+        {user?.rol === 'ADMINISTRADOR' && (
+        <Link to="/recepcion" className="quick-action-card">
+          <Link to="/admin" className="quick-action-card">
+            <div className="action-icon-circle" style={{ backgroundColor: '#fff7ed', color: '#ea580c' }}>
+              <Settings size={24} />
+            </div>
+            <h3 className="quick-action-title">Módulo de Administración</h3>
+            <p className="quick-action-desc">
+              ABM de Mutuales (Obras Sociales), catálogo de Prácticas Odontológicas con tarifario en tiempo real y registro de profesionales.
+            </p>
+            <div className="quick-action-link">
+              <span>Abrir administración</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
         </Link>
+        )}
       </div>
     </div>
   );

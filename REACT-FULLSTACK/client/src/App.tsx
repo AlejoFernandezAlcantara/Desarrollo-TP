@@ -156,9 +156,6 @@ export const App: React.FC = () => {
               <div>
                 <strong>Consultorio Carestia</strong> — Sistema Integral de Gestión Odontológica
               </div>
-              <div>
-                Trabajo Práctico Desarrollo • React + TypeScript + Vite + Vanilla CSS
-              </div>
             </div>
           </footer>
           </div>
