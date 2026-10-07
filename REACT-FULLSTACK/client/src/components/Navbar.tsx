@@ -33,7 +33,7 @@ export const Navbar: React.FC = () => {
           <img src="/logo.jpeg" alt="Logo Clínica" className="navbar-logo" onError={(e) => {
             (e.target as HTMLImageElement).style.display = 'none';
           }} />
-          <span className="navbar-title">DentalCare Pro</span>
+          <span className="navbar-title">Consultorio Carestia</span>
         </NavLink>
 
         <button 
