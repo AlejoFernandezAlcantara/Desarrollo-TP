@@ -1,0 +1,29 @@
+# Query: DentalCare Pro
+# ContextLines: 1
+
+5 resultados - Archivos de 5
+
+REACT-FULLSTACK\client\index.html:
+  7      <meta name="description" content="Sistema Integral de Gestión Odontológica - Turnos, Fichas Clínicas, Odontograma y Mutuales" />
+  8:     <title>Consultorio Carestia | Sistema Odontológico  | AlejoWachin</title>
+  9    </head>
+
+REACT-FULLSTACK\client\src\App.tsx:
+  156                <div>
+  157:                 <strong>Consultorio Carestia</strong> — Sistema Integral de Gestión Odontológica
+  158                </div>
+
+REACT-FULLSTACK\client\src\components\Navbar.tsx:
+  35            }} />
+  36:           <span className="navbar-title">Consultorio Carestia</span>
+  37          </NavLink>
+
+REACT-FULLSTACK\client\src\pages\auth\Login.tsx:
+  81            <p className="login-subtitle">
+  82:             Accede a tu panel clínico y administrativo de Consultorio Carestia
+  83            </p>
+
+REACT-FULLSTACK\client\src\pages\auth\Register.tsx:
+  116            <p className="register-subtitle">
+  117:             Regístrate en Consultorio Carestia para solicitar turnos, consultar tu historial y acceder a tus consultas
+  118            </p>

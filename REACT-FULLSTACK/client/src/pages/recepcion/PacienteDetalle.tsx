@@ -195,7 +195,7 @@ export const PacienteDetalle: React.FC = () => {
                     justifyContent: 'space-between', 
                     alignItems: 'center',
                     padding: '0.85rem 1rem',
-                    background: '#f8fafc',
+                    background: '#F9F1E4',
                     borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--border-light)'
                   }}
@@ -278,7 +278,7 @@ export const PacienteDetalle: React.FC = () => {
                     </div>
 
                     {r.observaciones && (
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem', background: '#f8fafc', padding: '0.4rem 0.6rem', borderRadius: '4px' }}>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.35rem', background: '#F9F1E4', padding: '0.4rem 0.6rem', borderRadius: '4px' }}>
                         {r.observaciones}
                       </div>
                     )}

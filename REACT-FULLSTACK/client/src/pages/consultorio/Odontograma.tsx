@@ -39,7 +39,7 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
         <div className="tooth-icon">
           <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path d="M7 4C7 2.5 8.5 2 12 2C15.5 2 17 2.5 17 4C17 6 18 10 18 14C18 18 16.5 22 14.5 22C12.5 22 12.5 17 12 17C11.5 17 11.5 22 9.5 22C7.5 22 6 18 6 14C6 10 7 6 7 4Z" 
-              fill={hasTreatment ? '#fde68a' : isSelected ? '#bae6fd' : '#ffffff'} 
+              fill={hasTreatment ? '#fde68a' : isSelected ? '#E3D3B0' : '#ffffff'} 
             />
           </svg>
         </div>
@@ -65,7 +65,7 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
 
         <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', fontWeight: 600 }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: '#f8fafc', border: '1.5px solid #cbd5e1' }} />
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: '#F9F1E4', border: '1.5px solid #cbd5e1' }} />
             <span>Sin tratamientos</span>
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -73,7 +73,7 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
             <span>Con Práctica Realizada</span>
           </span>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: '#e0f2fe', border: '1.5px solid var(--primary)' }} />
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: '#F3E7CC', border: '1.5px solid var(--primary)' }} />
             <span>Seleccionado</span>
           </span>
         </div>

@@ -69,7 +69,7 @@
 .modal-footer {
   padding: 1rem 1.5rem;
   border-top: 1px solid var(--border-light);
-  background-color: #f8fafc;
+  background-color: #F9F1E4;
   display: flex;
   justify-content: flex-end;
   gap: 0.75rem;

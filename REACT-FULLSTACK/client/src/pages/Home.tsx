@@ -74,11 +74,11 @@ export const Home: React.FC = () => {
           <div className="home-hero-actions">
             <Link to="/agenda/reservar" className="btn btn-hero-primary">
               <Calendar size={18} />
-              <span>Reservar Nuevo Turno (CUU 1)</span>
+              <span>Reservar Nuevo Turno </span>
             </Link>
             <Link to="/consultorio" className="btn btn-hero-secondary">
               <Activity size={18} />
-              <span>Atención en Consultorio (CUU 2)</span>
+              <span>Atención en Consultorio </span>
             </Link>
           </div>
         </div>
@@ -97,7 +97,7 @@ export const Home: React.FC = () => {
         </div>
 
         <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ backgroundColor: '#f0f9ff', color: '#0284c7' }}>
+          <div className="stat-icon-wrapper" style={{ backgroundColor: '#FBF5E8', color: '#B08028' }}>
             <Stethoscope size={26} />
           </div>
           <div>
@@ -138,10 +138,10 @@ export const Home: React.FC = () => {
       <div className="grid-2">
         {/* Card CUU 1: Agenda y Reservas */}
         <Link to="/agenda/reservar" className="quick-action-card">
-          <div className="action-icon-circle" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
+          <div className="action-icon-circle" style={{ backgroundColor: '#F3E7CC', color: '#B08028' }}>
             <Calendar size={24} />
           </div>
-          <h3 className="quick-action-title">CUU 1: Reservar Turno Odontológico</h3>
+          <h3 className="quick-action-title">: Reservar Turno Odontológico</h3>
           <p className="quick-action-desc">
             Flujo guiado para agendar turnos: filtra por odontólogo, consulta horarios disponibles, vincula al paciente y mutual, y confirma la reserva.
           </p>
@@ -153,10 +153,10 @@ export const Home: React.FC = () => {
 
         {/* Card CUU 2: Consultorio Clínico */}
         <Link to="/consultorio" className="quick-action-card">
-          <div className="action-icon-circle" style={{ backgroundColor: '#f0fdfa', color: '#0f766e' }}>
+          <div className="action-icon-circle" style={{ backgroundColor: '#FBF5E8', color: '#604828' }}>
             <Activity size={24} />
           </div>
-          <h3 className="quick-action-title">CUU 2: Atención Clínica & Odontograma</h3>
+          <h3 className="quick-action-title"> Atención Clínica & Odontograma</h3>
           <p className="quick-action-desc">
             Vista de pacientes citados para hoy. Permite al odontólogo ingresar a la consulta, registrar prácticas aplicadas en el odontograma y finalizar la sesión.
           </p>

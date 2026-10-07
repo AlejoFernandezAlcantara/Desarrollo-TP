@@ -171,7 +171,7 @@ export const ReservarTurno: React.FC = () => {
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
       <div className="page-header">
         <div>
-          <h1 className="page-header-title">CUU 1: Reservar Turno Odontológico</h1>
+          <h1 className="page-header-title">Reservar Turno Odontológico</h1>
           <p className="page-header-desc">
             Flujo guiado para asignar un turno disponible con un profesional odontólogo y confirmar la cita médica.
           </p>
@@ -429,7 +429,7 @@ export const ReservarTurno: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid-2" style={{ marginBottom: '1.5rem', background: '#f8fafc', padding: '1.25rem', borderRadius: 'var(--radius-md)' }}>
+          <div className="grid-2" style={{ marginBottom: '1.5rem', background: '#F9F1E4', padding: '1.25rem', borderRadius: 'var(--radius-md)' }}>
             <div>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
                 Profesional Odontólogo

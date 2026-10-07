@@ -37,7 +37,7 @@
   font-size: 1.15rem;
   font-weight: 800;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, #0284c7 0%, #0f766e 100%);
+  background: linear-gradient(135deg, #B08028 0%, #604828 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -168,9 +168,9 @@
 }
 
 .badge-odontologo {
-  background-color: #e0f2fe;
-  color: #0369a1;
-  border: 1px solid #bae6fd;
+  background-color: #F3E7CC;
+  color: #8F6620;
+  border: 1px solid #E3D3B0;
 }
 
 .badge-paciente {

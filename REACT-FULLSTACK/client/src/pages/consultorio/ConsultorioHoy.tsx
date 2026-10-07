@@ -101,7 +101,7 @@ export const ConsultorioHoy: React.FC = () => {
           <div style={{ marginTop: '1rem' }}>
             <Link to="/agenda/reservar" className="btn btn-primary">
               <Calendar size={16} />
-              <span>Agendar Turno (CUU 1)</span>
+              <span>Agendar Turno</span>
             </Link>
           </div>
         </div>
@@ -161,7 +161,7 @@ export const ConsultorioHoy: React.FC = () => {
                   </div>
 
                   {r.observaciones && (
-                    <div style={{ fontSize: '0.85rem', background: '#f8fafc', padding: '0.5rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
+                    <div style={{ fontSize: '0.85rem', background: '#F9F1E4', padding: '0.5rem', borderRadius: 'var(--radius-sm)', marginBottom: '1rem', color: 'var(--text-secondary)' }}>
                       <strong>Motivo:</strong> {r.observaciones}
                     </div>
                   )}
@@ -177,7 +177,7 @@ export const ConsultorioHoy: React.FC = () => {
                     className={`btn btn-sm ${isRealizada ? 'btn-secondary' : 'btn-primary'}`}
                   >
                     <Activity size={15} />
-                    <span>{isRealizada ? 'Ver Ficha / Odontograma' : 'Ingresar a Consulta (CUU 2)'}</span>
+                    <span>{isRealizada ? 'Ver Ficha / Odontograma' : 'Ingresar a Consulta'}</span>
                     <ArrowRight size={14} />
                   </Link>
                 </div>

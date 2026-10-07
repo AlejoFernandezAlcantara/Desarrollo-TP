@@ -35,9 +35,9 @@
 }
 
 .toast-info {
-  background-color: #f0f9ff;
-  color: #075985;
-  border-color: #bae6fd;
+  background-color: #FBF5E8;
+  color: #6F4E17;
+  border-color: #E3D3B0;
 }
 
 @keyframes slideInRight {

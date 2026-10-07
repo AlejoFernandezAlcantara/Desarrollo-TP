@@ -174,7 +174,7 @@ export const AtencionConsulta: React.FC = () => {
       </div>
 
       {/* Banner de Consulta y Paciente */}
-      <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(to right, #f8fafc, #f1f5f9)' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(to right, #F9F1E4, #f1f5f9)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -221,7 +221,7 @@ export const AtencionConsulta: React.FC = () => {
             <div className="card-header">
               <div>
                 <h3 className="card-title" style={{ fontSize: '1.15rem' }}>
-                  CUU 2: Registrar Práctica en la Consulta
+                  Registrar Práctica en la Consulta
                 </h3>
                 <p className="card-subtitle">
                   Aplica tratamientos y asócialos al odontograma del paciente
@@ -233,7 +233,7 @@ export const AtencionConsulta: React.FC = () => {
               <div className="form-group">
                 <label className="form-label">Pieza Dental Seleccionada</label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <div className="form-control" style={{ background: '#f8fafc', fontWeight: 700, color: selectedDienteNumero ? 'var(--primary)' : 'var(--text-muted)' }}>
+                  <div className="form-control" style={{ background: '#F9F1E4', fontWeight: 700, color: selectedDienteNumero ? 'var(--primary)' : 'var(--text-muted)' }}>
                     {selectedDienteNumero 
                       ? `Pieza N° ${selectedDienteNumero} (Seleccionada en odontograma)` 
                       : 'Práctica General (Sin diente específico)'}
@@ -335,7 +335,7 @@ export const AtencionConsulta: React.FC = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0.85rem',
-                    background: '#f8fafc',
+                    background: '#F9F1E4',
                     borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--border-light)'
                   }}

@@ -86,7 +86,7 @@ export const AgendaPage: React.FC = () => {
           </button>
           <Link to="/agenda/reservar" className="btn btn-primary">
             <Plus size={18} />
-            <span>Reservar Turno (CUU 1)</span>
+            <span>Reservar Turno </span>
           </Link>
         </div>
       </div>
@@ -134,7 +134,7 @@ export const AgendaPage: React.FC = () => {
           <div style={{ marginTop: '1rem' }}>
             <Link to="/agenda/reservar" className="btn btn-primary">
               <Plus size={16} />
-              <span>Iniciar Reserva (CUU 1)</span>
+              <span>Iniciar Reserva </span>
             </Link>
           </div>
         </div>
@@ -224,7 +224,7 @@ export const AgendaPage: React.FC = () => {
                             <Link
                               to={`/consultorio/atender/${r.id_reserva}`}
                               className="btn btn-primary btn-sm"
-                              title="Ingresar a la Consulta (CUU 2)"
+                              title="Ingresar a la Consulta "
                             >
                               <Activity size={14} />
                               <span>Atender</span>

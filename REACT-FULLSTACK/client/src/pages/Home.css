@@ -1,10 +1,10 @@
 .home-hero {
-  background: linear-gradient(135deg, #0284c7 0%, #0369a1 50%, #0f766e 100%);
+  background: linear-gradient(135deg, #B08028 0%, #8F6620 50%, #604828 100%);
   border-radius: var(--radius-lg);
   padding: 2.5rem;
   color: white;
   margin-bottom: 2rem;
-  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.3);
+  box-shadow: 0 10px 25px -5px rgba(176, 128, 40, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -67,7 +67,7 @@
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 .btn-hero-primary:hover {
-  background: #f8fafc;
+  background: #F9F1E4;
   transform: translateY(-2px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }

@@ -207,7 +207,7 @@ export const PacienteNuevo: React.FC = () => {
         <div className="card" style={{ marginBottom: '2rem' }}>
           <div className="card-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <Shield className="stat-icon-wrapper" size={20} style={{ color: '#0f766e', width: 32, height: 32, background: '#f0fdfa' }} />
+              <Shield className="stat-icon-wrapper" size={20} style={{ color: '#604828', width: 32, height: 32, background: '#FBF5E8' }} />
               <h3 className="card-title" style={{ fontSize: '1.1rem' }}>Obra Social & Cobertura</h3>
             </div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', fontWeight: 600 }}>
