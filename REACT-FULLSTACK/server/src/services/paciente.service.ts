@@ -30,7 +30,20 @@ export const pacienteService = {
       }
     });
   },
-
+  async getByEmail(email: string) {
+    return await prisma.usuario.findUnique({
+      where: { email },
+      include: {
+        paciente: true
+      }
+    });
+  },
+  /*async getByNroDocumento(nroDocumento: string) {
+    return await prisma.paciente.findUnique({
+      where: { nroDocumento },
+    });
+  },*/ /*SI SE QUIERE IMPLEMENTAR CAMBIAR EN SCHEMA.PRISMA PARA HACER EL CAMPO NRO DOCUMENTO COMO UNIQUE*/
+  
   async create(data: {
     nombre: string;
     apellido: string;
@@ -128,6 +141,7 @@ export const pacienteService = {
     nroDocumento?: string;
     tipoDoc?: TipoDocumento;
   }) {
+    
     return await prisma.$transaction(async (tx) => {
       if (data.nombre || data.apellido) {
         await tx.usuario.update({
