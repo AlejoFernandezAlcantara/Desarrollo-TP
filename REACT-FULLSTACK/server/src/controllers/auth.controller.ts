@@ -13,7 +13,6 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     }
 
     const { token, usuario } = await authService.login(email, password);
-
     // Enviar JWT en cookie HttpOnly segura
     res.cookie('token', token, {
       httpOnly: true,

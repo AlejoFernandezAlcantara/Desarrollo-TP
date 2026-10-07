@@ -126,7 +126,7 @@ async function seed() {
   }
 
   // 4. Actualizar contraseñas con texto plano 'hash_temporal_123' para que no fallen
-  const tempoUsers = await prisma.usuario.findMany({
+  /*const tempoUsers = await prisma.usuario.findMany({
     where: { password_hash: { startsWith: 'hash_temp' } }
   });
   for (const u of tempoUsers) {
@@ -136,6 +136,7 @@ async function seed() {
     });
     console.log(`ℹ️ Contraseña de ${u.email} actualizada a 'Odonto123!'`);
   }
+  */
 
   console.log('🎉 Base de datos sembrada y actualizada exitosamente.');
 }
