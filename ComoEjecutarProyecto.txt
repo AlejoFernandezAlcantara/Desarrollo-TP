@@ -4,6 +4,7 @@ Tener Docker Desktop instalado.
 Clonar el repositorio.
 Desde la carpeta Desarrollo-TP ejecutar: 
 docker compose up -d
+npm run dev en server (npm run build sino se buildeo)
 docker compose down (para finalizar)
  
 5. El backend queda disponible en: http://localhost:3001
