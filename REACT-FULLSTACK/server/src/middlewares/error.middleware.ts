@@ -1,0 +1,1 @@
+//Centralizar la gestion de errores en un solo lugar aqui
