@@ -24,6 +24,8 @@ export const login = async (email: string, password: string): Promise<{ token: s
     }
   });
 
+if (usuario) {
+}
   if (!usuario) {
     throw new Error('Credenciales inválidas');
   }
@@ -33,6 +35,7 @@ export const login = async (email: string, password: string): Promise<{ token: s
   }
 
   const passwordValido = await bcrypt.compare(password, usuario.password_hash);
+  
   if (!passwordValido) {
     throw new Error('Credenciales inválidas');
   }

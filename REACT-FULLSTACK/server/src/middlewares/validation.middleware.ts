@@ -12,7 +12,7 @@ export const validateRequest =
       const messages = error.errors
         .map((e: any) => `${e.path.join('.')}: ${e.message}`)
         .join('; ');
-      throw new AppError(400, messages);
+      next(new AppError(400, messages));
     }
   };
 

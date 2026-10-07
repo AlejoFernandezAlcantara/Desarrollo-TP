@@ -27,3 +27,5 @@ verificar bdd corre:
 mysql -u root -p consultorioBdd
 SHOW TABLES; (debe mostrar 14 tablas)
 SELECT COUNT(*) FROM usuario; (contar registros)
+
+SINO SE HIZO, EJECUTAR EN server/src/scripts/seed_auth.ts para cargar admin un odontologo y un pacinete de prueba
