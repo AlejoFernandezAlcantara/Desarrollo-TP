@@ -79,7 +79,7 @@ export const Login: React.FC = () => {
           </div>
           <h1 className="login-title">Iniciar Sesión</h1>
           <p className="login-subtitle">
-            Accede a tu panel clínico y administrativo de DentalCare Pro
+            Accede a tu panel clínico y administrativo de Consultorio Carestia
           </p>
         </div>
 

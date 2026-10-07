@@ -154,7 +154,7 @@ export const App: React.FC = () => {
           <footer className="app-footer">
             <div className="app-footer-inner">
               <div>
-                <strong>DentalCare Pro</strong> — Sistema Integral de Gestión Odontológica
+                <strong>Consultorio Carestia</strong> — Sistema Integral de Gestión Odontológica
               </div>
               <div>
                 Trabajo Práctico Desarrollo • React + TypeScript + Vite + Vanilla CSS

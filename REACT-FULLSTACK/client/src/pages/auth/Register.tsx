@@ -114,7 +114,7 @@ export const Register: React.FC = () => {
           </div>
           <h1 className="register-title">Crear Cuenta de Paciente</h1>
           <p className="register-subtitle">
-            Regístrate en DentalCare Pro para solicitar turnos, consultar tu historial y acceder a tus consultas
+            Regístrate en Consultorio Carestia para solicitar turnos, consultar tu historial y acceder a tus consultas
           </p>
         </div>
 
