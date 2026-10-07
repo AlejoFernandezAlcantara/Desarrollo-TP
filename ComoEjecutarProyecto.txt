@@ -18,3 +18,11 @@ abrir una nueva terminal: (en cd REACT-FULLSTACK/client)
 npm run dev (sino se hizo, ejecutar antes npm install)
 
 El frontend quedará disponible en: http://localhost:5173
+
+
+Verificar front corre : se ejecuta pagina
+verificar back corre : curl http://localhost:3001/ (rta eserada de que el servidor funciona correctamente)
+verificar bdd corre: 
+mysql -u root -p consultorioBdd
+SHOW TABLES; (debe mostrar 14 tablas)
+SELECT COUNT(*) FROM usuario; (contar registros)
