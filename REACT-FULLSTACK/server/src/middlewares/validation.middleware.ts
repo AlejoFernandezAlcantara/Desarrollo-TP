@@ -1,25 +1,38 @@
 import { Request, Response, NextFunction } from 'express';
-import { ZodSchema } from 'zod';
+import { z, ZodError} from 'zod';
 import { AppError } from './error.middleware';
 
 export const validateRequest =
-  (schema: ZodSchema) => (req: Request, res: Response, next: NextFunction) => {
+  (schema: z.ZodType) => (req: Request, res: Response, next: NextFunction) => {
     try {
-      const validated = schema.parse(req.body);
-      req.body = validated;
+      req.body = schema.parse(req.body);
       next();
-    } catch (error: any) {
-      const messages = error.errors
-        .map((e: any) => `${e.path.join('.')}: ${e.message}`)
-        .join('; ');
-      next(new AppError(400, messages));
-    }
-  };
+      } catch (error) {
+        if (error instanceof ZodError) {
+        const messages = error.issues
+          .map((e) => `${e.path.join('.')}: ${e.message}`)
+          .join('; ');
+        return next(new AppError(400, messages));
+      }
+      next(error);
+  }
+};
 
 
 
-  //ver de implementar esto de validarid (me lo paso luca lomba)
-  function validarId(nombre = 'id') {
+
+
+
+
+
+
+
+
+
+
+
+  //(me lo paso luca lomba)
+ /* function validarId(nombre = 'id') {
   return (req, res, next) => {
     const id = Number(req.params[nombre]);
 
@@ -34,4 +47,4 @@ export const validateRequest =
   };
 }
 
-module.exports = { validarId };
+module.exports = { validarId };*/

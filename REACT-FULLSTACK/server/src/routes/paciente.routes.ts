@@ -14,7 +14,7 @@ const router = Router();
 
 router.get('/', getPacientes);
 router.get('/:id', getPacienteById);
-router.post('/', /*validateRequest(CreatePacienteSchema)*/createPaciente);
+router.post('/', validateRequest(CreatePacienteSchema), createPaciente);
 router.put('/:id', updatePaciente);
 router.delete('/:id', deletePaciente);
 
