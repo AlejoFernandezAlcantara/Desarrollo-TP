@@ -16,7 +16,7 @@
   transform: translateX(-50%);
   width: 580px;
   height: 580px;
-  background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, rgba(176, 128, 40, 0.07) 50%, transparent 70%);
+  background: radial-gradient(circle, rgba(176, 128, 40, 0.12) 0%, rgba(96, 72, 40, 0.07) 50%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
   z-index: 0;
@@ -57,18 +57,18 @@
   width: 56px;
   height: 56px;
   border-radius: 16px;
-  background: linear-gradient(135deg, #dcfce7 0%, #F3E7CC 100%);
-  color: #059669;
+  background: linear-gradient(135deg, #F3E7CC 0%, #E3D3B0 100%);
+  color: #B08028;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1rem;
-  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.18);
+  box-shadow: 0 4px 12px rgba(176, 128, 40, 0.18);
 }
 
 [data-theme="dark"] .register-icon-badge {
-  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(176, 128, 40, 0.25) 100%);
-  color: #34d399;
+  background: linear-gradient(135deg, rgba(176, 128, 40, 0.25) 0%, rgba(200, 160, 88, 0.25) 100%);
+  color: #C8A058;
 }
 
 .register-title {
@@ -222,7 +222,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: white;
-  background: linear-gradient(135deg, #059669 0%, #B08028 100%);
+  background: linear-gradient(135deg, #B08028 0%, #8F6620 100%);
   border: none;
   border-radius: var(--radius-md);
   cursor: pointer;
@@ -230,14 +230,14 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  box-shadow: 0 4px 12px rgba(5, 150, 105, 0.25);
+  box-shadow: 0 4px 12px rgba(176, 128, 40, 0.25);
   transition: var(--transition);
 }
 
 .register-submit-btn:hover:not(:disabled) {
-  background: linear-gradient(135deg, #047857 0%, #8F6620 100%);
+  background: linear-gradient(135deg, #8F6620 0%, #6F4E17 100%);
   transform: translateY(-1.5px);
-  box-shadow: 0 6px 18px rgba(5, 150, 105, 0.35);
+  box-shadow: 0 6px 18px rgba(176, 128, 40, 0.35);
 }
 
 .register-submit-btn:disabled {
