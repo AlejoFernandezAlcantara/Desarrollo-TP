@@ -1,0 +1,43 @@
+LISTADO DE COSAS POR HACER- DEJAR ABAJO DEL TODO POR ESCRITO TODO LO REALIZADO SIN BORRAR NADA
+
+PRIORIDAD DE ARRIBA A ABAJO ( no hay nada de front)
+
+
+- SUGERIDO HACER UN MIDDLEWARE PARA MANEJO DE ERRORES CENTRALIZADO (ASI NO SE HACE TRY/CATCH POR TODO EL CODIGO)
+en ----->// server/src/middlewares/error.middleware.ts
+esta hecho solo el de pacientes  incluye routes, controllers y services (verificar)
+- AGREGAR VALIDACIONES  A INPUTS (SE SUGIERE CON ZOD) (emails telefonos dni cuit tamaño) (para formularios react hook form)
+/---->/ server/src/middlewares/validators.middleware.ts
+server/src/utils/validators.ts  aca va el schema validation
+-HACER UN BUEN LOGGING
+
+YA HECHO LO DE ARRIBA
+
+
+- IMPLEMENTAR HELMET PARA SEGURIDAD -VARIABLES DE ENTORNO Y RATELIMIT - CORS (esta hardcodeado, mas restrictivo) - JWT no tiene validacion de expiracion
+-TESTING (con vitest)
+-DOCUMENTAR APIS (swagger)
+-RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADE DEL SERVIDOR
+-VALIDAR FORMULARIOS LADO DEL CLIENTE
+
+-agregar amanejo de loading states y notificaciones(toast)
+
+
+stack: MERN
+Backend : Node.js + Express + Prisma
+Front : React + Typescript + vite
+Autenticacion : JWT + bcryptjs
+docker
+
+
+biri biri para agregar si sobra tiempo:
+cache (redis)
+paginacion
+componentes de loading
+animaciones a la UX/UI
+configurar CI/CD
+linting/prettier
+pre-commit hooks
+versionamieto automatico
+
+
