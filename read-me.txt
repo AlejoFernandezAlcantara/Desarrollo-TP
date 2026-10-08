@@ -14,7 +14,8 @@ server/src/utils/validators.ts  aca va el schema validation
 YA HECHO LO DE ARRIBA
 
 
-- IMPLEMENTAR HELMET PARA SEGURIDAD -VARIABLES DE ENTORNO Y RATELIMIT - CORS (esta hardcodeado, mas restrictivo) - JWT no tiene validacion de expiracion
+- IMPLEMENTAR HELMET PARA SEGURIDAD -VARIABLES DE ENTORNO Y RATELIMIT - CORS (esta hardcodeado, mas restrictivo) - JWT no tiene validacion de expiracion 
+  : implementados en server/src/app.ts y server/src/middlewares/rateLimit.middleware.ts (límite general en /api, límite estricto en login y registro)
 -TESTING (con vitest)
 -DOCUMENTAR APIS (swagger)
 -RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADE DEL SERVIDOR

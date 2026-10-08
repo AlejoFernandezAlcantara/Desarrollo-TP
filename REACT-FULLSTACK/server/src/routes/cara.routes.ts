@@ -10,23 +10,23 @@ import {
   getCarasByDiente
 } from '../controllers/cara.controller';
 import { authenticateToken, authorizeRoles } from '../middlewares/auth.middleware';
-import { validateRequest } from '../middlewares/validation.middleware';
-import { CreateCaraSchema, UpdateCaraSchema } from '../utils/validators';
+import { validateParams, validateRequest } from '../middlewares/validation.middleware';
+import { CreateCaraSchema, UpdateCaraSchema, DienteCaraParamsSchema, DienteParamsSchema, IdParamsSchema } from '../utils/validators';
 
 const router = Router();
 
 // Públicas (lectura)
 router.get('/', getCaras);
-router.get('/:id', getCaraById);
+router.get('/:id', validateParams(IdParamsSchema), getCaraById);
 
 // Protegidas: catálogo administrativo
 router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(CreateCaraSchema), createCara);
-router.put('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(UpdateCaraSchema), updateCara);
-router.delete('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), deleteCara);
+router.put('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(IdParamsSchema), validateRequest(UpdateCaraSchema), updateCara);
+router.delete('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(IdParamsSchema), deleteCara);
 
 // Relación Diente - Cara (protegidas, administrativas)
-router.get('/diente/:dienteId', authenticateToken, getCarasByDiente);
-router.post('/diente/:dienteId/:caraId', authenticateToken, authorizeRoles('ADMINISTRADOR'), linkCaraToDiente);
-router.delete('/diente/:dienteId/:caraId', authenticateToken, authorizeRoles('ADMINISTRADOR'), unlinkCaraFromDiente);
+router.get('/diente/:dienteId', authenticateToken, validateParams(DienteParamsSchema), getCarasByDiente);
+router.post('/diente/:dienteId/:caraId', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(DienteCaraParamsSchema), linkCaraToDiente);
+router.delete('/diente/:dienteId/:caraId', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(DienteCaraParamsSchema), unlinkCaraFromDiente);
 
 export default router;

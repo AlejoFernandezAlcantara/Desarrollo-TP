@@ -4,9 +4,11 @@ import { z } from 'zod';
 
 export const EmailSchema = z.string().trim().email('Email inválido').max(100);
 
+// bcrypt solo usa los primeros 72 bytes, por eso se limita el largo
 export const PasswordSchema = z
   .string()
-  .min(6, 'La contraseña debe tener al menos 6 caracteres');
+  .min(6, 'La contraseña debe tener al menos 6 caracteres')
+  .max(72, 'La contraseña no puede superar los 72 caracteres');
 
 export const TipoDocumentoSchema = z.enum(['DNI', 'Pasaporte']);
 
@@ -164,4 +166,66 @@ export const CreateDetalleSchema = z.object({
   diente_id: z.number().int().positive().optional(),
   odontograma_id: z.number().int().positive().optional(),
   observaciones: z.string().trim().optional(),
+});
+
+
+// ─── Usuario (gestión de cuentas, sólo administrador) ─────────────────────
+
+export const CreateUsuarioSchema = z.object({
+  nombre: z.string().trim().min(1, 'Nombre requerido').max(50),
+  apellido: z.string().trim().min(1, 'Apellido requerido').max(50),
+  email: EmailSchema,
+  password: PasswordSchema,
+});
+
+// Los campos que no figuran acá (id, activo, password_hash...) se descartan
+export const UpdateUsuarioSchema = CreateUsuarioSchema.partial();
+
+// ─── Parámetros de URL ────────────────────────────────────────────────────
+
+// Los params llegan como texto: se exige un entero positivo que entre en un INT de MySQL
+const IdTextoSchema = z
+  .string()
+  .refine(
+    (v) => /^\d{1,10}$/.test(v) && Number(v) >= 1 && Number(v) <= 2147483647,
+    'debe ser un número entero positivo'
+  );
+
+export const IdParamsSchema = z.object({ id: IdTextoSchema });
+export const CodigoParamsSchema = z.object({ codigo: IdTextoSchema });
+export const MutualParamsSchema = z.object({ id: IdTextoSchema, mutualId: IdTextoSchema });
+export const DienteParamsSchema = z.object({ dienteId: IdTextoSchema });
+export const DienteCaraParamsSchema = z.object({ dienteId: IdTextoSchema, caraId: IdTextoSchema });
+
+// ─── Filtros de query ─────────────────────────────────────────────────────
+
+// El front puede mandar el filtro vacío (?estado=): se trata como "sin filtro", igual que hacen los controllers
+const filtro = <T extends z.ZodType>(schema: T) =>
+  z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
+
+export const EstadoReservaSchema = z.enum(['pendiente', 'confirmada', 'cancelada', 'realizada']);
+
+export const ReservaQuerySchema = z.object({
+  pacienteId: filtro(IdTextoSchema),
+  odontologoId: filtro(IdTextoSchema),
+  estado: filtro(EstadoReservaSchema),
+});
+
+export const TurnoQuerySchema = z.object({
+  odontologoId: filtro(IdTextoSchema),
+  estado: filtro(EstadoTurnoSchema),
+});
+
+export const TurnoDisponiblesQuerySchema = z.object({
+  odontologoId: filtro(IdTextoSchema),
+  fecha: filtro(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'el formato debe ser YYYY-MM-DD')),
+});
+
+export const DetalleQuerySchema = z.object({
+  reservaId: filtro(IdTextoSchema),
+  odontogramaId: filtro(IdTextoSchema),
+});
+
+export const OdontologoQuerySchema = z.object({
+  mutualId: filtro(IdTextoSchema),
 });

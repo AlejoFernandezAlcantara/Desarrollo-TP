@@ -6,16 +6,24 @@ import routes from './routes';
 import { AppError } from './middlewares/error.middleware';
 import { errorHandler } from './middlewares/error.middleware';
 import { env } from './config/env';
+import helmet from 'helmet';
+import { apiLimiter, authLimiter } from './middlewares/rateLimit.middleware';
 
 const app: Application = express();
 
 // Middlewares
+app.use(helmet());
 app.use(cors({
   origin: env.ALLOWED_ORIGINS,
   credentials: true
 }));
 app.use(cookieParser());
 app.use(express.json());
+
+// Rate limit: general para toda la API y estricto para login/registro
+app.use('/api', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
 
 // Rutas principales
 app.use('/api', routes);
