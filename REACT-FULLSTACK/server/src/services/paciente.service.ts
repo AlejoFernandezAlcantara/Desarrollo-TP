@@ -1,6 +1,8 @@
 import { prisma } from '../lib/prisma';
 import { TipoDocumento } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { logger } from '../utils/logger';
+import { AppError } from '../middlewares/error.middleware';
 
 export const pacienteService = {
   async getAll() {
@@ -16,8 +18,8 @@ export const pacienteService = {
     });
   },
 
-  async getById(id: number) {
-    return await prisma.paciente.findUnique({
+  async getById(id: number) { //puede devolver null
+     return await prisma.paciente.findUnique({
       where: { id },
       include: {
         usuario: true,
@@ -29,7 +31,19 @@ export const pacienteService = {
         odontograma: true
       }
     });
+
   },
+  async getByIdOrThrow(id: number) { //no puede devolver null, lanza error si no encuentra
+    const paciente = await this.getById(id);
+ 
+    if (!paciente) {
+      throw new AppError(404, 'Paciente no encontrado');
+    }
+
+    return paciente;
+  },
+
+
   async getByEmail(email: string) {
     return await prisma.usuario.findUnique({
       where: { email },
@@ -38,12 +52,7 @@ export const pacienteService = {
       }
     });
   },
-  /*async getByNroDocumento(nroDocumento: string) {
-    return await prisma.paciente.findUnique({
-      where: { nroDocumento },
-    });
-  },*/ /*SI SE QUIERE IMPLEMENTAR CAMBIAR EN SCHEMA.PRISMA PARA HACER EL CAMPO NRO DOCUMENTO COMO UNIQUE*/
-  
+ 
   async create(data: {
     nombre: string;
     apellido: string;
@@ -61,7 +70,7 @@ export const pacienteService = {
   }) {
     // Validar rango de cubre (0 a 100) si se envía
     if (data.cubre !== undefined && (data.cubre < 0 || data.cubre > 100)) {
-      throw new Error('El porcentaje de cobertura debe estar entre 0 y 100');
+      throw new AppError(400, 'El porcentaje de cobertura debe estar entre 0 y 100');
     }
 
     let hashToStore = data.password_hash;
@@ -70,8 +79,13 @@ export const pacienteService = {
     }
 
     if (!hashToStore) {
-      throw new Error('Debes proporcionar una contraseña (password) para el paciente');
+      throw new AppError(400, 'Debes proporcionar una contraseña (password) para el paciente');
     }
+    const pacienteExistente = await this.getByEmail(data.email);
+        if (pacienteExistente) {
+          logger.warn('Email ya registrado', { email: data.email });
+           throw new AppError(400, 'El email ya está registrado');
+        }
 
     return await prisma.$transaction(async (tx) => {
       // 1. Crear usuario base
@@ -141,6 +155,12 @@ export const pacienteService = {
     nroDocumento?: string;
     tipoDoc?: TipoDocumento;
   }) {
+
+    const pacienteExistente = await this.getById( id );
+      if (!pacienteExistente) {
+      logger.warn('Paciente no encontrado para actualizar', { id });
+      throw new AppError(404, 'Paciente no encontrado');
+    }
     
     return await prisma.$transaction(async (tx) => {
       if (data.nombre || data.apellido) {
@@ -152,7 +172,7 @@ export const pacienteService = {
           }
         });
       }
-
+      
       return await tx.paciente.update({
         where: { id },
         data: {
@@ -177,6 +197,15 @@ export const pacienteService = {
   async delete(id: number) {
     return await prisma.$transaction(async (tx) => {
       // Elimina el usuario en cascada, lo cual borra el paciente, paciente_mutual y odontograma
+      const paciente = await tx.paciente.findUnique({
+        where: { id }
+      });
+
+      if (!paciente) {
+        logger.warn('Paciente no encontrado para eliminar', { id });
+        throw new AppError(404, 'Paciente no encontrado. No se puede eliminar');
+      }
+
       return await tx.usuario.delete({
         where: { id }
       });
@@ -185,7 +214,7 @@ export const pacienteService = {
 
   async addMutual(paciente_id: number, data: { mutual_id: number; nroAfiliado: string; cubre?: number }) {
     if (data.cubre !== undefined && (data.cubre < 0 || data.cubre > 100)) {
-      throw new Error('El porcentaje de cobertura debe estar entre 0 y 100');
+      throw new AppError(400, 'El porcentaje de cobertura debe estar entre 0 y 100');
     }
 
     return await prisma.pacienteMutual.upsert({

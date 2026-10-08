@@ -1,4 +1,5 @@
 import { prisma } from '../lib/prisma';
+import { AppError } from '../middlewares/error.middleware';
 
 export const mutualService = {
   async getAll() {
@@ -10,6 +11,15 @@ export const mutualService = {
       where: { id }
     });
   },
+  async getByIdOrThrow(id: number) { //no puede devolver null, lanza error si no encuentra
+      const mutual = await this.getById(id);
+   
+      if (!mutual) {
+        throw new AppError(404, 'Mutual no encontrado');
+      }
+  
+      return mutual;
+    },
 
   async create(data: { cuit: string; nombre: string }) {
     return await prisma.mutual.create({

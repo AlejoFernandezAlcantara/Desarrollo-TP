@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { asyncHandler, AppError } from '../middlewares/error.middleware';
 import { pacienteService } from '../services/paciente.service';
 import { logger } from '../utils/logger';
+import { mutualService } from '../services/mutual.service';
 
 
 /*POST /api/pacientes*/
@@ -9,26 +10,11 @@ export const createPaciente = asyncHandler(async (req: Request, res: Response) =
   const { email, nroDocumento } = req.body;
 
   logger.info('Intentando crear paciente', { email });
-  if (!email || !nroDocumento) {
-  throw new AppError(400, 'Email y nroDocumento son requeridos');
+    if (!email || !nroDocumento) {
+      throw new AppError(400, 'Email y nroDocumento son requeridos');
   }
-  // Verificar que no exista otro con el mismo email (compara con email)
-  const pacienteExistente = await pacienteService.getByEmail(email);
-  if (pacienteExistente) {
-    logger.warn('Email ya registrado', { email });
-    throw new AppError(400, 'El email ya está registrado');
-  }
-
-  // Verificar que no exista otro con el mismo DNI
-  /*const dniExistente = await pacienteService.findByDNI(nroDocumento);
-  if (dniExistente) {
-    logger.warn('DNI ya registrado', { nroDocumento });
-    throw new AppError(400, 'El DNI ya está registrado');
-  }*/ /*Para implementar (si se quiere) cambiar en schema.prisma para hacer el campo nroDocumento como unique)*/
-
-  
+   
   const paciente = await pacienteService.create(req.body);
-
   logger.info('Paciente creado exitosamente', { pacienteId: paciente.id, email });
 
   res.status(201).json({
@@ -43,7 +29,6 @@ export const getPacientes = asyncHandler(async (req: Request, res: Response) => 
   logger.info('Obteniendo lista de pacientes');
 
   const pacientes = await pacienteService.getAll();
-
   logger.debug('Pacientes obtenidos', { cantidad: pacientes.length });
 
   res.json({
@@ -64,13 +49,7 @@ export const getPacienteById = asyncHandler(async (req: Request, res: Response) 
     throw new AppError(400, 'El ID ingresado es inválido');
   }
 
-  const paciente = await pacienteService.getById(pacienteId);
-
-  if (!paciente) {
-    logger.warn('Paciente no encontrado', { pacienteId });
-    throw new AppError(404, 'Paciente no encontrado');
-  }
-
+  const paciente = await pacienteService.getByIdOrThrow(pacienteId);
   logger.debug('Paciente encontrado', { pacienteId });
 
   res.json({
@@ -89,25 +68,7 @@ export const updatePaciente = asyncHandler(async (req: Request, res: Response) =
   if (isNaN(pacienteId)) {
     throw new AppError(400, 'ID inválido');
   }
-
-  // Verificar que el paciente existe
-  const pacienteExistente = await pacienteService.getById(pacienteId);
-  if (!pacienteExistente) {
-    logger.warn('Paciente no encontrado para actualizar', { pacienteId });
-    throw new AppError(404, 'Paciente no encontrado');
-  }
-
-  // Verificar que no esté en uso el email ingresado si es diferente al actual (ver si se permite cambiar)
-  if (req.body.email && req.body.email !== pacienteExistente.usuario?.email) {
-    const emailEnUso = await pacienteService.getByEmail(req.body.email);
-    if (emailEnUso) {
-      logger.warn('Email ya en uso', { email: req.body.email });
-      throw new AppError(400, 'El email ya está en uso');
-    }
-  }
-
   const pacienteActualizado = await pacienteService.update(pacienteId, req.body);
-
   logger.info('Paciente actualizado exitosamente', { pacienteId });
 
   res.json({
@@ -128,15 +89,7 @@ export const deletePaciente = asyncHandler(async (req: Request, res: Response) =
     throw new AppError(400, 'El ID ingresado es inválido');
   }
 
-  
-  const paciente = await pacienteService.getById(pacienteId);
-  if (!paciente) {
-    logger.warn('Paciente no encontrado para eliminar', { pacienteId });
-    throw new AppError(404, 'Paciente no encontrado. No se puede eliminar');
-  }
-
   await pacienteService.delete(pacienteId);
-
   logger.info('Paciente eliminado exitosamente', { pacienteId });
 
   res.status(204).json();
@@ -154,18 +107,10 @@ export const addMutualToPaciente = asyncHandler(async (req: Request, res: Respon
   if (isNaN(pacienteId) || isNaN(mutId)) {
     throw new AppError(400, 'Los IDs ingresados son inválidos');
   }
-  const mutualExistente = await pacienteService.getById(mutId);
-  if (!mutualExistente) {
-    throw new AppError(404, 'Mutual no encontrada');
-  }
-
-  const paciente = await pacienteService.getById(pacienteId);
-  if (!paciente) {
-    throw new AppError(404, 'Paciente no encontrado');
-  }
-
+  await mutualService.getByIdOrThrow(mutId);
+  await pacienteService.getByIdOrThrow(pacienteId);
+  
   const resultado = await pacienteService.addMutual(pacienteId,{ mutual_id:mutId, nroAfiliado: nroAfiliado, cubre });
-
   logger.info('Mutual asociado exitosamente', { pacienteId, mutualId: mutId });
 
   res.json({
@@ -188,7 +133,6 @@ export const removeMutualFromPaciente = asyncHandler(async (req: Request, res: R
   }
 
   await pacienteService.removeMutual(pacienteId, mutId);
-
   logger.info('Mutual desasociado exitosamente del paciente ', { pacienteId, mutualId: mutId });
 
   res.status(204).json();
