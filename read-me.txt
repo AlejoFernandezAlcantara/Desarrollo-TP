@@ -4,7 +4,7 @@ PRIORIDAD DE ARRIBA A ABAJO ( no hay nada de front)
 
 
 - SUGERIDO HACER UN MIDDLEWARE PARA MANEJO DE ERRORES CENTRALIZADO (ASI NO SE HACE TRY/CATCH POR TODO EL CODIGO)
-en ----->// server/src/middlewares/error.middleware.ts
+en ----->// server/src/middlewares/error.  middleware.ts
 esta hecho solo el de pacientes  incluye routes, controllers y services (verificar)
 - AGREGAR VALIDACIONES  A INPUTS (SE SUGIERE CON ZOD) (emails telefonos dni cuit tamaño) (para formularios react hook form)
 /---->/ server/src/middlewares/validators.middleware.ts
@@ -28,7 +28,7 @@ Backend : Node.js + Express + Prisma
 Front : React + Typescript + vite
 Autenticacion : JWT + bcryptjs
 docker
-
+zod
 
 biri biri para agregar si sobra tiempo:
 cache (redis)
