@@ -1,10 +1,39 @@
 import { prisma } from '../lib/prisma';
+import { logger } from '../utils/logger';
+import { AppError } from '../middlewares/error.middleware';
+import { odontologoService } from './odontologo.service';
+
+// Estados que maneja el sistema para un turno (ver reserva.service: 'libre' y 'ocupado')
+const ESTADOS_TURNO = ['libre', 'ocupado'];
+
+const assertId = (id: number) => {
+  if (isNaN(id)) {
+    throw new AppError(400, 'El ID ingresado es inválido');
+  }
+};
+
+const parseFecha = (valor: string | Date) => {
+  const fecha = new Date(valor);
+  if (isNaN(fecha.getTime())) {
+    throw new AppError(400, 'La fecha ingresada es inválida');
+  }
+  return fecha;
+};
+
+const assertEstado = (estado: string) => {
+  if (!ESTADOS_TURNO.includes(estado)) {
+    throw new AppError(400, `Estado de turno inválido. Valores permitidos: ${ESTADOS_TURNO.join(', ')}`);
+  }
+};
 
 export const turnoService = {
   async getAll(odontologo_id?: number, estado?: string) {
+    if (odontologo_id !== undefined) assertId(odontologo_id);
+    if (estado !== undefined) assertEstado(estado);
+
     return await prisma.turno.findMany({
       where: {
-        ...(odontologo_id && { odontologo_id }),
+        ...(odontologo_id !== undefined && { odontologo_id }),
         ...(estado && { estado })
       },
       include: {
@@ -22,14 +51,20 @@ export const turnoService = {
   },
 
   async getDisponibles(odontologo_id?: number, fechaStr?: string) {
+    if (odontologo_id !== undefined) assertId(odontologo_id);
+
     const now = new Date();
     let gteDate = now;
     let lteDate: Date | undefined;
 
     if (fechaStr) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(fechaStr)) {
+        throw new AppError(400, 'El formato de fecha debe ser YYYY-MM-DD');
+      }
+
       // Si se pasa una fecha (YYYY-MM-DD), buscar turnos dentro de ese día
-      const startOfDay = new Date(`${fechaStr}T00:00:00.000Z`);
-      const endOfDay = new Date(`${fechaStr}T23:59:59.999Z`);
+      const startOfDay = parseFecha(`${fechaStr}T00:00:00.000Z`);
+      const endOfDay = parseFecha(`${fechaStr}T23:59:59.999Z`);
       gteDate = startOfDay > now ? startOfDay : now;
       lteDate = endOfDay;
     }
@@ -41,7 +76,7 @@ export const turnoService = {
           gte: gteDate,
           ...(lteDate && { lte: lteDate })
         },
-        ...(odontologo_id && { odontologo_id })
+        ...(odontologo_id !== undefined && { odontologo_id })
       },
       include: {
         odontologo: {
@@ -69,7 +104,7 @@ export const turnoService = {
     }));
   },
 
-  async getById(codigo: number) {
+  async getById(codigo: number) { // puede devolver null
     return await prisma.turno.findUnique({
       where: { codigo },
       include: {
@@ -83,18 +118,43 @@ export const turnoService = {
     });
   },
 
+  async getByIdOrThrow(codigo: number) { // no puede devolver null, lanza error si no encuentra
+    assertId(codigo);
+
+    const turno = await this.getById(codigo);
+
+    if (!turno) {
+      throw new AppError(404, 'Turno no encontrado');
+    }
+
+    return turno;
+  },
+
   async create(data: {
     fecha_hora_inicio: string | Date;
     duracion: number;
     odontologo_id: number;
     estado?: string;
   }) {
+    assertId(data.odontologo_id);
+
+    const fechaInicio = parseFecha(data.fecha_hora_inicio);
+
+    if (data.duracion === undefined || data.duracion <= 0) {
+      throw new AppError(400, 'La duración debe ser mayor a 0');
+    }
+
+    const estado = data.estado ?? 'libre';
+    assertEstado(estado);
+
+    await odontologoService.getByIdOrThrow(data.odontologo_id);
+
     return await prisma.turno.create({
       data: {
-        fecha_hora_inicio: new Date(data.fecha_hora_inicio),
+        fecha_hora_inicio: fechaInicio,
         duracion: data.duracion,
         odontologo_id: data.odontologo_id,
-        estado: data.estado || 'libre'
+        estado
       },
       include: {
         odontologo: {
@@ -112,18 +172,45 @@ export const turnoService = {
     estado?: string;
     odontologo_id?: number;
   }) {
+    const turno = await this.getByIdOrThrow(codigo);
+
+    // Un turno asociado a una reserva no se modifica directamente
+    if (turno.reserva_id !== null) {
+      throw new AppError(409, 'No se puede modificar un turno que tiene una reserva asociada');
+    }
+
+    if (data.odontologo_id !== undefined) {
+      assertId(data.odontologo_id);
+      await odontologoService.getByIdOrThrow(data.odontologo_id);
+    }
+
+    if (data.duracion !== undefined && data.duracion <= 0) {
+      throw new AppError(400, 'La duración debe ser mayor a 0');
+    }
+
+    if (data.estado !== undefined) {
+      assertEstado(data.estado);
+    }
+
     return await prisma.turno.update({
       where: { codigo },
       data: {
-        ...(data.fecha_hora_inicio && { fecha_hora_inicio: new Date(data.fecha_hora_inicio) }),
-        ...(data.duracion && { duracion: data.duracion }),
-        ...(data.estado && { estado: data.estado }),
-        ...(data.odontologo_id && { odontologo_id: data.odontologo_id })
+        ...(data.fecha_hora_inicio !== undefined && { fecha_hora_inicio: parseFecha(data.fecha_hora_inicio) }),
+        ...(data.duracion !== undefined && { duracion: data.duracion }),
+        ...(data.estado !== undefined && { estado: data.estado }),
+        ...(data.odontologo_id !== undefined && { odontologo_id: data.odontologo_id })
       }
     });
   },
 
   async delete(codigo: number) {
+    const turno = await this.getByIdOrThrow(codigo);
+
+    if (turno.reserva_id !== null) {
+      logger.warn('Turno con reserva asociada, no se puede eliminar', { codigo });
+      throw new AppError(409, 'No se puede eliminar un turno que tiene una reserva asociada');
+    }
+
     return await prisma.turno.delete({
       where: { codigo }
     });

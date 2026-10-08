@@ -1,96 +1,107 @@
 import { Request, Response } from 'express';
+import { asyncHandler } from '../middlewares/error.middleware';
 import { caraService } from '../services/cara.service';
+import { logger } from '../utils/logger';
 
-export const getCaras = async (req: Request, res: Response) => {
-  try {
-    const caras = await caraService.getAll();
-    res.json(caras);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener las caras' });
-  }
-};
+/* GET /api/caras */
+export const getCaras = asyncHandler(async (req: Request, res: Response) => {
+  const caras = await caraService.getAll();
+  logger.debug('Caras obtenidas', { cantidad: caras.length });
 
-export const getCaraById = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const cara = await caraService.getById(id);
+  res.json({
+    success: true,
+    data: caras,
+    total: caras.length,
+  });
+});
 
-    if (!cara) {
-      res.status(404).json({ error: 'Cara no encontrada' });
-      return;
-    }
+/* GET /api/caras/:id */
+export const getCaraById = asyncHandler(async (req: Request, res: Response) => {
+  const caraId = parseInt(req.params.id as string);
 
-    res.json(cara);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener la cara' });
-  }
-};
+  const cara = await caraService.getByIdOrThrow(caraId);
+  logger.debug('Cara encontrada', { caraId });
 
-export const createCara = async (req: Request, res: Response) => {
-  try {
-    const nuevaCara = await caraService.create(req.body);
-    res.status(201).json(nuevaCara);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al crear la cara. Verifica los datos enviados.' });
-  }
-};
+  res.json({
+    success: true,
+    data: cara,
+  });
+});
 
-export const updateCara = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const caraActualizada = await caraService.update(id, req.body);
-    res.json(caraActualizada);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al actualizar la cara.' });
-  }
-};
+/* POST /api/caras */
+export const createCara = asyncHandler(async (req: Request, res: Response) => {
+  logger.info('Intentando crear cara', { nombre: req.body.nombre });
 
-export const deleteCara = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    await caraService.delete(id);
-    res.status(204).send();
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al eliminar la cara.' });
-  }
-};
+  const nuevaCara = await caraService.create(req.body);
+  logger.info('Cara creada exitosamente', { caraId: nuevaCara.id, nombre: req.body.nombre });
 
-export const linkCaraToDiente = async (req: Request, res: Response) => {
-  try {
-    const dienteId = parseInt(req.params.dienteId as string);
-    const caraId = parseInt(req.params.caraId as string);
-    const vinculo = await caraService.linkToDiente(dienteId, caraId);
-    res.status(201).json(vinculo);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al vincular cara con diente.' });
-  }
-};
+  res.status(201).json({
+    success: true,
+    message: 'Cara registrada exitosamente',
+    data: nuevaCara,
+  });
+});
 
-export const unlinkCaraFromDiente = async (req: Request, res: Response) => {
-  try {
-    const dienteId = parseInt(req.params.dienteId as string);
-    const caraId = parseInt(req.params.caraId as string);
-    await caraService.unlinkFromDiente(dienteId, caraId);
-    res.status(204).send();
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al desvincular cara de diente.' });
-  }
-};
+/* PUT /api/caras/:id */
+export const updateCara = asyncHandler(async (req: Request, res: Response) => {
+  const caraId = parseInt(req.params.id as string);
 
-export const getCarasByDiente = async (req: Request, res: Response) => {
-  try {
-    const dienteId = parseInt(req.params.dienteId as string);
-    const caras = await caraService.getCarasByDiente(dienteId);
-    res.json(caras);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener las caras del diente.' });
-  }
-};
+  const caraActualizada = await caraService.update(caraId, req.body);
+  logger.info('Cara actualizada exitosamente', { caraId, cambios: Object.keys(req.body) });
+
+  res.json({
+    success: true,
+    message: 'Cara actualizada exitosamente',
+    data: caraActualizada,
+  });
+});
+
+/* DELETE /api/caras/:id */
+export const deleteCara = asyncHandler(async (req: Request, res: Response) => {
+  const caraId = parseInt(req.params.id as string);
+
+  await caraService.delete(caraId);
+  logger.info('Cara eliminada exitosamente', { caraId });
+
+  res.status(204).send();
+});
+
+/* POST /api/caras/diente/:dienteId/:caraId */
+export const linkCaraToDiente = asyncHandler(async (req: Request, res: Response) => {
+  const dienteId = parseInt(req.params.dienteId as string);
+  const caraId = parseInt(req.params.caraId as string);
+
+  const vinculo = await caraService.linkToDiente(dienteId, caraId);
+  logger.info('Cara vinculada a diente', { dienteId, caraId });
+
+  res.status(201).json({
+    success: true,
+    message: 'Cara vinculada al diente',
+    data: vinculo,
+  });
+});
+
+/* DELETE /api/caras/diente/:dienteId/:caraId */
+export const unlinkCaraFromDiente = asyncHandler(async (req: Request, res: Response) => {
+  const dienteId = parseInt(req.params.dienteId as string);
+  const caraId = parseInt(req.params.caraId as string);
+
+  await caraService.unlinkFromDiente(dienteId, caraId);
+  logger.info('Cara desvinculada del diente', { dienteId, caraId });
+
+  res.status(204).send();
+});
+
+/* GET /api/caras/diente/:dienteId */
+export const getCarasByDiente = asyncHandler(async (req: Request, res: Response) => {
+  const dienteId = parseInt(req.params.dienteId as string);
+
+  const caras = await caraService.getCarasByDiente(dienteId);
+  logger.debug('Caras del diente obtenidas', { dienteId, cantidad: caras.length });
+
+  res.json({
+    success: true,
+    data: caras,
+    total: caras.length,
+  });
+});

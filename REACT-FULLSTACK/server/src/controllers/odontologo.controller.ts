@@ -1,73 +1,101 @@
 import { Request, Response } from 'express';
+import { asyncHandler } from '../middlewares/error.middleware';
 import { odontologoService } from '../services/odontologo.service';
+import { logger } from '../utils/logger';
 
-export const getOdontologos = async (req: Request, res: Response) => {
-  try {
-    const mutualId = req.query.mutualId ? parseInt(req.query.mutualId as string) : undefined;
-    const odontologos = await odontologoService.getAll(mutualId);
-    res.json(odontologos);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener odontólogos' });
-  }
-};
+/* GET /api/odontologos?mutualId= */
+export const getOdontologos = asyncHandler(async (req: Request, res: Response) => {
+  const mutualId = req.query.mutualId ? parseInt(req.query.mutualId as string) : undefined;
 
-export const addMutualToOdontologo = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const vinculo = await odontologoService.addMutual(id, req.body);
-    res.status(201).json(vinculo);
-  } catch (error: any) {
-    console.error(error);
-    res.status(400).json({ error: error.message || 'Error al vincular la mutual al odontólogo.' });
-  }
-};
+  const odontologos = await odontologoService.getAll(mutualId);
+  logger.debug('Odontólogos obtenidos', { cantidad: odontologos.length, mutualId });
 
-export const getOdontologoById = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const odontologo = await odontologoService.getById(id);
-    
-    if (!odontologo) {
-      res.status(404).json({ error: 'Odontólogo no encontrado' });
-      return;
-    }
-    
-    res.json(odontologo);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener el odontólogo' });
-  }
-};
+  res.json({
+    success: true,
+    data: odontologos,
+    total: odontologos.length,
+  });
+});
 
-export const createOdontologo = async (req: Request, res: Response) => {
-  try {
-    const nuevoOdontologo = await odontologoService.create(req.body);
-    res.status(201).json(nuevoOdontologo);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al crear el odontólogo. Verifica los datos enviados.' });
-  }
-};
+/* POST /api/odontologos/:id/mutuales */
+export const addMutualToOdontologo = asyncHandler(async (req: Request, res: Response) => {
+  const { id, mutualId } = req.params as { id: string; mutualId: string };
+  const { nroAfiliado } = req.body;
+  const odontologoId = parseInt(id);
+  const mutId = parseInt(mutualId);
 
-export const updateOdontologo = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const odontologoActualizado = await odontologoService.update(id, req.body);
-    res.json(odontologoActualizado);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al actualizar el odontólogo.' });
-  }
-};
+  const vinculo = await odontologoService.addMutual(odontologoId, {
+    mutual_id: mutId,
+    nroAfiliado,
+  });
+  logger.info('Mutual asociada al odontólogo', { odontologoId, mutualId: mutId });
 
-export const deleteOdontologo = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    await odontologoService.delete(id);
-    res.status(204).send();
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al eliminar el odontólogo.' });
-  }
-};
+  res.status(201).json({
+    success: true,
+    message: 'Mutual asociada al odontólogo',
+    data: vinculo,
+  });
+});
+
+/* GET /api/odontologos/:id */
+export const getOdontologoById = asyncHandler(async (req: Request, res: Response) => {
+  const odontologoId = parseInt(req.params.id as string);
+
+  const odontologo = await odontologoService.getByIdOrThrow(odontologoId);
+  logger.debug('Odontólogo encontrado', { odontologoId });
+
+  res.json({
+    success: true,
+    data: odontologo,
+  });
+});
+
+/* POST /api/odontologos */
+export const createOdontologo = asyncHandler(async (req: Request, res: Response) => {
+  logger.info('Intentando crear odontólogo', { email: req.body.email });
+
+  const nuevoOdontologo = await odontologoService.create(req.body);
+  logger.info('Odontólogo creado exitosamente', { odontologoId: nuevoOdontologo.id, email: req.body.email });
+
+  res.status(201).json({
+    success: true,
+    message: 'Odontólogo registrado exitosamente',
+    data: nuevoOdontologo,
+  });
+});
+
+/* PUT /api/odontologos/:id */
+export const updateOdontologo = asyncHandler(async (req: Request, res: Response) => {
+  const odontologoId = parseInt(req.params.id as string);
+
+  const odontologoActualizado = await odontologoService.update(odontologoId, req.body);
+  logger.info('Odontólogo actualizado exitosamente', { odontologoId, cambios: Object.keys(req.body) });
+
+  res.json({
+    success: true,
+    message: 'Odontólogo actualizado exitosamente',
+    data: odontologoActualizado,
+  });
+});
+
+/* DELETE /api/odontologos/:id */
+export const deleteOdontologo = asyncHandler(async (req: Request, res: Response) => {
+  const odontologoId = parseInt(req.params.id as string);
+
+  await odontologoService.delete(odontologoId);
+  logger.info('Odontólogo eliminado exitosamente', { odontologoId });
+
+  res.status(204).send();
+});
+
+/* DELETE /api/odontologos/:id/mutuales/:mutualId */
+export const removeMutualFromOdontologo = asyncHandler(async (req: Request, res: Response) => {
+  const { id, mutualId } = req.params as { id: string; mutualId: string };
+  const odontologoId = parseInt(id);
+  const mutId = parseInt(mutualId);
+
+  await odontologoService.removeMutual(odontologoId, mutId);
+  logger.info('Mutual desasociada del odontólogo', { odontologoId, mutualId: mutId });
+
+  res.status(204).send();
+});

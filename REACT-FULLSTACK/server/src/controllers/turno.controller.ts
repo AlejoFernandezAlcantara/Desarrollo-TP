@@ -1,75 +1,85 @@
 import { Request, Response } from 'express';
+import { asyncHandler } from '../middlewares/error.middleware';
 import { turnoService } from '../services/turno.service';
+import { logger } from '../utils/logger';
 
-export const getTurnos = async (req: Request, res: Response) => {
-  try {
-    const odontologoId = req.query.odontologoId ? parseInt(req.query.odontologoId as string) : undefined;
-    const estado = req.query.estado as string | undefined;
-    const turnos = await turnoService.getAll(odontologoId, estado);
-    res.json(turnos);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener los turnos' });
-  }
-};
+/* GET /api/turnos?odontologoId=&estado= */
+export const getTurnos = asyncHandler(async (req: Request, res: Response) => {
+  const odontologoId = req.query.odontologoId ? parseInt(req.query.odontologoId as string) : undefined;
+  const estado = req.query.estado as string | undefined;
 
-export const getTurnosDisponibles = async (req: Request, res: Response) => {
-  try {
-    const odontologoId = req.query.odontologoId ? parseInt(req.query.odontologoId as string) : undefined;
-    const fecha = req.query.fecha as string | undefined; // Formato YYYY-MM-DD
-    const turnos = await turnoService.getDisponibles(odontologoId, fecha);
-    res.json(turnos);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener turnos disponibles' });
-  }
-};
+  const turnos = await turnoService.getAll(odontologoId, estado);
+  logger.debug('Turnos obtenidos', { cantidad: turnos.length, odontologoId, estado });
 
-export const getTurnoById = async (req: Request, res: Response) => {
-  try {
-    const codigo = parseInt(req.params.codigo as string);
-    const turno = await turnoService.getById(codigo);
+  res.json({
+    success: true,
+    data: turnos,
+    total: turnos.length,
+  });
+});
 
-    if (!turno) {
-      res.status(404).json({ error: 'Turno no encontrado' });
-      return;
-    }
+/* GET /api/turnos/disponibles?odontologoId=&fecha=YYYY-MM-DD */
+export const getTurnosDisponibles = asyncHandler(async (req: Request, res: Response) => {
+  const odontologoId = req.query.odontologoId ? parseInt(req.query.odontologoId as string) : undefined;
+  const fecha = req.query.fecha as string | undefined;
 
-    res.json(turno);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener el turno' });
-  }
-};
+  const turnos = await turnoService.getDisponibles(odontologoId, fecha);
+  logger.debug('Turnos disponibles obtenidos', { cantidad: turnos.length, odontologoId, fecha });
 
-export const createTurno = async (req: Request, res: Response) => {
-  try {
-    const nuevoTurno = await turnoService.create(req.body);
-    res.status(201).json(nuevoTurno);
-  } catch (error: any) {
-    console.error(error);
-    res.status(400).json({ error: error.message || 'Error al crear el turno. Verifica los datos enviados.' });
-  }
-};
+  res.json({
+    success: true,
+    data: turnos,
+    total: turnos.length,
+  });
+});
 
-export const updateTurno = async (req: Request, res: Response) => {
-  try {
-    const codigo = parseInt(req.params.codigo as string);
-    const turnoActualizado = await turnoService.update(codigo, req.body);
-    res.json(turnoActualizado);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al actualizar el turno.' });
-  }
-};
+/* GET /api/turnos/:codigo */
+export const getTurnoById = asyncHandler(async (req: Request, res: Response) => {
+  const codigo = parseInt(req.params.codigo as string);
 
-export const deleteTurno = async (req: Request, res: Response) => {
-  try {
-    const codigo = parseInt(req.params.codigo as string);
-    await turnoService.delete(codigo);
-    res.status(204).send();
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al eliminar el turno.' });
-  }
-};
+  const turno = await turnoService.getByIdOrThrow(codigo);
+  logger.debug('Turno encontrado', { codigo });
+
+  res.json({
+    success: true,
+    data: turno,
+  });
+});
+
+/* POST /api/turnos */
+export const createTurno = asyncHandler(async (req: Request, res: Response) => {
+  logger.info('Intentando crear turno', { odontologoId: req.body.odontologo_id });
+
+  const nuevoTurno = await turnoService.create(req.body);
+  logger.info('Turno creado exitosamente', { codigo: nuevoTurno.codigo });
+
+  res.status(201).json({
+    success: true,
+    message: 'Turno registrado exitosamente',
+    data: nuevoTurno,
+  });
+});
+
+/* PUT /api/turnos/:codigo */
+export const updateTurno = asyncHandler(async (req: Request, res: Response) => {
+  const codigo = parseInt(req.params.codigo as string);
+
+  const turnoActualizado = await turnoService.update(codigo, req.body);
+  logger.info('Turno actualizado exitosamente', { codigo, cambios: Object.keys(req.body) });
+
+  res.json({
+    success: true,
+    message: 'Turno actualizado exitosamente',
+    data: turnoActualizado,
+  });
+});
+
+/* DELETE /api/turnos/:codigo */
+export const deleteTurno = asyncHandler(async (req: Request, res: Response) => {
+  const codigo = parseInt(req.params.codigo as string);
+
+  await turnoService.delete(codigo);
+  logger.info('Turno eliminado exitosamente', { codigo });
+
+  res.status(204).send();
+});

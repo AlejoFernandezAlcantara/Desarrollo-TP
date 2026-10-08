@@ -1,12 +1,25 @@
 import { prisma } from '../lib/prisma';
 import { EstadoReserva, ResultadoReserva } from '@prisma/client';
+import { logger } from '../utils/logger';
+import { AppError } from '../middlewares/error.middleware';
+import { pacienteService } from './paciente.service';
+import { mutualService } from './mutual.service';
+
+const assertId = (id: number) => {
+  if (isNaN(id)) {
+    throw new AppError(400, 'El ID ingresado es inválido');
+  }
+};
 
 export const reservaService = {
   async getAll(paciente_id?: number, odontologo_id?: number, estado?: EstadoReserva) {
+    if (paciente_id !== undefined) assertId(paciente_id);
+    if (odontologo_id !== undefined) assertId(odontologo_id);
+
     return await prisma.reserva.findMany({
       where: {
-        ...(paciente_id && { paciente_id }),
-        ...(odontologo_id && { odontologo_id }),
+        ...(paciente_id !== undefined && { paciente_id }),
+        ...(odontologo_id !== undefined && { odontologo_id }),
         ...(estado && { estado })
       },
       include: {
@@ -35,7 +48,7 @@ export const reservaService = {
     });
   },
 
-  async getById(id_reserva: number) {
+  async getById(id_reserva: number) { // puede devolver null
     return await prisma.reserva.findUnique({
       where: { id_reserva },
       include: {
@@ -62,7 +75,19 @@ export const reservaService = {
     });
   },
 
-  // CUU 1: Reservar un turno con un Odontólogo (Transaccional)
+  async getByIdOrThrow(id_reserva: number) { // no puede devolver null, lanza error si no encuentra
+    assertId(id_reserva);
+
+    const reserva = await this.getById(id_reserva);
+
+    if (!reserva) {
+      throw new AppError(404, 'Reserva no encontrada');
+    }
+
+    return reserva;
+  },
+
+  // CUU 1: Reservar un turno con un Odontólogo (transaccional)
   async createReservaTurno(data: {
     paciente_id: number;
     turno_codigo: number;
@@ -70,6 +95,15 @@ export const reservaService = {
     observaciones?: string;
     coseguro?: number;
   }) {
+    assertId(data.paciente_id);
+    assertId(data.turno_codigo);
+
+    await pacienteService.getByIdOrThrow(data.paciente_id);
+
+    if (data.mutual_id !== undefined) {
+      await mutualService.getByIdOrThrow(data.mutual_id);
+    }
+
     return await prisma.$transaction(async (tx) => {
       // 1. Validar que el turno exista y esté libre
       const turno = await tx.turno.findUnique({
@@ -77,23 +111,14 @@ export const reservaService = {
       });
 
       if (!turno) {
-        throw new Error('El turno especificado no existe.');
+        throw new AppError(404, 'El turno especificado no existe');
       }
 
       if (turno.estado !== 'libre') {
-        throw new Error('El turno seleccionado ya no está disponible.');
+        throw new AppError(409, 'El turno seleccionado ya no está disponible');
       }
 
-      // 2. Validar que el paciente exista
-      const paciente = await tx.paciente.findUnique({
-        where: { id: data.paciente_id }
-      });
-
-      if (!paciente) {
-        throw new Error('El paciente especificado no existe.');
-      }
-
-      // 3. Crear la reserva
+      // 2. Crear la reserva
       const reserva = await tx.reserva.create({
         data: {
           paciente_id: data.paciente_id,
@@ -105,7 +130,7 @@ export const reservaService = {
         }
       });
 
-      // 4. Actualizar el estado del turno y asociarlo a la reserva
+      // 3. Marcar el turno como ocupado y asociarlo a la reserva
       await tx.turno.update({
         where: { codigo: data.turno_codigo },
         data: {
@@ -114,7 +139,7 @@ export const reservaService = {
         }
       });
 
-      // 5. Retornar la reserva completa
+      // 4. Devolver la reserva completa
       return await tx.reserva.findUnique({
         where: { id_reserva: reserva.id_reserva },
         include: {
@@ -137,14 +162,19 @@ export const reservaService = {
 
   // Cancelar reserva (libera los turnos asociados)
   async cancelarReserva(id_reserva: number, motivo?: string) {
+    assertId(id_reserva);
+
     return await prisma.$transaction(async (tx) => {
       const reserva = await tx.reserva.findUnique({
-        where: { id_reserva },
-        include: { turnos: true }
+        where: { id_reserva }
       });
 
       if (!reserva) {
-        throw new Error('Reserva no encontrada.');
+        throw new AppError(404, 'Reserva no encontrada');
+      }
+
+      if (reserva.estado !== 'confirmada') {
+        throw new AppError(409, `No se puede cancelar una reserva en estado "${reserva.estado}"`);
       }
 
       // Liberar los turnos asociados
@@ -161,7 +191,9 @@ export const reservaService = {
         where: { id_reserva },
         data: {
           estado: 'cancelada',
-          observaciones: motivo ? `${reserva.observaciones ? reserva.observaciones + ' - ' : ''}Motivo cancelación: ${motivo}` : reserva.observaciones
+          observaciones: motivo
+            ? `${reserva.observaciones ? reserva.observaciones + ' - ' : ''}Motivo cancelación: ${motivo}`
+            : reserva.observaciones
         }
       });
     });
@@ -172,6 +204,12 @@ export const reservaService = {
     resultado: ResultadoReserva;
     observaciones?: string;
   }) {
+    const reserva = await this.getByIdOrThrow(id_reserva);
+
+    if (reserva.estado !== 'confirmada') {
+      throw new AppError(409, `No se puede finalizar una reserva en estado "${reserva.estado}"`);
+    }
+
     return await prisma.reserva.update({
       where: { id_reserva },
       data: {

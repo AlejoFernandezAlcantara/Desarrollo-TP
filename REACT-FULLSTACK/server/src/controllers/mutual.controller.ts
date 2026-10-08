@@ -1,65 +1,67 @@
 import { Request, Response } from 'express';
+import { asyncHandler } from '../middlewares/error.middleware';
 import { mutualService } from '../services/mutual.service';
+import { logger } from '../utils/logger';
 
-export const getMutuales = async (req: Request, res: Response) => {
-  try {
-    const mutuales = await mutualService.getAll();
-    res.json(mutuales);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener mutuales' });
-  }
-};
+/* GET /api/mutuales */
+export const getMutuales = asyncHandler(async (req: Request, res: Response) => {
+  const mutuales = await mutualService.getAll();
+  logger.debug('Mutuales obtenidas', { cantidad: mutuales.length });
 
-export const getMutualById = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const mutual = await mutualService.getById(id);
-    
-    if (!mutual) {
-      res.status(404).json({ error: 'Mutual no encontrada' });
-      return;
-    }
-    
-    res.json(mutual);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener la mutual' });
-  }
-};
+  res.json({
+    success: true,
+    data: mutuales,
+    total: mutuales.length,
+  });
+});
 
-export const createMutual = async (req: Request, res: Response) => {
-  try {
-    const nuevaMutual = await mutualService.create(req.body);
-    res.status(201).json(nuevaMutual);
-  } catch (error: any) {
-    console.error(error);
-    if (error.code === 'P2002') {
-      res.status(400).json({ error: 'Ya existe una mutual registrada con ese CUIT. Debe ser único.' });
-      return;
-    }
-    res.status(400).json({ error: error.message || 'Error al crear la mutual. Verifica los datos enviados.' });
-  }
-};
+/* GET /api/mutuales/:id */
+export const getMutualById = asyncHandler(async (req: Request, res: Response) => {
+  const mutualId = parseInt(req.params.id as string);
 
-export const updateMutual = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const mutualActualizada = await mutualService.update(id, req.body);
-    res.json(mutualActualizada);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al actualizar la mutual.' });
-  }
-};
+  const mutual = await mutualService.getByIdOrThrow(mutualId);
+  logger.debug('Mutual encontrada', { mutualId });
 
-export const deleteMutual = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    await mutualService.delete(id);
-    res.status(204).send();
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al eliminar la mutual.' });
-  }
-};
+  res.json({
+    success: true,
+    data: mutual,
+  });
+});
+
+/* POST /api/mutuales */
+export const createMutual = asyncHandler(async (req: Request, res: Response) => {
+  logger.info('Intentando crear mutual', { cuit: req.body.cuit });
+
+  const nuevaMutual = await mutualService.create(req.body);
+  logger.info('Mutual creada exitosamente', { mutualId: nuevaMutual.id, cuit: req.body.cuit });
+
+  res.status(201).json({
+    success: true,
+    message: 'Mutual registrada exitosamente',
+    data: nuevaMutual,
+  });
+});
+
+/* PUT /api/mutuales/:id */
+export const updateMutual = asyncHandler(async (req: Request, res: Response) => {
+  const mutualId = parseInt(req.params.id as string);
+
+  const mutualActualizada = await mutualService.update(mutualId, req.body);
+  logger.info('Mutual actualizada exitosamente', { mutualId, cambios: Object.keys(req.body) });
+
+  res.json({
+    success: true,
+    message: 'Mutual actualizada exitosamente',
+    data: mutualActualizada,
+  });
+});
+
+/* DELETE /api/mutuales/:id */
+export const deleteMutual = asyncHandler(async (req: Request, res: Response) => {
+  const mutualId = parseInt(req.params.id as string);
+
+  await mutualService.delete(mutualId);
+  logger.info('Mutual eliminada exitosamente', { mutualId });
+
+  res.status(204).send();
+});

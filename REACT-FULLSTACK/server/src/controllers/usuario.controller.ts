@@ -1,61 +1,67 @@
 import { Request, Response } from 'express';
+import { asyncHandler } from '../middlewares/error.middleware';
 import * as usuarioService from '../services/usuario.service';
+import { logger } from '../utils/logger';
 
-export const getAllUsuarios = async (req: Request, res: Response) => {
-  try {
-    const usuarios = await usuarioService.getAll();
-    res.json(usuarios);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener usuarios' });
-  }
-};
+/* GET /api/usuarios */
+export const getAllUsuarios = asyncHandler(async (req: Request, res: Response) => {
+  const usuarios = await usuarioService.getAll();
+  logger.debug('Usuarios obtenidos', { cantidad: usuarios.length });
 
-export const getUsuarioById = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const usuario = await usuarioService.getById(id);
-    
-    if (!usuario) {
-      res.status(404).json({ error: 'Usuario no encontrado' });
-      return;
-    }
-    
-    res.json(usuario);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener el usuario' });
-  }
-};
+  res.json({
+    success: true,
+    data: usuarios,
+    total: usuarios.length,
+  });
+});
 
-export const createUsuario = async (req: Request, res: Response) => {
-  try {
-    const nuevoUsuario = await usuarioService.create(req.body);
-    res.status(201).json(nuevoUsuario);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al crear el usuario. Verifica los datos enviados.' });
-  }
-};
+/* GET /api/usuarios/:id */
+export const getUsuarioById = asyncHandler(async (req: Request, res: Response) => {
+  const usuarioId = parseInt(req.params.id as string);
 
-export const updateUsuario = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const usuarioActualizado = await usuarioService.update(id, req.body);
-    res.json(usuarioActualizado);
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al actualizar el usuario.' });
-  }
-};
+  const usuario = await usuarioService.getByIdOrThrow(usuarioId);
+  logger.debug('Usuario encontrado', { usuarioId });
 
-export const deleteUsuario = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    await usuarioService.remove(id);
-    res.status(204).send(); // 204 No Content
-  } catch (error) {
-    console.error(error);
-    res.status(400).json({ error: 'Error al eliminar el usuario.' });
-  }
-};
+  res.json({
+    success: true,
+    data: usuario,
+  });
+});
+
+/* POST /api/usuarios */
+export const createUsuario = asyncHandler(async (req: Request, res: Response) => {
+  logger.info('Intentando crear usuario', { email: req.body.email });
+
+  const nuevoUsuario = await usuarioService.create(req.body);
+  logger.info('Usuario creado exitosamente', { usuarioId: nuevoUsuario?.id, email: req.body.email });
+
+  res.status(201).json({
+    success: true,
+    message: 'Usuario registrado exitosamente',
+    data: nuevoUsuario,
+  });
+});
+
+/* PUT /api/usuarios/:id */
+export const updateUsuario = asyncHandler(async (req: Request, res: Response) => {
+  const usuarioId = parseInt(req.params.id as string);
+
+  const usuarioActualizado = await usuarioService.update(usuarioId, req.body);
+  logger.info('Usuario actualizado exitosamente', { usuarioId, cambios: Object.keys(req.body) });
+
+  res.json({
+    success: true,
+    message: 'Usuario actualizado exitosamente',
+    data: usuarioActualizado,
+  });
+});
+
+/* DELETE /api/usuarios/:id */
+export const deleteUsuario = asyncHandler(async (req: Request, res: Response) => {
+  const usuarioId = parseInt(req.params.id as string);
+
+  await usuarioService.remove(usuarioId);
+  logger.info('Usuario eliminado exitosamente', { usuarioId });
+
+  res.status(204).send();
+});

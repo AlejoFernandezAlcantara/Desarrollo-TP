@@ -1,68 +1,77 @@
 import { Request, Response } from 'express';
+import { asyncHandler } from '../middlewares/error.middleware';
 import { reservaService } from '../services/reserva.service';
+import { logger } from '../utils/logger';
 import { EstadoReserva } from '@prisma/client';
 
-export const getReservas = async (req: Request, res: Response) => {
-  try {
-    const pacienteId = req.query.pacienteId ? parseInt(req.query.pacienteId as string) : undefined;
-    const odontologoId = req.query.odontologoId ? parseInt(req.query.odontologoId as string) : undefined;
-    const estado = req.query.estado as EstadoReserva | undefined;
+/* GET /api/reservas?pacienteId=&odontologoId=&estado= */
+export const getReservas = asyncHandler(async (req: Request, res: Response) => {
+  const pacienteId = req.query.pacienteId ? parseInt(req.query.pacienteId as string) : undefined;
+  const odontologoId = req.query.odontologoId ? parseInt(req.query.odontologoId as string) : undefined;
+  const estado = req.query.estado as EstadoReserva | undefined;
 
-    const reservas = await reservaService.getAll(pacienteId, odontologoId, estado);
-    res.json(reservas);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener las reservas' });
-  }
-};
+  const reservas = await reservaService.getAll(pacienteId, odontologoId, estado);
+  logger.debug('Reservas obtenidas', { cantidad: reservas.length, pacienteId, odontologoId, estado });
 
-export const getReservaById = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const reserva = await reservaService.getById(id);
+  res.json({
+    success: true,
+    data: reservas,
+    total: reservas.length,
+  });
+});
 
-    if (!reserva) {
-      res.status(404).json({ error: 'Reserva no encontrada' });
-      return;
-    }
+/* GET /api/reservas/:id */
+export const getReservaById = asyncHandler(async (req: Request, res: Response) => {
+  const reservaId = parseInt(req.params.id as string);
 
-    res.json(reserva);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Error al obtener la reserva' });
-  }
-};
+  const reserva = await reservaService.getByIdOrThrow(reservaId);
+  logger.debug('Reserva encontrada', { reservaId });
 
-// CUU 1: Reservar turno
-export const createReserva = async (req: Request, res: Response) => {
-  try {
-    const nuevaReserva = await reservaService.createReservaTurno(req.body);
-    res.status(201).json(nuevaReserva);
-  } catch (error: any) {
-    console.error(error);
-    res.status(400).json({ error: error.message || 'Error al procesar la reserva.' });
-  }
-};
+  res.json({
+    success: true,
+    data: reserva,
+  });
+});
 
-export const cancelarReserva = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const motivo = req.body.motivo as string | undefined;
-    const reservaCancelada = await reservaService.cancelarReserva(id, motivo);
-    res.json(reservaCancelada);
-  } catch (error: any) {
-    console.error(error);
-    res.status(400).json({ error: error.message || 'Error al cancelar la reserva.' });
-  }
-};
+/* POST /api/reservas (CUU 1: reservar turno) */
+export const createReserva = asyncHandler(async (req: Request, res: Response) => {
+  logger.info('Intentando crear reserva', { turno_codigo: req.body.turno_codigo, paciente_id: req.body.paciente_id });
 
-export const finalizarReserva = async (req: Request, res: Response) => {
-  try {
-    const id = parseInt(req.params.id as string);
-    const reservaFinalizada = await reservaService.finalizarReserva(id, req.body);
-    res.json(reservaFinalizada);
-  } catch (error: any) {
-    console.error(error);
-    res.status(400).json({ error: error.message || 'Error al finalizar la reserva/consulta.' });
-  }
-};
+  const nuevaReserva = await reservaService.createReservaTurno(req.body);
+  logger.info('Reserva creada exitosamente', { reservaId: nuevaReserva?.id_reserva });
+
+  res.status(201).json({
+    success: true,
+    message: 'Reserva registrada exitosamente',
+    data: nuevaReserva,
+  });
+});
+
+/* PATCH /api/reservas/:id/cancelar */
+export const cancelarReserva = asyncHandler(async (req: Request, res: Response) => {
+  const reservaId = parseInt(req.params.id as string);
+  const motivo = req.body?.motivo as string | undefined;
+
+  const reservaCancelada = await reservaService.cancelarReserva(reservaId, motivo);
+  logger.info('Reserva cancelada exitosamente', { reservaId, motivo });
+
+  res.json({
+    success: true,
+    message: 'Reserva cancelada exitosamente',
+    data: reservaCancelada,
+  });
+});
+
+/* PATCH /api/reservas/:id/finalizar */
+export const finalizarReserva = asyncHandler(async (req: Request, res: Response) => {
+  const reservaId = parseInt(req.params.id as string);
+
+  const reservaFinalizada = await reservaService.finalizarReserva(reservaId, req.body);
+  logger.info('Reserva finalizada exitosamente', { reservaId });
+
+  res.json({
+    success: true,
+    message: 'Reserva finalizada exitosamente',
+    data: reservaFinalizada,
+  });
+});

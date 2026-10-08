@@ -1,7 +1,9 @@
+import './config/env';
 import express, { Application } from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import routes from './routes';
+import { AppError } from './middlewares/error.middleware';
 import { errorHandler } from './middlewares/error.middleware';
 import { env } from './config/env';
 
@@ -21,6 +23,9 @@ app.use('/api', routes);
 // Ruta base de prueba
 app.get('/', (req, res) => {
   res.send('¡El servidor backend (con Prisma) está funcionando correctamente!');
+});
+app.use((req, res, next) => {
+  next(new AppError(404, `Ruta no encontrada: ${req.method} ${req.originalUrl}`));
 });
 
 app.use(errorHandler);

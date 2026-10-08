@@ -3,6 +3,13 @@ import { TipoDocumento } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { logger } from '../utils/logger';
 import { AppError } from '../middlewares/error.middleware';
+import { mutualService } from './mutual.service';
+
+const assertId = (id: number) => {
+  if (isNaN(id)) {
+    throw new AppError(400, 'El ID ingresado es inválido');
+  }
+};
 
 export const pacienteService = {
   async getAll() {
@@ -18,8 +25,8 @@ export const pacienteService = {
     });
   },
 
-  async getById(id: number) { //puede devolver null
-     return await prisma.paciente.findUnique({
+  async getById(id: number) { // puede devolver null
+    return await prisma.paciente.findUnique({
       where: { id },
       include: {
         usuario: true,
@@ -31,18 +38,19 @@ export const pacienteService = {
         odontograma: true
       }
     });
-
   },
-  async getByIdOrThrow(id: number) { //no puede devolver null, lanza error si no encuentra
+
+  async getByIdOrThrow(id: number) { // no puede devolver null, lanza error si no encuentra
+    assertId(id);
+
     const paciente = await this.getById(id);
- 
+
     if (!paciente) {
       throw new AppError(404, 'Paciente no encontrado');
     }
 
     return paciente;
   },
-
 
   async getByEmail(email: string) {
     return await prisma.usuario.findUnique({
@@ -52,14 +60,14 @@ export const pacienteService = {
       }
     });
   },
- 
+
   async create(data: {
     nombre: string;
     apellido: string;
     email: string;
     password?: string;
     password_hash?: string;
-    nro_paciente: number;
+    nro_paciente?: number;
     direccion: string;
     telefono?: string;
     nroDocumento: string;
@@ -68,6 +76,10 @@ export const pacienteService = {
     nroAfiliado?: string;
     cubre?: number;
   }) {
+    if (!data.email || !data.nroDocumento) {
+      throw new AppError(400, 'Email y nroDocumento son requeridos');
+    }
+
     // Validar rango de cubre (0 a 100) si se envía
     if (data.cubre !== undefined && (data.cubre < 0 || data.cubre > 100)) {
       throw new AppError(400, 'El porcentaje de cobertura debe estar entre 0 y 100');
@@ -81,11 +93,12 @@ export const pacienteService = {
     if (!hashToStore) {
       throw new AppError(400, 'Debes proporcionar una contraseña (password) para el paciente');
     }
+
     const pacienteExistente = await this.getByEmail(data.email);
-        if (pacienteExistente) {
-          logger.warn('Email ya registrado', { email: data.email });
-           throw new AppError(400, 'El email ya está registrado');
-        }
+    if (pacienteExistente) {
+      logger.warn('Email ya registrado', { email: data.email });
+      throw new AppError(400, 'El email ya está registrado');
+    }
 
     return await prisma.$transaction(async (tx) => {
       // 1. Crear usuario base
@@ -149,19 +162,13 @@ export const pacienteService = {
   async update(id: number, data: {
     nombre?: string;
     apellido?: string;
-    nro_paciente?: number;
     direccion?: string;
     telefono?: string;
     nroDocumento?: string;
     tipoDoc?: TipoDocumento;
   }) {
+    await this.getByIdOrThrow(id);
 
-    const pacienteExistente = await this.getById( id );
-      if (!pacienteExistente) {
-      logger.warn('Paciente no encontrado para actualizar', { id });
-      throw new AppError(404, 'Paciente no encontrado');
-    }
-    
     return await prisma.$transaction(async (tx) => {
       if (data.nombre || data.apellido) {
         await tx.usuario.update({
@@ -172,11 +179,10 @@ export const pacienteService = {
           }
         });
       }
-      
+
       return await tx.paciente.update({
         where: { id },
         data: {
-          nro_paciente: data.nro_paciente,
           direccion: data.direccion,
           telefono: data.telefono,
           nroDocumento: data.nroDocumento,
@@ -195,6 +201,8 @@ export const pacienteService = {
   },
 
   async delete(id: number) {
+    assertId(id);
+
     return await prisma.$transaction(async (tx) => {
       // Elimina el usuario en cascada, lo cual borra el paciente, paciente_mutual y odontograma
       const paciente = await tx.paciente.findUnique({
@@ -213,6 +221,12 @@ export const pacienteService = {
   },
 
   async addMutual(paciente_id: number, data: { mutual_id: number; nroAfiliado: string; cubre?: number }) {
+    assertId(paciente_id);
+    assertId(data.mutual_id);
+
+    await this.getByIdOrThrow(paciente_id);
+    await mutualService.getByIdOrThrow(data.mutual_id);
+
     if (data.cubre !== undefined && (data.cubre < 0 || data.cubre > 100)) {
       throw new AppError(400, 'El porcentaje de cobertura debe estar entre 0 y 100');
     }
@@ -241,13 +255,31 @@ export const pacienteService = {
   },
 
   async removeMutual(paciente_id: number, mutual_id: number) {
-    return await prisma.pacienteMutual.delete({
-      where: {
-        paciente_id_mutual_id: {
-          paciente_id,
-          mutual_id
-        }
+  assertId(paciente_id);
+  assertId(mutual_id);
+
+  await this.getByIdOrThrow(paciente_id);
+
+  const vinculo = await prisma.pacienteMutual.findUnique({
+    where: {
+      paciente_id_mutual_id: {
+        paciente_id,
+        mutual_id
       }
-    });
+    }
+  });
+
+  if (!vinculo) {
+    throw new AppError(404, 'El paciente no tiene asociada esa mutual');
   }
+
+  return await prisma.pacienteMutual.delete({
+    where: {
+      paciente_id_mutual_id: {
+        paciente_id,
+        mutual_id
+      }
+    }
+  });
+}
 };
