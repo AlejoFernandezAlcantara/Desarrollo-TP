@@ -45,7 +45,18 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     return {} as T;
   }
 
-  return response.json();
+  const payload: unknown = await response.json();
+  if (
+    payload &&
+    typeof payload === 'object' &&
+    'success' in payload &&
+    payload.success === true &&
+    'data' in payload
+  ) {
+    return payload.data as T;
+  }
+
+  return payload as T;
 }
 
 // -------------------------------------------------------------------

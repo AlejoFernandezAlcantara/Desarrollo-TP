@@ -22,27 +22,16 @@ export const Login: React.FC = () => {
     }
   }, [isAuthenticated, user]);
 
-  const redirectByRole = (rol: string) => {
-    const fromPath = (location.state as any)?.from?.pathname;
-    if (fromPath && fromPath !== '/login') {
-      navigate(fromPath, { replace: true });
-      return;
-    }
+const redirectByRole = (_rol?: string) => {
+  // Si el usuario venía de una página protegida, vuelve a esa; si no, va al Home
+  const fromPath = (location.state as any)?.from?.pathname;
+  if (fromPath && fromPath !== '/login') {
+    navigate(fromPath, { replace: true });
+    return;
+  }
 
-    switch (rol) {
-      case 'ADMINISTRADOR':
-        navigate('/admin', { replace: true });
-        break;
-      case 'ODONTOLOGO':
-        navigate('/consultorio', { replace: true });
-        break;
-      case 'PACIENTE':
-        navigate('/agenda', { replace: true });
-        break;
-      default:
-        navigate('/', { replace: true });
-    }
-  };
+  navigate('/', { replace: true });
+};
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
