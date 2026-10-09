@@ -1,6 +1,6 @@
 LISTADO DE COSAS POR HACER- DEJAR ABAJO DEL TODO POR ESCRITO TODO LO REALIZADO SIN BORRAR NADA
 
-PRIORIDAD DE ARRIBA A ABAJO ( no hay nada de front)
+PRIORIDAD DE ARRIBA A ABAJO 
 
 
 - SUGERIDO HACER UN MIDDLEWARE PARA MANEJO DE ERRORES CENTRALIZADO (ASI NO SE HACE TRY/CATCH POR TODO EL CODIGO)
@@ -10,17 +10,24 @@ esta hecho solo el de pacientes  incluye routes, controllers y services (verific
 /---->/ server/src/middlewares/validators.middleware.ts
 server/src/utils/validators.ts  aca va el schema validation
 -HACER UN BUEN LOGGING
+- IMPLEMENTAR HELMET PARA SEGURIDAD -VARIABLES DE ENTORNO - CORS - JWT 
 
 YA HECHO LO DE ARRIBA
 
 
-- IMPLEMENTAR HELMET PARA SEGURIDAD -VARIABLES DE ENTORNO Y RATELIMIT - CORS (esta hardcodeado, mas restrictivo) - JWT no tiene validacion de expiracion
+-IMPLEMENTAR MIDDLEWARE RATELIMITING (express-rate-limit)
+
+- HACER SCRIPT SIMPLE PARA EJECUTAR BACK/FRONT Y BDD  DE UNA MANERA MAS SENCILLA
+
 -TESTING (con vitest)
+
 -DOCUMENTAR APIS (swagger)
--RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADE DEL SERVIDOR
+
+-RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADO DEL SERVIDOR
+
 -VALIDAR FORMULARIOS LADO DEL CLIENTE
 
--agregar amanejo de loading states y notificaciones(toast)
+-agregar manejo de loading states y notificaciones(toast)
 
 
 stack: MERN
@@ -29,6 +36,8 @@ Front : React + Typescript + vite
 Autenticacion : JWT + bcryptjs
 docker
 zod
+helmet
+
 
 biri biri para agregar si sobra tiempo:
 cache (redis)

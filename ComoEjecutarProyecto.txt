@@ -1,3 +1,5 @@
+Primero de todo revisar los .env del cliente como del servidor para tener todos los datos correctos
+
 Para levantar el Back:
  
 Tener Docker Desktop instalado.
@@ -20,15 +22,17 @@ El frontend quedará disponible en: http://localhost:5173
 
 Verificar front corre : se ejecuta pagina
 verificar back corre : curl http://localhost:3001/ (rta eserada de que el servidor funciona correctamente)
-verificar bdd corre: 
+verificar bdd corre:  docker ps o
 mysql -u root -p consultorioBdd
 SHOW TABLES; (debe mostrar 14 tablas)
 SELECT COUNT(*) FROM usuario; (contar registros)
+-LA BDD CORRE EN EL PUERTO 3007-
+
 
 SINO SE HIZO, EJECUTAR EN server/src/scripts/seed_auth.ts para cargar admin un odontologo y un pacinete de prueba
 npx ts-node src/scripts/seed_auth.ts (desde server)
 
-PAQUETES A TENER INSTALADOS:(chequear versiones)
+PAQUETES INSTALADOS
 EN SERVER
  @prisma/client@6.19.3
  @types/bcryptjs@2.4.6
