@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Stethoscope, Link2, RefreshCw } from 'lucide-react';
+import { Plus, Search, Stethoscope, Link2, RefreshCw, Eye, EyeOff } from 'lucide-react';
 import { odontologosApi, mutualesApi } from '../../services/api';
 import { Odontologo, Mutual, TipoDocumento } from '../../types';
 import { Modal } from '../../components/Modal';
@@ -13,10 +13,12 @@ export const OdontologosPage: React.FC = () => {
 
   // Modal Nuevo Odontólogo
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     nombre: '',
     apellido: '',
     email: '',
+    password: '',
     nro_Matricula: '',
     especialidad: '',
     telefono: '',
@@ -55,6 +57,12 @@ export const OdontologosPage: React.FC = () => {
     fetchData();
   }, []);
 
+  const closeCreateModal = () => {
+    setIsModalOpen(false);
+    setFormData((prev) => ({ ...prev, password: '' }));
+    setShowPassword(false);
+  };
+
   const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
@@ -63,6 +71,7 @@ export const OdontologosPage: React.FC = () => {
         nombre: formData.nombre,
         apellido: formData.apellido,
         email: formData.email,
+        password: formData.password,
         nro_Matricula: parseInt(formData.nro_Matricula) || 0,
         especialidad: formData.especialidad,
         telefono: formData.telefono || undefined,
@@ -74,12 +83,14 @@ export const OdontologosPage: React.FC = () => {
         nombre: '',
         apellido: '',
         email: '',
+        password: '',
         nro_Matricula: '',
         especialidad: '',
         telefono: '',
         nroDocumento: '',
         tipoDoc: 'DNI'
       });
+      setShowPassword(false);
       fetchData();
     } catch (err: any) {
       alert(err.message || 'Error al registrar odontólogo');
@@ -233,7 +244,7 @@ export const OdontologosPage: React.FC = () => {
       {/* Modal Registrar Odontólogo */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={closeCreateModal}
         title="Registrar Nuevo Profesional Odontólogo"
       >
         <form onSubmit={handleCreateSubmit}>
@@ -272,6 +283,33 @@ export const OdontologosPage: React.FC = () => {
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             />
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="odontologo-password">Contraseña inicial *</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                id="odontologo-password"
+                type={showPassword ? 'text' : 'password'}
+                required
+                minLength={6}
+                maxLength={72}
+                autoComplete="new-password"
+                className="form-control"
+                placeholder="Mínimo 6 caracteres"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => setShowPassword((visible) => !visible)}
+                aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
 
           <div className="form-row">
@@ -339,7 +377,7 @@ export const OdontologosPage: React.FC = () => {
             <button
               type="button"
               className="btn btn-secondary"
-              onClick={() => setIsModalOpen(false)}
+              onClick={closeCreateModal}
             >
               Cancelar
             </button>

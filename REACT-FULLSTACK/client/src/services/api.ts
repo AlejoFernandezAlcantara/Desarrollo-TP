@@ -98,22 +98,17 @@ export const odontologosApi = {
     nombre: string;
     apellido: string;
     email: string;
-    password_hash?: string;
+    password: string;
     nro_Matricula: number;
     especialidad: string;
     telefono?: string;
     nroDocumento: string;
     tipoDoc: TipoDocumento;
-  }) => {
-    const payload = {
-      ...data,
-      password_hash: data.password_hash || 'pass_default123'
-    };
-    return request<Odontologo>('/odontologos', {
+  }) =>
+    request<Odontologo>('/odontologos', {
       method: 'POST',
-      body: JSON.stringify(payload)
-    });
-  },
+      body: JSON.stringify(data)
+    }),
   addMutual: (id: number, data: { mutual_id: number; nroAfiliado: string }) =>
     request<any>(`/odontologos/${id}/mutuales`, {
       method: 'POST',
