@@ -42,7 +42,7 @@ export const Register: React.FC = () => {
   // Redirigir si ya está autenticado
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/agenda', { replace: true });
+      navigate('/agenda/reservar', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -97,7 +97,7 @@ export const Register: React.FC = () => {
       setSuccess(true);
       // Redirigir al inicio o agenda tras un instante breve
       setTimeout(() => {
-        navigate('/agenda', { replace: true });
+        navigate('/agenda/reservar', { replace: true });
       }, 1200);
     } catch (err: any) {
       setError(err.message || 'Error al registrar paciente. Intenta nuevamente.');
