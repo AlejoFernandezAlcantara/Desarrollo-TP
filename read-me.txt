@@ -15,10 +15,15 @@ server/src/utils/validators.ts  aca va el schema validation
 YA HECHO LO DE ARRIBA
 
 
+<<<<<<< HEAD
 -IMPLEMENTAR MIDDLEWARE RATELIMITING (express-rate-limit)
 
 - HACER SCRIPT SIMPLE PARA EJECUTAR BACK/FRONT Y BDD  DE UNA MANERA MAS SENCILLA
 
+=======
+- IMPLEMENTAR HELMET PARA SEGURIDAD -VARIABLES DE ENTORNO Y RATELIMIT - CORS (esta hardcodeado, mas restrictivo) - JWT no tiene validacion de expiracion 
+  : implementados en server/src/app.ts y server/src/middlewares/rateLimit.middleware.ts (límite general en /api, límite estricto en login y registro)
+>>>>>>> 428e70ea411b8caea7d74ae1704c85e7ced5283b
 -TESTING (con vitest)
 
 -DOCUMENTAR APIS (swagger)

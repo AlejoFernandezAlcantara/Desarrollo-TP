@@ -9,22 +9,22 @@ import {
   removeMutualFromOdontologo
 } from '../controllers/odontologo.controller';
 import { authenticateToken, authorizeRoles } from '../middlewares/auth.middleware';
-import { validateRequest } from '../middlewares/validation.middleware';
-import { CreateOdontologoSchema, UpdateOdontologoSchema, AddMutualOdontologoSchema } from '../utils/validators';
+import { validateParams, validateQuery, validateRequest } from '../middlewares/validation.middleware';
+import { CreateOdontologoSchema, UpdateOdontologoSchema, AddMutualOdontologoSchema, IdParamsSchema, MutualParamsSchema, OdontologoQuerySchema } from '../utils/validators';
 
 const router = Router();
 
 // Lectura: requiere sesión (el listado incluye datos personales y de matrícula)
-router.get('/', authenticateToken, getOdontologos);
-router.get('/:id', authenticateToken, getOdontologoById);
+router.get('/', authenticateToken, validateQuery(OdontologoQuerySchema), getOdontologos);
+router.get('/:id', authenticateToken, validateParams(IdParamsSchema), getOdontologoById);
 
 // Alta de odontólogos: sólo administrador
 router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(CreateOdontologoSchema), createOdontologo);
-router.put('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(UpdateOdontologoSchema), updateOdontologo);
-router.delete('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), deleteOdontologo);
+router.put('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(IdParamsSchema), validateRequest(UpdateOdontologoSchema), updateOdontologo);
+router.delete('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(IdParamsSchema), deleteOdontologo);
 
 // Vínculos con mutuales: sólo administrador
-router.post('/:id/mutuales/:mutualId', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(AddMutualOdontologoSchema), addMutualToOdontologo);
-router.delete('/:id/mutuales/:mutualId', authenticateToken, authorizeRoles('ADMINISTRADOR'), removeMutualFromOdontologo);
+router.post('/:id/mutuales/:mutualId', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(MutualParamsSchema), validateRequest(AddMutualOdontologoSchema), addMutualToOdontologo);
+router.delete('/:id/mutuales/:mutualId', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(MutualParamsSchema), removeMutualFromOdontologo);
 
 export default router;
