@@ -69,3 +69,16 @@ export const authorizeRoles = (...roles: UserRole[]) => {
     next();
   };
 };
+
+/**
+ * Si el usuario es PACIENTE, solo puede acceder a su propio registro (:id === personaId).
+ * Odontólogos y administradores pasan sin restricción.
+ */
+export const soloPropioSiPaciente = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.user?.rol === 'PACIENTE' && Number(req.params.id) !== req.user.personaId) {
+    res.status(403).json({ error: 'Acceso denegado. Solo puedes consultar tus propios datos.' });
+    return;
+  }
+
+  next();
+};

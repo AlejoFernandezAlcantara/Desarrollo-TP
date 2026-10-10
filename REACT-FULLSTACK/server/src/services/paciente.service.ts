@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import { logger } from '../utils/logger';
 import { AppError } from '../middlewares/error.middleware';
 import { mutualService } from './mutual.service';
+import { usuarioPublico } from '../utils/selects';
 
 const assertId = (id: number) => {
   if (isNaN(id)) {
@@ -29,7 +30,7 @@ export const pacienteService = {
     return await prisma.paciente.findUnique({
       where: { id },
       include: {
-        usuario: true,
+        usuario: { select: usuarioPublico },
         mutuales: {
           include: {
             mutual: true

@@ -101,16 +101,16 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
-              {/* Agenda: solo personal */}
+              
+              {/* Módulo Agenda & Turnos (Pacientes, Odontólogos y Administradores) */}
               <Route
                 path="/agenda"
                 element={
-                  <ProtectedRoute allowedRoles={['ODONTOLOGO', 'ADMINISTRADOR']}>
+                  <ProtectedRoute allowedRoles={['PACIENTE','ODONTOLOGO', 'ADMINISTRADOR']}>
                     <AgendaPage />
                   </ProtectedRoute>
                 }
               />
-              {/* Módulo Agenda & Turnos (Pacientes, Odontólogos y Administradores) */}
               <Route
                 path="/agenda/reservar"
                 element={

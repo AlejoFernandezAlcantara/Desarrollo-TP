@@ -4,6 +4,7 @@ import { logger } from '../utils/logger';
 import { AppError } from '../middlewares/error.middleware';
 import { pacienteService } from './paciente.service';
 import { mutualService } from './mutual.service';
+import { usuarioPublico } from '../utils/selects';
 
 const assertId = (id: number) => {
   if (isNaN(id)) {
@@ -25,12 +26,12 @@ export const reservaService = {
       include: {
         paciente: {
           include: {
-            usuario: true
+            usuario: { select: usuarioPublico }
           }
         },
         odontologo: {
           include: {
-            usuario: true
+            usuario: { select: usuarioPublico }
           }
         },
         mutual: true,

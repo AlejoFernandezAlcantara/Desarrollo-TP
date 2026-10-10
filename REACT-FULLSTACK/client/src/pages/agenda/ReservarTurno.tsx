@@ -1,40 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { 
-  Check, 
-  ChevronRight, 
-  ChevronLeft, 
-  Calendar, 
-  User, 
-  Clock, 
-  Shield, 
-  Stethoscope, 
-  CheckCircle2, 
-  Plus, 
-  AlertCircle 
+import {
+  Check,
+  ChevronLeft,
+  Clock,
+  Stethoscope,
+  CheckCircle2,
+  Plus
 } from 'lucide-react';
 import { odontologosApi, turnosApi, pacientesApi, reservasApi } from '../../services/api';
 import { Odontologo, Turno, Paciente } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 import { Modal } from '../../components/Modal';
 import './Agenda.css';
+
+type Step = 'odontologo' | 'turno' | 'paciente' | 'confirmacion';
+
+// El paciente se reserva a sí mismo: no necesita el paso "Paciente".
+const STEPS_PACIENTE: { key: Step; label: string }[] = [
+  { key: 'odontologo', label: 'Odontólogo' },
+  { key: 'turno', label: 'Turno' },
+  { key: 'confirmacion', label: 'Confirmación' }
+];
+
+// El personal (admin) reserva en nombre de un paciente.
+const STEPS_STAFF: { key: Step; label: string }[] = [
+  { key: 'odontologo', label: 'Odontólogo' },
+  { key: 'turno', label: 'Turno Libre' },
+  { key: 'paciente', label: 'Paciente' },
+  { key: 'confirmacion', label: 'Confirmación' }
+];
 
 export const ReservarTurno: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const preselectedPacienteId = searchParams.get('pacienteId');
 
-  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const { user } = useAuth();
+  const rol = user?.rol;
+  const personaId = user?.personaId;
+  const esPaciente = rol === 'PACIENTE';
+  const esAdmin = rol === 'ADMINISTRADOR';
+
+  const steps = esPaciente ? STEPS_PACIENTE : STEPS_STAFF;
+  const [step, setStep] = useState<Step>('odontologo');
 
   // Data State
   const [odontologos, setOdontologos] = useState<Odontologo[]>([]);
   const [turnosDisponibles, setTurnosDisponibles] = useState<Turno[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
-  
+
   // Selection State
   const [selectedOdontologo, setSelectedOdontologo] = useState<Odontologo | null>(null);
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
   const [selectedPaciente, setSelectedPaciente] = useState<Paciente | null>(null);
-  
+
   // Confirmation form
   const [selectedMutualId, setSelectedMutualId] = useState<string>('');
   const [observaciones, setObservaciones] = useState('');
@@ -46,50 +66,65 @@ export const ReservarTurno: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pacienteSearch, setPacienteSearch] = useState('');
 
-  // Modal para habilitar nuevos turnos libres en caso de que no haya
+  // Modal para habilitar nuevos turnos libres (solo administrador)
   const [isGenerarTurnoModalOpen, setIsGenerarTurnoModalOpen] = useState(false);
   const [nuevoTurnoData, setNuevoTurnoData] = useState({
     fecha_hora_inicio: '',
     duracion: '30'
   });
 
-  // 1. Cargar odontólogos y pacientes inicialmente
+  // Fija el paciente de la reserva y preselecciona su primera mutual
+  const aplicarPaciente = (p: Paciente) => {
+    setSelectedPaciente(p);
+    setSelectedMutualId(p.mutuales && p.mutuales.length > 0 ? p.mutuales[0].mutual_id.toString() : '');
+  };
+
+  // 1. Carga inicial según el rol
   useEffect(() => {
+    if (!rol) return;
+
     const initData = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const [odos, pacs] = await Promise.all([
-          odontologosApi.getAll(),
-          pacientesApi.getAll()
-        ]);
+        const odos = await odontologosApi.getAll();
         setOdontologos(odos);
-        setPacientes(pacs);
 
-        // Si vino un paciente preseleccionado desde la ficha o url
-        if (preselectedPacienteId) {
-          const found = pacs.find(p => p.id === parseInt(preselectedPacienteId));
-          if (found) {
-            setSelectedPaciente(found);
+        if (rol === 'PACIENTE') {
+          // El paciente solo necesita sus propios datos (mutuales incluidas)
+          if (personaId == null) {
+            throw new Error('Tu usuario no tiene un perfil de paciente asociado.');
+          }
+          aplicarPaciente(await pacientesApi.getById(personaId));
+        } else {
+          // El personal necesita el padrón para elegir a quién reservarle
+          const pacs = await pacientesApi.getAll();
+          setPacientes(pacs);
+
+          if (preselectedPacienteId) {
+            const found = pacs.find((p) => p.id === parseInt(preselectedPacienteId));
+            if (found) aplicarPaciente(found);
           }
         }
       } catch (err: any) {
-        setError(err.message || 'Error al inicializar datos para reserva');
+        setError(err.message || 'Error al inicializar datos para la reserva');
       } finally {
         setLoading(false);
       }
     };
     initData();
-  }, [preselectedPacienteId]);
+  }, [rol, personaId, preselectedPacienteId]);
 
   // 2. Al seleccionar un odontólogo, buscar sus turnos libres
   const handleSelectOdontologo = async (odo: Odontologo) => {
     setSelectedOdontologo(odo);
     setSelectedTurno(null);
+    setError(null);
     setLoading(true);
     try {
       const turnos = await turnosApi.getDisponibles(odo.id);
       setTurnosDisponibles(turnos);
-      setStep(2);
+      setStep('turno');
     } catch (err: any) {
       setError(err.message || 'Error al obtener turnos disponibles');
     } finally {
@@ -97,7 +132,7 @@ export const ReservarTurno: React.FC = () => {
     }
   };
 
-  // 3. Crear un bloque de turno libre si no hay turnos
+  // 3. Crear un bloque de turno libre (solo administrador)
   const handleCrearTurnoLibre = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOdontologo) return;
@@ -108,37 +143,26 @@ export const ReservarTurno: React.FC = () => {
         duracion: parseInt(nuevoTurnoData.duracion) || 30
       });
       setIsGenerarTurnoModalOpen(false);
-      // Recargar turnos
-      const turnos = await turnosApi.getDisponibles(selectedOdontologo.id);
-      setTurnosDisponibles(turnos);
+      setTurnosDisponibles(await turnosApi.getDisponibles(selectedOdontologo.id));
     } catch (err: any) {
       alert(err.message || 'Error al crear turno libre');
     }
   };
 
-  // 4. Seleccionar Turno
+  // 4. Seleccionar turno: el paciente (o un paciente ya elegido) va directo a confirmar
   const handleSelectTurno = (t: Turno) => {
     setSelectedTurno(t);
-    // Si ya teníamos un paciente seleccionado de antemano, pasamos a confirmación
-    if (selectedPaciente) {
-      setStep(4);
-    } else {
-      setStep(3);
-    }
+    setError(null);
+    setStep(esPaciente || selectedPaciente ? 'confirmacion' : 'paciente');
   };
 
-  // 5. Seleccionar Paciente
+  // 5. Seleccionar paciente (solo personal)
   const handleSelectPaciente = (p: Paciente) => {
-    setSelectedPaciente(p);
-    if (p.mutuales && p.mutuales.length > 0) {
-      setSelectedMutualId(p.mutuales[0].mutual_id.toString());
-    } else {
-      setSelectedMutualId('');
-    }
-    setStep(4);
+    aplicarPaciente(p);
+    setStep('confirmacion');
   };
 
-  // 6. Confirmar Reserva Final (CUU 1)
+  // 6. Confirmar reserva final (CUU 1)
   const handleConfirmarReserva = async () => {
     if (!selectedPaciente || !selectedTurno) return;
     setSubmitting(true);
@@ -150,22 +174,55 @@ export const ReservarTurno: React.FC = () => {
         turno_codigo: selectedTurno.codigo,
         mutual_id: selectedMutualId ? parseInt(selectedMutualId) : undefined,
         observaciones: observaciones || undefined,
-        coseguro: coseguro ? parseFloat(coseguro) : undefined
+        // El coseguro lo define el consultorio, el paciente no lo informa
+        coseguro: !esPaciente && coseguro ? parseFloat(coseguro) : undefined
       });
 
       navigate('/agenda');
     } catch (err: any) {
       setError(err.message || 'Error al confirmar la reserva.');
       setSubmitting(false);
+
+      // Si el turno se ocupó mientras el usuario elegía (409), refrescar la lista
+      if (selectedOdontologo) {
+        try {
+          const turnos = await turnosApi.getDisponibles(selectedOdontologo.id);
+          setTurnosDisponibles(turnos);
+          if (!turnos.some((t) => t.codigo === selectedTurno.codigo)) {
+            setSelectedTurno(null);
+            setStep('turno');
+          }
+        } catch {
+          // si falla el refresco, queda el mensaje de error original
+        }
+      }
     }
   };
 
-  const filteredPacientes = pacientes.filter(p => {
+  const filteredPacientes = pacientes.filter((p) => {
     const term = pacienteSearch.toLowerCase();
     const fullName = `${p.usuario?.nombre} ${p.usuario?.apellido}`.toLowerCase();
     const doc = p.nroDocumento || '';
     return fullName.includes(term) || doc.includes(term);
   });
+
+  // Navegación del stepper: solo hacia pasos cuyos requisitos ya están cumplidos
+  const canGoTo = (key: Step): boolean => {
+    switch (key) {
+      case 'odontologo':
+        return true;
+      case 'turno':
+        return !!selectedOdontologo;
+      case 'paciente':
+        return !!selectedTurno;
+      case 'confirmacion':
+        return !!selectedTurno && !!selectedPaciente;
+    }
+  };
+
+  const currentIndex = steps.findIndex((s) => s.key === step);
+  const nombreOdo = (odo: Odontologo) =>
+    odo.nombreCompleto || `${odo.usuario?.nombre ?? ''} ${odo.usuario?.apellido ?? ''}`.trim();
 
   return (
     <div style={{ maxWidth: '900px', margin: '0 auto' }}>
@@ -173,51 +230,29 @@ export const ReservarTurno: React.FC = () => {
         <div>
           <h1 className="page-header-title">Reservar Turno Odontológico</h1>
           <p className="page-header-desc">
-            Flujo guiado para asignar un turno disponible con un profesional odontólogo y confirmar la cita médica.
+            {esPaciente
+              ? 'Elige un profesional, selecciona un horario disponible y confirma tu turno.'
+              : 'Flujo guiado para asignar un turno disponible con un profesional odontólogo y confirmar la cita médica.'}
           </p>
         </div>
         <Link to="/agenda" className="btn btn-secondary btn-sm">
-          Ver Agenda Completa
+          {esPaciente ? 'Mis Turnos' : 'Ver Agenda Completa'}
         </Link>
       </div>
 
       {/* Stepper Indicator */}
       <div className="card" style={{ marginBottom: '2rem', padding: '1.25rem 1.5rem' }}>
         <div className="stepper">
-          <div 
-            className={`step-item ${step === 1 ? 'active' : step > 1 ? 'completed' : ''}`}
-            onClick={() => setStep(1)}
-          >
-            <div className="step-circle">
-              {step > 1 ? <Check size={18} /> : '1'}
+          {steps.map((s, i) => (
+            <div
+              key={s.key}
+              className={`step-item ${i === currentIndex ? 'active' : i < currentIndex ? 'completed' : ''}`}
+              onClick={() => canGoTo(s.key) && setStep(s.key)}
+            >
+              <div className="step-circle">{i < currentIndex ? <Check size={18} /> : i + 1}</div>
+              <span className="step-label">{s.label}</span>
             </div>
-            <span className="step-label">Odontólogo</span>
-          </div>
-
-          <div 
-            className={`step-item ${step === 2 ? 'active' : step > 2 ? 'completed' : ''}`}
-            onClick={() => selectedOdontologo && setStep(2)}
-          >
-            <div className="step-circle">
-              {step > 2 ? <Check size={18} /> : '2'}
-            </div>
-            <span className="step-label">Turno Libre</span>
-          </div>
-
-          <div 
-            className={`step-item ${step === 3 ? 'active' : step > 3 ? 'completed' : ''}`}
-            onClick={() => selectedTurno && setStep(3)}
-          >
-            <div className="step-circle">
-              {step > 3 ? <Check size={18} /> : '3'}
-            </div>
-            <span className="step-label">Paciente</span>
-          </div>
-
-          <div className={`step-item ${step === 4 ? 'active' : ''}`}>
-            <div className="step-circle">4</div>
-            <span className="step-label">Confirmación</span>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -227,8 +262,8 @@ export const ReservarTurno: React.FC = () => {
         </div>
       )}
 
-      {/* PASO 1: SELECCIONAR ODONTÓLOGO */}
-      {step === 1 && (
+      {/* PASO: SELECCIONAR ODONTÓLOGO */}
+      {step === 'odontologo' && (
         <div className="card">
           <div className="card-header">
             <div>
@@ -246,12 +281,11 @@ export const ReservarTurno: React.FC = () => {
             <div className="empty-state">
               <Stethoscope className="empty-state-icon" />
               <h3>No hay odontólogos registrados</h3>
-              <p>Debes registrar al menos un profesional en el panel de administración.</p>
+              <p>Todavía no hay profesionales disponibles para reservar.</p>
             </div>
           ) : (
             <div className="selection-grid">
               {odontologos.map((odo) => {
-                const nombre = odo.nombreCompleto || `${odo.usuario?.nombre} ${odo.usuario?.apellido}`;
                 const isSelected = selectedOdontologo?.id === odo.id;
                 return (
                   <div
@@ -264,7 +298,7 @@ export const ReservarTurno: React.FC = () => {
                       <span className="badge badge-primary">{odo.especialidad}</span>
                     </div>
                     <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>
-                      Dr./Dra. {nombre}
+                      Dr./Dra. {nombreOdo(odo)}
                     </div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
                       Matrícula: {odo.nro_Matricula}
@@ -277,38 +311,43 @@ export const ReservarTurno: React.FC = () => {
         </div>
       )}
 
-      {/* PASO 2: SELECCIONAR TURNO LIBRE */}
-      {step === 2 && selectedOdontologo && (
+      {/* PASO: SELECCIONAR TURNO LIBRE */}
+      {step === 'turno' && selectedOdontologo && (
         <div className="card">
           <div className="card-header">
             <div>
               <h3 className="card-title">Paso 2: Turnos Libres Disponibles</h3>
               <p className="card-subtitle">
-                Profesional: <strong>Dr./Dra. {selectedOdontologo.nombreCompleto || selectedOdontologo.usuario?.nombre}</strong> ({selectedOdontologo.especialidad})
+                Profesional: <strong>Dr./Dra. {nombreOdo(selectedOdontologo)}</strong> ({selectedOdontologo.especialidad})
               </p>
             </div>
-            <button 
-              className="btn btn-secondary btn-sm"
-              onClick={() => setIsGenerarTurnoModalOpen(true)}
-            >
-              <Plus size={16} />
-              <span>Habilitar Nuevo Horario</span>
-            </button>
+            {esAdmin && (
+              <button className="btn btn-secondary btn-sm" onClick={() => setIsGenerarTurnoModalOpen(true)}>
+                <Plus size={16} />
+                <span>Habilitar Nuevo Horario</span>
+              </button>
+            )}
           </div>
 
           {turnosDisponibles.length === 0 ? (
             <div className="empty-state">
               <Clock className="empty-state-icon" />
               <h3>No hay turnos libres actualmente para este profesional</h3>
-              <p>Puedes crear un nuevo bloque de turno disponible ahora mismo.</p>
-              <button 
-                className="btn btn-primary" 
-                style={{ marginTop: '1rem' }}
-                onClick={() => setIsGenerarTurnoModalOpen(true)}
-              >
-                <Plus size={16} />
-                <span>Generar Turno Libre</span>
-              </button>
+              {esAdmin ? (
+                <>
+                  <p>Puedes crear un nuevo bloque de turno disponible ahora mismo.</p>
+                  <button
+                    className="btn btn-primary"
+                    style={{ marginTop: '1rem' }}
+                    onClick={() => setIsGenerarTurnoModalOpen(true)}
+                  >
+                    <Plus size={16} />
+                    <span>Generar Turno Libre</span>
+                  </button>
+                </>
+              ) : (
+                <p>Prueba con otro profesional o vuelve a intentarlo más tarde.</p>
+              )}
             </div>
           ) : (
             <div className="selection-grid">
@@ -348,7 +387,7 @@ export const ReservarTurno: React.FC = () => {
           )}
 
           <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-start' }}>
-            <button className="btn btn-ghost" onClick={() => setStep(1)}>
+            <button className="btn btn-ghost" onClick={() => setStep('odontologo')}>
               <ChevronLeft size={16} />
               <span>Cambiar Odontólogo</span>
             </button>
@@ -356,18 +395,20 @@ export const ReservarTurno: React.FC = () => {
         </div>
       )}
 
-      {/* PASO 3: SELECCIONAR PACIENTE */}
-      {step === 3 && (
+      {/* PASO: SELECCIONAR PACIENTE (solo personal) */}
+      {step === 'paciente' && !esPaciente && (
         <div className="card">
           <div className="card-header">
             <div>
               <h3 className="card-title">Paso 3: Selecciona el Paciente</h3>
               <p className="card-subtitle">Busca el paciente en el padrón o da de alta uno nuevo</p>
             </div>
-            <Link to="/recepcion/nuevo" className="btn btn-secondary btn-sm" target="_blank">
-              <Plus size={16} />
-              <span>Alta Rápida de Paciente</span>
-            </Link>
+            {esAdmin && (
+              <Link to="/recepcion/nuevo" className="btn btn-secondary btn-sm" target="_blank">
+                <Plus size={16} />
+                <span>Alta Rápida de Paciente</span>
+              </Link>
+            )}
           </div>
 
           <div style={{ marginBottom: '1rem' }}>
@@ -411,7 +452,7 @@ export const ReservarTurno: React.FC = () => {
           </div>
 
           <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-start' }}>
-            <button className="btn btn-ghost" onClick={() => setStep(2)}>
+            <button className="btn btn-ghost" onClick={() => setStep('turno')}>
               <ChevronLeft size={16} />
               <span>Cambiar Turno</span>
             </button>
@@ -419,13 +460,15 @@ export const ReservarTurno: React.FC = () => {
         </div>
       )}
 
-      {/* PASO 4: CONFIRMACIÓN Y RESERVA */}
-      {step === 4 && selectedOdontologo && selectedTurno && selectedPaciente && (
+      {/* PASO: CONFIRMACIÓN Y RESERVA */}
+      {step === 'confirmacion' && selectedOdontologo && selectedTurno && selectedPaciente && (
         <div className="card">
           <div className="card-header">
             <div>
-              <h3 className="card-title">Paso 4: Confirmar y Registrar Reserva</h3>
-              <p className="card-subtitle">Verifica los datos antes de emitir la cita médica</p>
+              <h3 className="card-title">
+                Paso {steps.length}: {esPaciente ? 'Confirma tu Turno' : 'Confirmar y Registrar Reserva'}
+              </h3>
+              <p className="card-subtitle">Verifica los datos antes de confirmar la cita</p>
             </div>
           </div>
 
@@ -435,7 +478,7 @@ export const ReservarTurno: React.FC = () => {
                 Profesional Odontólogo
               </div>
               <div style={{ fontWeight: 800, fontSize: '1.05rem', marginTop: '0.2rem' }}>
-                Dr./Dra. {selectedOdontologo.nombreCompleto || selectedOdontologo.usuario?.nombre}
+                Dr./Dra. {nombreOdo(selectedOdontologo)}
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--primary)', fontWeight: 600 }}>
                 {selectedOdontologo.especialidad} (Mat. {selectedOdontologo.nro_Matricula})
@@ -461,7 +504,7 @@ export const ReservarTurno: React.FC = () => {
 
             <div>
               <div style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase' }}>
-                Paciente Citado
+                {esPaciente ? 'Paciente' : 'Paciente Citado'}
               </div>
               <div style={{ fontWeight: 800, fontSize: '1.05rem', marginTop: '0.2rem' }}>
                 {selectedPaciente.usuario?.apellido}, {selectedPaciente.usuario?.nombre}
@@ -474,7 +517,7 @@ export const ReservarTurno: React.FC = () => {
             <div>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label className="form-label" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>
-                  Mutual a Imputar
+                  {esPaciente ? 'Obra Social / Mutual' : 'Mutual a Imputar'}
                 </label>
                 <select
                   className="form-control"
@@ -493,23 +536,26 @@ export const ReservarTurno: React.FC = () => {
           </div>
 
           <div className="form-row">
-            <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">Coseguro a Cobrar ($ Opcional)</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="form-control"
-                placeholder="Ej: 1500.00"
-                value={coseguro}
-                onChange={(e) => setCoseguro(e.target.value)}
-              />
-            </div>
+            {!esPaciente && (
+              <div className="form-group" style={{ flex: 1 }}>
+                <label className="form-label">Coseguro a Cobrar ($ Opcional)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="form-control"
+                  placeholder="Ej: 1500.00"
+                  value={coseguro}
+                  onChange={(e) => setCoseguro(e.target.value)}
+                />
+              </div>
+            )}
             <div className="form-group" style={{ flex: 2 }}>
               <label className="form-label">Motivo de la consulta / Observaciones</label>
               <input
                 type="text"
                 className="form-control"
+                maxLength={255}
                 placeholder="Ej: Limpieza general, dolor en molar superior, etc."
                 value={observaciones}
                 onChange={(e) => setObservaciones(e.target.value)}
@@ -518,9 +564,12 @@ export const ReservarTurno: React.FC = () => {
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2rem' }}>
-            <button className="btn btn-ghost" onClick={() => setStep(3)}>
+            <button
+              className="btn btn-ghost"
+              onClick={() => setStep(esPaciente ? 'turno' : 'paciente')}
+            >
               <ChevronLeft size={16} />
-              <span>Modificar Paciente</span>
+              <span>{esPaciente ? 'Cambiar Turno' : 'Modificar Paciente'}</span>
             </button>
 
             <button
@@ -530,54 +579,56 @@ export const ReservarTurno: React.FC = () => {
               style={{ padding: '0.75rem 1.75rem', fontSize: '1rem' }}
             >
               <CheckCircle2 size={18} />
-              <span>{submitting ? 'Emitiendo Reserva...' : 'Confirmar Reserva de Turno'}</span>
+              <span>{submitting ? 'Reservando...' : 'Confirmar Reserva de Turno'}</span>
             </button>
           </div>
         </div>
       )}
 
-      {/* Modal Habilitar Turno Libre */}
-      <Modal
-        isOpen={isGenerarTurnoModalOpen}
-        onClose={() => setIsGenerarTurnoModalOpen(false)}
-        title={`Habilitar Nuevo Turno Libre con Dr./Dra. ${selectedOdontologo?.usuario?.nombre || ''}`}
-      >
-        <form onSubmit={handleCrearTurnoLibre}>
-          <div className="form-group">
-            <label className="form-label">Fecha y Hora de Inicio *</label>
-            <input
-              type="datetime-local"
-              required
-              className="form-control"
-              value={nuevoTurnoData.fecha_hora_inicio}
-              onChange={(e) => setNuevoTurnoData({ ...nuevoTurnoData, fecha_hora_inicio: e.target.value })}
-            />
-          </div>
+      {/* Modal Habilitar Turno Libre (solo administrador) */}
+      {esAdmin && (
+        <Modal
+          isOpen={isGenerarTurnoModalOpen}
+          onClose={() => setIsGenerarTurnoModalOpen(false)}
+          title={`Habilitar Nuevo Turno Libre con Dr./Dra. ${selectedOdontologo ? nombreOdo(selectedOdontologo) : ''}`}
+        >
+          <form onSubmit={handleCrearTurnoLibre}>
+            <div className="form-group">
+              <label className="form-label">Fecha y Hora de Inicio *</label>
+              <input
+                type="datetime-local"
+                required
+                className="form-control"
+                value={nuevoTurnoData.fecha_hora_inicio}
+                onChange={(e) => setNuevoTurnoData({ ...nuevoTurnoData, fecha_hora_inicio: e.target.value })}
+              />
+            </div>
 
-          <div className="form-group">
-            <label className="form-label">Duración del Turno (Minutos) *</label>
-            <select
-              className="form-control"
-              value={nuevoTurnoData.duracion}
-              onChange={(e) => setNuevoTurnoData({ ...nuevoTurnoData, duracion: e.target.value })}
-            >
-              <option value="15">15 minutos</option>
-              <option value="30">30 minutos (Estándar)</option>
-              <option value="45">45 minutos</option>
-              <option value="60">60 minutos (1 hora)</option>
-            </select>
-          </div>
+            <div className="form-group">
+              <label className="form-label">Duración del Turno (Minutos) *</label>
+              <select
+                className="form-control"
+                value={nuevoTurnoData.duracion}
+                onChange={(e) => setNuevoTurnoData({ ...nuevoTurnoData, duracion: e.target.value })}
+              >
+                <option value="15">15 minutos</option>
+                <option value="30">30 minutos (Estándar)</option>
+                <option value="45">45 minutos</option>
+                <option value="60">60 minutos (1 hora)</option>
+              </select>
+            </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-            <button type="button" className="btn btn-secondary" onClick={() => setIsGenerarTurnoModalOpen(false)}>
-              Cancelar
-            </button>
-            <button type="submit" className="btn btn-primary">
-              Crear Horario Libre
-            </button>
-          </div>
-        </form>
-      </Modal>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setIsGenerarTurnoModalOpen(false)}>
+                Cancelar
+              </button>
+              <button type="submit" className="btn btn-primary">
+                Crear Horario Libre
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
     </div>
   );
 };

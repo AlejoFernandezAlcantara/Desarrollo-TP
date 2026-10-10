@@ -6,7 +6,15 @@ import { EstadoReserva } from '@prisma/client';
 
 /* GET /api/reservas?pacienteId=&odontologoId=&estado= */
 export const getReservas = asyncHandler(async (req: Request, res: Response) => {
-  const pacienteId = req.query.pacienteId ? parseInt(req.query.pacienteId as string) : undefined;
+  if (req.user?.rol === 'PACIENTE' && req.user.personaId === undefined) {
+    res.status(403).json({ error: 'Tu usuario no tiene un perfil de paciente asociado.' });
+    return;
+  }
+
+  // Un paciente solo ve sus propias reservas, sin importar el query string
+  const pacienteId = req.user?.rol === 'PACIENTE'
+    ? req.user.personaId
+    : req.query.pacienteId ? parseInt(req.query.pacienteId as string) : undefined;
   const odontologoId = req.query.odontologoId ? parseInt(req.query.odontologoId as string) : undefined;
   const estado = req.query.estado as EstadoReserva | undefined;
 
@@ -35,9 +43,14 @@ export const getReservaById = asyncHandler(async (req: Request, res: Response) =
 
 /* POST /api/reservas (CUU 1: reservar turno) */
 export const createReserva = asyncHandler(async (req: Request, res: Response) => {
-  logger.info('Intentando crear reserva', { turno_codigo: req.body.turno_codigo, paciente_id: req.body.paciente_id });
+  // Un paciente solo puede reservar para sí mismo y no define el coseguro
+  const data = req.user?.rol === 'PACIENTE'
+    ? { ...req.body, paciente_id: req.user.personaId, coseguro: undefined }
+    : req.body;
 
-  const nuevaReserva = await reservaService.createReservaTurno(req.body);
+  logger.info('Intentando crear reserva', { turno_codigo: data.turno_codigo, paciente_id: data.paciente_id });
+
+  const nuevaReserva = await reservaService.createReservaTurno(data);
   logger.info('Reserva creada exitosamente', { reservaId: nuevaReserva?.id_reserva });
 
   res.status(201).json({
