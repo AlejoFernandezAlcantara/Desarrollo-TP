@@ -24,10 +24,7 @@ export const Navbar: React.FC = () => {
   const canViewAdmin = user?.rol === 'ADMINISTRADOR';
   const canViewRecepcion = user?.rol === 'ADMINISTRADOR';
   const canViewConsultorio = user?.rol === 'ADMINISTRADOR' || user?.rol === 'ODONTOLOGO';
-  const canViewAgenda = isAuthenticated; // Todos pueden ver agenda o turnos según su contexto
-  const esPaciente = user?.rol === 'PACIENTE';
-  const agendaPath = esPaciente ? '/agenda/reservar' : '/agenda';
-  const agendaLabel = esPaciente ? 'Reservar Turno' : 'Agenda & Turnos';
+  const canViewAgenda = true; // Todos pueden ver agenda o turnos según su contexto
 
   return (
     <header className="navbar">
@@ -70,14 +67,14 @@ export const Navbar: React.FC = () => {
           )}
 
           {canViewRecepcion && (
-            <NavLink
-              to={agendaPath}
+            <NavLink 
+              to="/recepcion" 
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               onClick={closeMenu}
             >
-              <Calendar size={18} />
-              <span>{agendaLabel}</span>
-            </NavLink>  
+              <Users size={18} />
+              <span>Recepción / Pacientes</span>
+            </NavLink>
           )}
 
           {canViewConsultorio && (
