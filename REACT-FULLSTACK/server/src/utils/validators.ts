@@ -127,7 +127,12 @@ export const UpdateCaraSchema = CreateCaraSchema.partial();
 export const EstadoTurnoSchema = z.enum(['libre', 'ocupado']);
 
 export const CreateTurnoSchema = z.object({
-  fecha_hora_inicio: z.coerce.date({ message: 'Fecha inválida' }),
+  fecha_hora_inicio: z
+    .coerce
+    .date({ message: 'Fecha inválida' })
+    .refine((fecha) => fecha.getTime() > Date.now(), {
+      message: 'No se puede crear un turno con fecha u hora en el pasado',
+    }),
   duracion: z.number().int().positive('La duración debe ser mayor a 0'),
   odontologo_id: z.number().int().positive(),
   estado: EstadoTurnoSchema.optional(),

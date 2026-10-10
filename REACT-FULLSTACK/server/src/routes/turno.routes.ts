@@ -21,9 +21,9 @@ router.get('/disponibles', validateQuery(TurnoDisponiblesQuerySchema), getTurnos
 router.get('/', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateQuery(TurnoQuerySchema), getTurnos);
 router.get('/:codigo', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(CodigoParamsSchema), getTurnoById);
 
-// Gestión de la agenda: sólo administrador
-router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(CreateTurnoSchema), createTurno);
+// Gestión de la agenda: administrador y odontólogo (solo puede crear/borrar los suyos)
+router.post('/', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateRequest(CreateTurnoSchema), createTurno);
 router.put('/:codigo', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(CodigoParamsSchema), validateRequest(UpdateTurnoSchema), updateTurno);
-router.delete('/:codigo', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(CodigoParamsSchema), deleteTurno);
+router.delete('/:codigo', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(CodigoParamsSchema), deleteTurno);
 
 export default router;

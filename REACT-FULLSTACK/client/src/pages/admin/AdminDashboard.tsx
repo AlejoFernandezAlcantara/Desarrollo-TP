@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Shield, FileText, Stethoscope } from 'lucide-react';
+import { Shield, FileText, Stethoscope, CalendarPlus } from 'lucide-react';
 import { MutualesPage } from './MutualesPage';
 import { PracticasPage } from './PracticasPage';
 import { OdontologosPage } from './OdontologosPage';
+import { GestionTurnos } from '../agenda/GestionTurnos';
 import './Admin.css';
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'mutuales' | 'practicas' | 'odontologos'>('mutuales');
+  const [activeTab, setActiveTab] = useState<'mutuales' | 'practicas' | 'odontologos' | 'turnos'>('mutuales');
 
   return (
     <div>
@@ -42,11 +43,20 @@ export const AdminDashboard: React.FC = () => {
             <Stethoscope size={18} />
             <span>Plantel de Odontólogos</span>
           </button>
+
+          <button
+            className={`admin-tab ${activeTab === 'turnos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('turnos')}
+          >
+            <CalendarPlus size={18} />
+            <span>Generar Turnos</span>
+          </button>
         </div>
 
         {activeTab === 'mutuales' && <MutualesPage />}
         {activeTab === 'practicas' && <PracticasPage />}
         {activeTab === 'odontologos' && <OdontologosPage />}
+        {activeTab === 'turnos' && <GestionTurnos />}
       </div>
     </div>
   );

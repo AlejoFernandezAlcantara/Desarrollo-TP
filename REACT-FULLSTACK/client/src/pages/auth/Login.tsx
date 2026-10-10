@@ -15,23 +15,12 @@ export const Login: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Redirigir si ya está autenticado
+  // Redirigir siempre al inicio si ya está autenticado
   useEffect(() => {
     if (isAuthenticated && user) {
-      redirectByRole(user.rol);
+      navigate('/', { replace: true });
     }
-  }, [isAuthenticated, user]);
-
-const redirectByRole = (_rol?: string) => {
-  // Si el usuario venía de una página protegida, vuelve a esa; si no, va al Home
-  const fromPath = (location.state as any)?.from?.pathname;
-  if (fromPath && fromPath !== '/login') {
-    navigate(fromPath, { replace: true });
-    return;
-  }
-
-  navigate('/', { replace: true });
-};
+  }, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,8 +33,8 @@ const redirectByRole = (_rol?: string) => {
 
     setIsSubmitting(true);
     try {
-      const loggedUser = await login(email.trim(), password);
-      redirectByRole(loggedUser.rol);
+      await login(email.trim(), password);
+      navigate('/', { replace: true });
     } catch (err: any) {
       setError(err.message || 'Error al iniciar sesión. Verifica tus credenciales.');
     } finally {

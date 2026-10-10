@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Plus, Search, Stethoscope, Link2, RefreshCw, Eye, EyeOff } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Plus, Search, Stethoscope, Link2, RefreshCw, Eye, EyeOff, CalendarPlus } from 'lucide-react';
 import { odontologosApi, mutualesApi } from '../../services/api';
 import { Odontologo, Mutual, TipoDocumento } from '../../types';
 import { Modal } from '../../components/Modal';
@@ -186,7 +187,7 @@ export const OdontologosPage: React.FC = () => {
                 <th>Especialidad</th>
                 <th>Contacto</th>
                 <th>Obras Sociales Aceptadas</th>
-                <th style={{ textAlign: 'right' }}>Vincular Mutual</th>
+                <th style={{ textAlign: 'right' }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -224,14 +225,24 @@ export const OdontologosPage: React.FC = () => {
                       )}
                     </td>
                     <td style={{ textAlign: 'right' }}>
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => handleOpenMutualModal(o)}
-                        title="Vincular Obra Social"
-                      >
-                        <Link2 size={14} />
-                        <span>Asignar Mutual</span>
-                      </button>
+                      <div style={{ display: 'inline-flex', gap: '0.4rem' }}>
+                        <Link
+                          to={`/agenda/turnos?odontologoId=${o.id}`}
+                          className="btn btn-primary btn-sm"
+                          title="Generar turnos para este odontólogo"
+                        >
+                          <CalendarPlus size={14} />
+                          <span>Generar Turnos</span>
+                        </Link>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleOpenMutualModal(o)}
+                          title="Vincular Obra Social"
+                        >
+                          <Link2 size={14} />
+                          <span>Asignar Mutual</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 );

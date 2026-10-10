@@ -132,15 +132,43 @@ export const ReservarTurno: React.FC = () => {
     }
   };
 
+  const getMinDateTimeLocal = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  };
+
   // 3. Crear un bloque de turno libre (solo administrador)
   const handleCrearTurnoLibre = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedOdontologo) return;
     try {
+      const fechaHora = new Date(nuevoTurnoData.fecha_hora_inicio);
+      if (isNaN(fechaHora.getTime())) {
+        alert('Fecha u hora inválida');
+        return;
+      }
+      if (fechaHora.getTime() <= Date.now()) {
+        alert('No se puede crear un turno con fecha u hora en el pasado. Seleccioná una fecha y hora futura.');
+        return;
+      }
+
+      const duracion = parseInt(nuevoTurnoData.duracion) || 30;
+      const fechaFin = new Date(fechaHora.getTime() + duracion * 60 * 1000);
+      const superpuesto = turnosDisponibles.find((t) => {
+        const tStart = new Date(t.fecha_hora_inicio);
+        const tEnd = new Date(tStart.getTime() + t.duracion * 60 * 1000);
+        return fechaHora < tEnd && fechaFin > tStart;
+      });
+      if (superpuesto) {
+        alert('Ya existe un turno en ese horario para este odontólogo. No se permiten turnos superpuestos.');
+        return;
+      }
+
       await turnosApi.create({
         odontologo_id: selectedOdontologo.id,
-        fecha_hora_inicio: new Date(nuevoTurnoData.fecha_hora_inicio).toISOString(),
-        duracion: parseInt(nuevoTurnoData.duracion) || 30
+        fecha_hora_inicio: fechaHora.toISOString(),
+        duracion
       });
       setIsGenerarTurnoModalOpen(false);
       setTurnosDisponibles(await turnosApi.getDisponibles(selectedOdontologo.id));
@@ -598,6 +626,7 @@ export const ReservarTurno: React.FC = () => {
               <input
                 type="datetime-local"
                 required
+                min={getMinDateTimeLocal()}
                 className="form-control"
                 value={nuevoTurnoData.fecha_hora_inicio}
                 onChange={(e) => setNuevoTurnoData({ ...nuevoTurnoData, fecha_hora_inicio: e.target.value })}

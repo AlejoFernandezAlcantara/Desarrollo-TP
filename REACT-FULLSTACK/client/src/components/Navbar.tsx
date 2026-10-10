@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Calendar, Users, Settings, Activity, Home, Menu, X, LogOut, LogIn, User as UserIcon, Sun, Moon } from 'lucide-react';
+import { Calendar, CalendarPlus, Users, Settings, Activity, Home, Menu, X, LogOut, LogIn, User as UserIcon, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import './Navbar.css';
@@ -24,6 +24,7 @@ export const Navbar: React.FC = () => {
   const canViewAdmin = user?.rol === 'ADMINISTRADOR';
   const canViewRecepcion = user?.rol === 'ADMINISTRADOR';
   const canViewConsultorio = user?.rol === 'ADMINISTRADOR' || user?.rol === 'ODONTOLOGO';
+  const canViewGenerarTurnos = user?.rol === 'ADMINISTRADOR' || user?.rol === 'ODONTOLOGO';
   const canViewAgenda = true; // Todos pueden ver agenda o turnos según su contexto
 
   return (
@@ -36,8 +37,8 @@ export const Navbar: React.FC = () => {
           <span className="navbar-title">Consultorio Carestia</span>
         </NavLink>
 
-        <button 
-          className="navbar-mobile-toggle" 
+        <button
+          className="navbar-mobile-toggle"
           onClick={toggleMenu}
           aria-label="Abrir menú"
         >
@@ -45,8 +46,8 @@ export const Navbar: React.FC = () => {
         </button>
 
         <nav className={`navbar-links ${mobileMenuOpen ? 'open' : ''}`}>
-          <NavLink 
-            to="/" 
+          <NavLink
+            to="/"
             className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
             onClick={closeMenu}
             end
@@ -56,8 +57,8 @@ export const Navbar: React.FC = () => {
           </NavLink>
 
           {canViewAgenda && (
-            <NavLink 
-              to="/agenda" 
+            <NavLink
+              to="/agenda"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               onClick={closeMenu}
             >
@@ -66,9 +67,20 @@ export const Navbar: React.FC = () => {
             </NavLink>
           )}
 
+          {canViewGenerarTurnos && (
+            <NavLink
+              to="/agenda/turnos"
+              className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              onClick={closeMenu}
+            >
+              <CalendarPlus size={18} />
+              <span>{user?.rol === 'ODONTOLOGO' ? 'Mis Turnos' : 'Generar Turnos'}</span>
+            </NavLink>
+          )}
+
           {canViewRecepcion && (
-            <NavLink 
-              to="/recepcion" 
+            <NavLink
+              to="/recepcion"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               onClick={closeMenu}
             >
@@ -78,8 +90,8 @@ export const Navbar: React.FC = () => {
           )}
 
           {canViewConsultorio && (
-            <NavLink 
-              to="/consultorio" 
+            <NavLink
+              to="/consultorio"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               onClick={closeMenu}
             >
@@ -89,8 +101,8 @@ export const Navbar: React.FC = () => {
           )}
 
           {canViewAdmin && (
-            <NavLink 
-              to="/admin" 
+            <NavLink
+              to="/admin"
               className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               onClick={closeMenu}
             >
@@ -111,43 +123,43 @@ export const Navbar: React.FC = () => {
             </button>
 
             <div className="navbar-auth-section">
-            {isAuthenticated && user ? (
-              <div className="navbar-user-box">
-                <div className="navbar-user-info">
-                  <div className="navbar-user-avatar">
-                    <UserIcon size={14} />
+              {isAuthenticated && user ? (
+                <div className="navbar-user-box">
+                  <div className="navbar-user-info">
+                    <div className="navbar-user-avatar">
+                      <UserIcon size={14} />
+                    </div>
+                    <div className="navbar-user-details">
+                      <span className="navbar-user-name">
+                        {user.nombre} {user.apellido}
+                      </span>
+                      <span className={`badge badge-role badge-${user.rol.toLowerCase()}`}>
+                        {user.rol}
+                      </span>
+                    </div>
                   </div>
-                  <div className="navbar-user-details">
-                    <span className="navbar-user-name">
-                      {user.nombre} {user.apellido}
-                    </span>
-                    <span className={`badge badge-role badge-${user.rol.toLowerCase()}`}>
-                      {user.rol}
-                    </span>
-                  </div>
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-sm btn-logout"
+                    onClick={handleLogout}
+                    title="Cerrar sesión"
+                  >
+                    <LogOut size={16} />
+                    <span className="logout-text">Salir</span>
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm btn-logout"
-                  onClick={handleLogout}
-                  title="Cerrar sesión"
+              ) : (
+                <NavLink
+                  to="/login"
+                  className="btn btn-primary btn-sm btn-login"
+                  onClick={closeMenu}
                 >
-                  <LogOut size={16} />
-                  <span className="logout-text">Salir</span>
-                </button>
-              </div>
-            ) : (
-              <NavLink
-                to="/login"
-                className="btn btn-primary btn-sm btn-login"
-                onClick={closeMenu}
-              >
-                <LogIn size={16} />
-                <span>Iniciar Sesión</span>
-              </NavLink>
-            )}
+                  <LogIn size={16} />
+                  <span>Iniciar Sesión</span>
+                </NavLink>
+              )}
+            </div>
           </div>
-        </div>
         </nav>
       </div>
     </header>

@@ -140,6 +140,10 @@ export const turnoService = {
 
     const fechaInicio = parseFecha(data.fecha_hora_inicio);
 
+    if (fechaInicio.getTime() < Date.now()) {
+      throw new AppError(400, 'No se puede crear un turno con fecha u hora en el pasado');
+    }
+
     if (data.duracion === undefined || data.duracion <= 0) {
       throw new AppError(400, 'La duración debe ser mayor a 0');
     }
@@ -148,6 +152,37 @@ export const turnoService = {
     assertEstado(estado);
 
     await odontologoService.getByIdOrThrow(data.odontologo_id);
+
+    // Validar que no haya turnos superpuestos o duplicados para el mismo odontólogo el mismo día
+    const fechaFin = new Date(fechaInicio.getTime() + data.duracion * 60 * 1000);
+    const startOfDay = new Date(fechaInicio);
+    startOfDay.setHours(0, 0, 0, 0);
+    const endOfDay = new Date(fechaInicio);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    const turnosDelDia = await prisma.turno.findMany({
+      where: {
+        odontologo_id: data.odontologo_id,
+        fecha_hora_inicio: {
+          gte: new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000),
+          lte: endOfDay
+        }
+      }
+    });
+
+    for (const t of turnosDelDia) {
+      const tStart = new Date(t.fecha_hora_inicio);
+      const tEnd = new Date(tStart.getTime() + t.duracion * 60 * 1000);
+
+      if (fechaInicio < tEnd && fechaFin > tStart) {
+        const horaInicioStr = tStart.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        const horaFinStr = tEnd.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+        throw new AppError(
+          409,
+          `El odontólogo ya tiene un turno en ese horario (${horaInicioStr} a ${horaFinStr} hs). No se permiten turnos superpuestos para el mismo día.`
+        );
+      }
+    }
 
     return await prisma.turno.create({
       data: {
@@ -190,6 +225,47 @@ export const turnoService = {
 
     if (data.estado !== undefined) {
       assertEstado(data.estado);
+    }
+
+    const fechaInicioFinal = data.fecha_hora_inicio !== undefined ? parseFecha(data.fecha_hora_inicio) : new Date(turno.fecha_hora_inicio);
+    const duracionFinal = data.duracion !== undefined ? data.duracion : turno.duracion;
+    const odontologoIdFinal = data.odontologo_id !== undefined ? data.odontologo_id : turno.odontologo_id;
+
+    if (data.fecha_hora_inicio !== undefined || data.duracion !== undefined || data.odontologo_id !== undefined) {
+      if (data.fecha_hora_inicio !== undefined && fechaInicioFinal.getTime() < Date.now()) {
+        throw new AppError(400, 'No se puede reprogramar un turno con fecha u hora en el pasado');
+      }
+
+      const fechaFinFinal = new Date(fechaInicioFinal.getTime() + duracionFinal * 60 * 1000);
+      const startOfDay = new Date(fechaInicioFinal);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(fechaInicioFinal);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const turnosDelDia = await prisma.turno.findMany({
+        where: {
+          odontologo_id: odontologoIdFinal,
+          codigo: { not: codigo },
+          fecha_hora_inicio: {
+            gte: new Date(startOfDay.getTime() - 24 * 60 * 60 * 1000),
+            lte: endOfDay
+          }
+        }
+      });
+
+      for (const t of turnosDelDia) {
+        const tStart = new Date(t.fecha_hora_inicio);
+        const tEnd = new Date(tStart.getTime() + t.duracion * 60 * 1000);
+
+        if (fechaInicioFinal < tEnd && fechaFinFinal > tStart) {
+          const horaInicioStr = tStart.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+          const horaFinStr = tEnd.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+          throw new AppError(
+            409,
+            `El odontólogo ya tiene un turno en ese horario (${horaInicioStr} a ${horaFinStr} hs). No se permiten turnos superpuestos para el mismo día.`
+          );
+        }
+      }
     }
 
     return await prisma.turno.update({

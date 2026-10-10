@@ -1,23 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Calendar as CalendarIcon, 
-  Plus, 
-  Search, 
-  User, 
-  Clock, 
-  XCircle, 
-  RefreshCw, 
-  Stethoscope, 
+import {
+  Calendar as CalendarIcon,
+  Plus,
+  CalendarPlus,
+  Search,
+  User,
+  Clock,
+  XCircle,
+  RefreshCw,
+  Stethoscope,
   Activity,
   Filter
 } from 'lucide-react';
 import { reservasApi, odontologosApi } from '../../services/api';
 import { Reserva, Odontologo } from '../../types';
 import { Modal } from '../../components/Modal';
+import { useAuth } from '../../contexts/AuthContext';
 import './Agenda.css';
 
 export const AgendaPage: React.FC = () => {
+  const { user } = useAuth();
+  const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [odontologos, setOdontologos] = useState<Odontologo[]>([]);
   const [selectedOdontologoId, setSelectedOdontologoId] = useState<string>('');
@@ -84,9 +88,15 @@ export const AgendaPage: React.FC = () => {
           <button className="btn btn-secondary" onClick={fetchAgenda} title="Recargar agenda">
             <RefreshCw size={16} />
           </button>
+          {esStaff && (
+            <Link to="/agenda/turnos" className="btn btn-secondary">
+              <CalendarPlus size={16} />
+              <span>{user?.rol === 'ODONTOLOGO' ? 'Mis Turnos' : 'Generar Turnos'}</span>
+            </Link>
+          )}
           <Link to="/agenda/reservar" className="btn btn-primary">
             <Plus size={18} />
-            <span>Reservar Turno </span>
+            <span>Reservar Turno</span>
           </Link>
         </div>
       </div>
@@ -163,7 +173,7 @@ export const AgendaPage: React.FC = () => {
                 const horaStr = turno ? dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
 
                 const pacienteNombre = `${r.paciente?.usuario?.apellido}, ${r.paciente?.usuario?.nombre}`;
-                const odontologoNombre = r.odontologo 
+                const odontologoNombre = r.odontologo
                   ? `${r.odontologo.usuario?.nombre} ${r.odontologo.usuario?.apellido}`
                   : 'No especificado';
 
@@ -208,11 +218,10 @@ export const AgendaPage: React.FC = () => {
                       )}
                     </td>
                     <td>
-                      <span className={`badge ${
-                        r.estado === 'realizada' ? 'badge-success' :
-                        r.estado === 'confirmada' ? 'badge-primary' :
-                        r.estado === 'cancelada' ? 'badge-danger' : 'badge-warning'
-                      }`}>
+                      <span className={`badge ${r.estado === 'realizada' ? 'badge-success' :
+                          r.estado === 'confirmada' ? 'badge-primary' :
+                            r.estado === 'cancelada' ? 'badge-danger' : 'badge-warning'
+                        }`}>
                         {r.estado}
                       </span>
                     </td>

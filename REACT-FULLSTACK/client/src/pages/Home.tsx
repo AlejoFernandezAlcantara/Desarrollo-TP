@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Calendar, 
+  CalendarPlus,
   Users, 
   Activity, 
   Settings, 
@@ -78,12 +79,20 @@ const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
           <div className="home-hero-actions">
             <Link to="/agenda/reservar" className="btn btn-hero-primary">
               <Calendar size={18} />
-              <span>Reservar Nuevo Turno </span>
+              <span>Reservar Nuevo Turno</span>
             </Link>
-            <Link to="/consultorio" className="btn btn-hero-secondary">
-              <Activity size={18} />
-              <span>Atención en Consultorio </span>
-            </Link>
+            {esStaff && (
+              <Link to="/agenda/turnos" className="btn btn-hero-secondary">
+                <CalendarPlus size={18} />
+                <span>{user?.rol === 'ODONTOLOGO' ? 'Generar Mis Turnos' : 'Generar Turnos Odontólogo'}</span>
+              </Link>
+            )}
+            {esStaff && (
+              <Link to="/consultorio" className="btn btn-hero-secondary">
+                <Activity size={18} />
+                <span>Atención en Consultorio</span>
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -140,6 +149,27 @@ const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
       </div>
 
       <div className="grid-2">
+        {/* Card Generación de Turnos (Odontólogos y Administradores) */}
+        {esStaff && (
+          <Link to="/agenda/turnos" className="quick-action-card">
+            <div className="action-icon-circle" style={{ backgroundColor: '#ecfdf5', color: '#059669' }}>
+              <CalendarPlus size={24} />
+            </div>
+            <h3 className="quick-action-title">
+              {user?.rol === 'ODONTOLOGO' ? 'Generar Mis Turnos y Horarios' : 'Generar Turnos de Odontólogos'}
+            </h3>
+            <p className="quick-action-desc">
+              {user?.rol === 'ODONTOLOGO'
+                ? 'Habilitá y administrá tus horarios y turnos disponibles para que los pacientes puedan agendarlos.'
+                : 'Habilitá y generá bloques de turnos disponibles para el plantel de profesionales odontólogos.'}
+            </p>
+            <div className="quick-action-link">
+              <span>{user?.rol === 'ODONTOLOGO' ? 'Generar mis turnos' : 'Generar turnos'}</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
+        )}
+
         {/* Card CUU 1: Agenda y Reservas */}
         <Link to="/agenda/reservar" className="quick-action-card">
           <div className="action-icon-circle" style={{ backgroundColor: '#F3E7CC', color: '#B08028' }}>
@@ -157,12 +187,11 @@ const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
 
         {/* Card CUU 2: Consultorio Clínico */}
         {esStaff && (
-        <Link to="/consultorio" className="quick-action-card">
           <Link to="/consultorio" className="quick-action-card">
             <div className="action-icon-circle" style={{ backgroundColor: '#FBF5E8', color: '#604828' }}>
               <Activity size={24} />
             </div>
-            <h3 className="quick-action-title"> Atención Clínica & Odontograma</h3>
+            <h3 className="quick-action-title">Atención Clínica & Odontograma</h3>
             <p className="quick-action-desc">
               Vista de pacientes citados para hoy. Permite al odontólogo ingresar a la consulta, registrar prácticas aplicadas en el odontograma y finalizar la sesión.
             </p>
@@ -171,12 +200,10 @@ const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
               <ArrowRight size={16} />
             </div>
           </Link>
-        </Link>
         )}  
 
         {/* Card Recepción */}
         {user?.rol === 'ADMINISTRADOR' && (
-        <Link to="/recepcion" className="quick-action-card">
           <Link to="/recepcion" className="quick-action-card">
             <div className="action-icon-circle" style={{ backgroundColor: '#f5f3ff', color: '#6366f1' }}>
               <Users size={24} />
@@ -190,13 +217,10 @@ const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
               <ArrowRight size={16} />
             </div>
           </Link>
-        </Link>
         )}
 
-        
         {/* Card Administración */}
         {user?.rol === 'ADMINISTRADOR' && (
-        <Link to="/recepcion" className="quick-action-card">
           <Link to="/admin" className="quick-action-card">
             <div className="action-icon-circle" style={{ backgroundColor: '#fff7ed', color: '#ea580c' }}>
               <Settings size={24} />
@@ -210,7 +234,6 @@ const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
               <ArrowRight size={16} />
             </div>
           </Link>
-        </Link>
         )}
       </div>
     </div>
