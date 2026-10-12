@@ -32,6 +32,47 @@ YA HECHO LO DE ARRIBA
 
 -agregar manejo de loading states y notificaciones(toast)
 
+consignas que faltan de nuestra propuesta : 
+
+    1. CRUD paciente {depende de} CRUD Mutual (se relacionan pero faltan cositas)
+    2. CRUD Cara {depende de} CRUD Diente (falta implementar en algo concreto)
+
+    1. Listado de odontologos filtrado por obra social, muestra nombre del odontologo y sus especialidades => detalle muestra datos completos del odontologo (funciona pero falta el filtrado por obra social)
+    2. Listado de los próximos turnos disponibles por odontólogo => Detalle: muestra Fecha y hora y duración. (funciona)
+
+    1. Reservar un turno con un Odontolo (casi completo falta arreglar bugs y boludeces)
+    2. Registrar practicas realizadas en una consulta 
+
+Frontend-regularidad:
+    - Desarrollarse utilizando un framework de Frontend. (si)
+    - Utilizar HTML5(si)
+    - Utilizar CSS según las directrices de alguna biblioteca de componentes, guía de estilo o framework de CSS y la metodología propuesta por el framework de frontend elegido. Se sugiere el uso de biblioteca de componentes; preprocesadores: sass, scss, less, stylus, etc o frameworks de css: Pico.css, Bulma, Material, Tailwind, Bootstrap, etc.(si)
+    - Guía de estilos sugerida Airbnb Javascript https://github.com/airbnb/javascript (no /  es opcional asi q ya fue)
+    - Aplicar la estrategia mobile-first para la escritura del código css de la aplicación (no / falta ver si es responsive)
+    - La app debe visualizarse correctamente en al menos 3 diferentes breakpoints: SM, MD, LG (no / se probo en pc)
+    - Seguir buenas prácticas de UX/UI (Que no requiera manual de usuario o explicaciones específicas para utilizar la interfaz ) (incheckeable)
+    -Las app debe mostrar las siguientes características entre sus componentes: 
+        -Manejo de eventos del usuario: click, input, etc (si)
+        -Ante una posibilidad de fallo, manejar el/los errores adecuadamente y de manera amigable al usuario (si)
+        -Reactividad ante un estado (si)
+        -Input property (si)
+        -Output property (si)
+    -Implementar al menos un servicio. 
+    -Para el manejo de la información, por ej una respuesta de un endpoint o los datos a enviar en una request, representar en el código los modelos de objetos con clases, interfaces y tipos de datos custom. (si)
+    -De ser posible, implementar algún patrón de diseño orientado a objetos. 
+    -Las dependencias para ejecución, desarrollo y test deben estar correctamente registradas para ser instaladas automáticamente (e.j. package.json). (si)
+
+Backend-regularidad
+    Desarrollarse en JavaScript. (si)
+    Utilizar un framework web que permita integrarse a las demás. (si)
+    herramientas a través de middlewares, pluggins o modulos. (si)
+    Exponer una API web (rest, tRPC o gRPC) para interactuar con el frontend. (si)
+    Utilizar una base de datos persistente que acceda a través de un servicio externo (es decir que no sea una base de datos embebida). (si)
+    La persistencia a la base de datos debe realizarse mediante un mapper (ORM/ODM/OXM). En caso que la base de datos utilizada no tenga un mapper disponible para JavaScript se deberá implementar la persistencai utilizando un patron Repository.(si)
+    Realizarse mediante capas. (si / creo)
+    Validar entrada de datos, manejar e informar apropiadamente los errores a través de la API. (si/ checkeable)
+    Las dependencias para ejecución, desarrollo y test deben estar correctamente registradas para ser instaladas automáticamente (e.j. package.json). (si/creo)
+
 
 stack: MERN
 Backend : Node.js + Express + Prisma
