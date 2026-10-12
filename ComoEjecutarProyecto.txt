@@ -1,4 +1,4 @@
-DESDE ../Desarrollo-TP (powershell)
+DESDE ../Desarrollo-TP (powershell y docker desktop abierto)
 
 PARA PPRENDER:
 .\iniciar.bat (windows)
