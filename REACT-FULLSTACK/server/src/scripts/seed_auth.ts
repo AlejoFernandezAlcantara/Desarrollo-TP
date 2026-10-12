@@ -4,6 +4,15 @@ import bcrypt from 'bcryptjs';
 async function seed() {
   console.log('Iniciando carga de usuarios y credenciales en la base de datos...');
 
+  // Si los usuarios de prueba ya existen, no se vuelve a sembrar (no se pisan contraseñas ni datos).
+  const yaCargados = await prisma.usuario.count({
+    where: { email: { in: ['admin@consultorio.com', 'odonto@consultorio.com', 'paciente@consultorio.com'] } },
+  });
+  if (yaCargados === 3) {
+    console.log('✅ Los usuarios de prueba ya están cargados. No se hizo nada.');
+    return;
+  }
+
   const adminPass = await bcrypt.hash('Admin123!', 10);
   const odontoPass = await bcrypt.hash('Odonto123!', 10);
   const pacientePass = await bcrypt.hash('Paciente123!', 10);

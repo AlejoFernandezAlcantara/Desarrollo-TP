@@ -1,3 +1,36 @@
+DESDE ../Desarrollo-TP (powershell)
+
+PARA PPRENDER:
+.\iniciar.bat (windows)
+./iniciar.sh (MAC/LINUX) (si  da permission denied, ejecutar una vez: chmod +x iniciar.sh detener.sh.)
+
+PARA APAGAR:
+.\detener.bat (windows)
+.\detener.sh (MAC/LINUX)
+
+REINICIAR BDD (se ejecutan scripts, si la queres vacia, ejecutar por docker):
+.\iniciar.bat reiniciar (windows)
+./iniciar.sh --reiniciar (MAC/LINUX)
+
+EJECUTAR UN SCRIPT:
+npx tsx src/scripts/......ts
+
+COMANDOS DOCKER:
+docker compose up -d db (Levantar solo la base)
+docker compose stop db (Apagar la base)
+docker compose down -v (Borrar la base por completo a mano)
+docker compose logs db (Ver logs de MySQL)
+docker ps (Estado de los contenedores)
+
+REVISAR BDD:
+docker compose exec db mysql -uroot -padmin consultorioBdd
+(se ejecuta query desde consola como si fuera workbench)
+
+
+
+
+
+
 Primero de todo revisar los .env del cliente como del servidor para tener todos los datos correctos
 
 Para levantar el Back:
