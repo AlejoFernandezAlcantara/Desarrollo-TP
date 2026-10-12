@@ -167,11 +167,18 @@ export const FinalizarReservaSchema = z.object({
 
 export const CreateDetalleSchema = z.object({
   reserva_id: z.number().int().positive(),
-  practica_id: z.number().int().positive(),
+  practica_id: z.number().int().positive().optional(),
+  practica_personalizada: z.string().trim().min(1).max(100).optional(),
   diente_id: z.number().int().positive().optional(),
   odontograma_id: z.number().int().positive().optional(),
   observaciones: z.string().trim().optional(),
-});
+}).refine(
+  (data) => data.practica_id !== undefined || (data.practica_personalizada && data.practica_personalizada.trim().length > 0),
+  {
+    message: 'Debe seleccionar una práctica precargada o ingresar una práctica personalizada',
+    path: ['practica_id']
+  }
+);
 
 
 // ─── Usuario (gestión de cuentas, sólo administrador) ─────────────────────

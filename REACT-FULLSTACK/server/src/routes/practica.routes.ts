@@ -16,9 +16,9 @@ const router = Router();
 router.get('/', getPracticas);
 router.get('/:id', validateParams(IdParamsSchema), getPracticaById);
 
-// Protegidas: catálogo administrativo
-router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(CreatePracticaSchema), createPractica);
-router.put('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(IdParamsSchema), validateRequest(UpdatePracticaSchema), updatePractica);
-router.delete('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(IdParamsSchema), deletePractica);
+// Protegidas: catálogo administrativo y profesional médico
+router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR', 'ODONTOLOGO'), validateRequest(CreatePracticaSchema), createPractica);
+router.put('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR', 'ODONTOLOGO'), validateParams(IdParamsSchema), validateRequest(UpdatePracticaSchema), updatePractica);
+router.delete('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR', 'ODONTOLOGO'), validateParams(IdParamsSchema), deletePractica);
 
 export default router;
