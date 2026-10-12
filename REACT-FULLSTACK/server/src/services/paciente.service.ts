@@ -113,15 +113,24 @@ export const pacienteService = {
       });
 
       // 2. Crear paciente vinculado
+      let nroPaciente = data.nro_paciente;
+      if (nroPaciente === undefined || nroPaciente === null) {
+        const ultimo = await tx.paciente.findFirst({
+          orderBy: { nro_paciente: 'desc' },
+          select: { nro_paciente: true },
+        });
+        nroPaciente = (ultimo?.nro_paciente ?? 0) + 1;
+      }
+
       const paciente = await tx.paciente.create({
         data: {
           id: usuario.id,
-          nro_paciente: data.nro_paciente,
+          nro_paciente: nroPaciente,
           direccion: data.direccion,
           telefono: data.telefono,
           nroDocumento: data.nroDocumento,
-          tipoDoc: data.tipoDoc
-        }
+          tipoDoc: data.tipoDoc,
+        },
       });
 
       // 3. Si se especificó una mutual, crear la relación
