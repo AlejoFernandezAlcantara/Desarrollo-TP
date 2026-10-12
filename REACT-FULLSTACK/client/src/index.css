@@ -19,18 +19,18 @@
   --danger: #ef4444;
   --danger-light: #fef2f2;
   
-  --bg-app: #F9F1E4;
-  --bg-surface: #ffffff;
-  --bg-surface-glass: rgba(255, 255, 255, 0.85);
-  --bg-surface-hover: #f1f5f9;
-  --bg-table-header: #F9F1E4;
+  --bg-app: #F5EFEB;
+  --bg-surface: #FCFAF8;
+  --bg-surface-glass: rgba(252, 250, 248, 0.92);
+  --bg-surface-hover: #EFE8E2;
+  --bg-table-header: #F5EFEB;
   
-  --text-main: #0f172a;
-  --text-secondary: #334155;
-  --text-muted: #64748b;
-  --text-subtle: #94a3b8;
+  --text-main: #1C1917;
+  --text-secondary: #44403C;
+  --text-muted: #78716C;
+  --text-subtle: #A8A29E;
   
-  --border-light: #e2e8f0;
+  --border-light: #E7DFD7;
   --border-focus: #C8A058;
   
   --radius-sm: 6px;
@@ -38,11 +38,11 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
   
-  --shadow-xs: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
-  --shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.08), 0 1px 2px -1px rgba(15, 23, 42, 0.08);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.08), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  --shadow-xs: 0 1px 2px 0 rgba(41, 37, 36, 0.04);
+  --shadow-sm: 0 1px 3px 0 rgba(41, 37, 36, 0.06), 0 1px 2px -1px rgba(41, 37, 36, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(41, 37, 36, 0.06), 0 2px 4px -2px rgba(41, 37, 36, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(41, 37, 36, 0.07), 0 4px 6px -4px rgba(41, 37, 36, 0.04);
+  --shadow-xl: 0 20px 25px -5px rgba(41, 37, 36, 0.07), 0 8px 10px -6px rgba(41, 37, 36, 0.04);
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -209,13 +209,13 @@ body {
   background: var(--bg-surface);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 12px -2px rgba(45, 30, 15, 0.08), 0 2px 4px -1px rgba(45, 30, 15, 0.05);
   padding: 1.5rem;
   transition: var(--transition);
 }
 
 .card:hover {
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 8px 20px -3px rgba(45, 30, 15, 0.12), 0 3px 6px -1px rgba(45, 30, 15, 0.06);
 }
 
 .card-header {
@@ -419,6 +419,12 @@ body {
 }
 
 /* Responsive grid */
+.grid-1 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.25rem;
+}
+
 .grid-2 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));

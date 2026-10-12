@@ -9,13 +9,27 @@ import {
     CheckCircle2,
     Filter,
     Layers,
-    Calendar as CalendarIcon
+    Calendar as CalendarIcon,
+    CalendarRange
 } from 'lucide-react';
 import { turnosApi, odontologosApi } from '../../services/api';
 import { Turno, Odontologo } from '../../types';
 import { Modal } from '../../components/Modal';
 import { useAuth } from '../../contexts/AuthContext';
 import './Agenda.css';
+
+// ─── Tipos internos ─────────────────────────────────────────────────────────
+type ModoCreacion = 'individual' | 'unDia' | 'variosD';
+
+const DIAS_SEMANA = [
+    { valor: 1, label: 'Lunes' },
+    { valor: 2, label: 'Martes' },
+    { valor: 3, label: 'Miércoles' },
+    { valor: 4, label: 'Jueves' },
+    { valor: 5, label: 'Viernes' },
+    { valor: 6, label: 'Sábado' },
+    { valor: 0, label: 'Domingo' },
+];
 
 export const GestionTurnos: React.FC = () => {
     const { user } = useAuth();
@@ -37,7 +51,7 @@ export const GestionTurnos: React.FC = () => {
 
     // Modal crear turno
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [modoCreacion, setModoCreacion] = useState<'individual' | 'rango'>('individual');
+    const [modoCreacion, setModoCreacion] = useState<ModoCreacion>('individual');
     const [submitting, setSubmitting] = useState(false);
 
     // Formulario turno individual
@@ -47,12 +61,23 @@ export const GestionTurnos: React.FC = () => {
         odontologo_id: esOdontologo && user?.personaId ? user.personaId.toString() : (queryOdontologoId || '')
     });
 
-    // Formulario generación por rango (múltiples turnos)
-    const [rangoTurnos, setRangoTurnos] = useState({
+    // Formulario carga masiva — un solo día
+    const [unDiaForm, setUnDiaForm] = useState({
         fecha: '',
         hora_inicio: '09:00',
         hora_fin: '13:00',
         duracion: '30',
+        odontologo_id: esOdontologo && user?.personaId ? user.personaId.toString() : (queryOdontologoId || '')
+    });
+
+    // Formulario carga masiva — varios días
+    const [variosD, setVariosD] = useState({
+        fecha_desde: '',
+        fecha_hasta: '',
+        hora_inicio: '09:00',
+        hora_fin: '13:00',
+        duracion: '30',
+        dias_semana: [] as number[],
         odontologo_id: esOdontologo && user?.personaId ? user.personaId.toString() : (queryOdontologoId || '')
     });
 
@@ -65,11 +90,13 @@ export const GestionTurnos: React.FC = () => {
             const myId = user.personaId.toString();
             setSelectedOdontologoId(myId);
             setNuevoTurno(prev => ({ ...prev, odontologo_id: myId }));
-            setRangoTurnos(prev => ({ ...prev, odontologo_id: myId }));
+            setUnDiaForm(prev => ({ ...prev, odontologo_id: myId }));
+            setVariosD(prev => ({ ...prev, odontologo_id: myId }));
         } else if (esAdmin && queryOdontologoId) {
             setSelectedOdontologoId(queryOdontologoId);
             setNuevoTurno(prev => ({ ...prev, odontologo_id: queryOdontologoId }));
-            setRangoTurnos(prev => ({ ...prev, odontologo_id: queryOdontologoId }));
+            setUnDiaForm(prev => ({ ...prev, odontologo_id: queryOdontologoId }));
+            setVariosD(prev => ({ ...prev, odontologo_id: queryOdontologoId }));
         }
     }, [esOdontologo, esAdmin, user?.personaId, queryOdontologoId]);
 
@@ -173,7 +200,50 @@ export const GestionTurnos: React.FC = () => {
         }
     };
 
-    const handleCrearTurnosRango = async (e: React.FormEvent) => {
+    // ─── Helper: generar slots para un único día ────────────────────────────
+    const generarTurnosParaFecha = (
+        fecha: string,
+        hora_inicio: string,
+        hora_fin: string,
+        duracionMin: number,
+        targetOdontologoId: number
+    ): { dt: Date }[] => {
+        const [hIni, mIni] = hora_inicio.split(':').map(Number);
+        const [hFin, mFin] = hora_fin.split(':').map(Number);
+        const startMinutes = hIni * 60 + mIni;
+        const endMinutes = hFin * 60 + mFin;
+        if (endMinutes <= startMinutes) throw new Error('La hora de fin debe ser posterior a la hora de inicio');
+        const totalMin = endMinutes - startMinutes;
+        const cantidadTurnos = Math.floor(totalMin / duracionMin);
+        if (cantidadTurnos <= 0) throw new Error('El intervalo de tiempo es menor que la duración de un turno');
+        if (cantidadTurnos > 30) throw new Error('No es posible generar más de 30 turnos por día simultáneamente');
+
+        const slots: { dt: Date }[] = [];
+        for (let i = 0; i < cantidadTurnos; i++) {
+            const minOffset = startMinutes + (i * duracionMin);
+            const h = Math.floor(minOffset / 60).toString().padStart(2, '0');
+            const m = (minOffset % 60).toString().padStart(2, '0');
+            const dt = new Date(`${fecha}T${h}:${m}:00`);
+            const dtEnd = new Date(dt.getTime() + duracionMin * 60 * 1000);
+            if (dt.getTime() <= Date.now()) {
+                throw new Error(`El turno de las ${h}:${m} hs del ${fecha} es en el pasado. No se pueden generar turnos pasados.`);
+            }
+            const superpuesto = turnos.find((t) => {
+                if (t.odontologo_id !== targetOdontologoId) return false;
+                const tStart = new Date(t.fecha_hora_inicio);
+                const tEnd = new Date(tStart.getTime() + t.duracion * 60 * 1000);
+                return dt < tEnd && dtEnd > tStart;
+            });
+            if (superpuesto) {
+                throw new Error(`El turno de las ${h}:${m} hs del ${fecha} se superpone con un turno ya existente.`);
+            }
+            slots.push({ dt });
+        }
+        return slots;
+    };
+
+    // ─── Handler carga masiva un día ────────────────────────────────────────
+    const handleCargaMasivaUnDia = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
         setError(null);
@@ -181,95 +251,82 @@ export const GestionTurnos: React.FC = () => {
         try {
             const targetOdontologoId = esOdontologo
                 ? user?.personaId
-                : parseInt(rangoTurnos.odontologo_id);
-
-            if (!targetOdontologoId) {
-                throw new Error('Debes seleccionar un profesional odontólogo');
-            }
-
-            const { fecha, hora_inicio, hora_fin, duracion } = rangoTurnos;
-            if (!fecha || !hora_inicio || !hora_fin) {
-                throw new Error('Completá la fecha y los horarios de inicio y fin');
-            }
-
-            const hoyStr = getTodayString();
-            if (fecha < hoyStr) {
-                throw new Error('La fecha seleccionada no puede ser en el pasado');
-            }
-
-            const duracionMin = parseInt(duracion);
-            const [hIni, mIni] = hora_inicio.split(':').map(Number);
-            const [hFin, mFin] = hora_fin.split(':').map(Number);
-
-            const startMinutes = hIni * 60 + mIni;
-            const endMinutes = hFin * 60 + mFin;
-
-            if (endMinutes <= startMinutes) {
-                throw new Error('La hora de fin debe ser posterior a la hora de inicio');
-            }
-
+                : parseInt(unDiaForm.odontologo_id);
+            if (!targetOdontologoId) throw new Error('Debes seleccionar un profesional odontólogo');
+            const { fecha, hora_inicio, hora_fin, duracion } = unDiaForm;
+            if (!fecha || !hora_inicio || !hora_fin) throw new Error('Completá la fecha y los horarios de inicio y fin');
+            if (fecha < getTodayString()) throw new Error('La fecha seleccionada no puede ser en el pasado');
             const dtInicio = new Date(`${fecha}T${hora_inicio}:00`);
-            if (dtInicio.getTime() <= Date.now()) {
-                throw new Error('La hora de inicio seleccionada ya pasó. Seleccioná un horario posterior al actual.');
-            }
-
-            const totalMin = endMinutes - startMinutes;
-            const cantidadTurnos = Math.floor(totalMin / duracionMin);
-
-            if (cantidadTurnos <= 0) {
-                throw new Error('El intervalo de tiempo es menor que la duración de un turno');
-            }
-
-            if (cantidadTurnos > 30) {
-                throw new Error('No es posible generar más de 30 turnos simultáneamente');
-            }
-
-            // Generar cada turno validando que no quede en el pasado ni se superponga
-            const promesas = [];
-            for (let i = 0; i < cantidadTurnos; i++) {
-                const minOffset = startMinutes + (i * duracionMin);
-                const h = Math.floor(minOffset / 60);
-                const m = minOffset % 60;
-                const hh = h.toString().padStart(2, '0');
-                const mm = m.toString().padStart(2, '0');
-
-                // Formato local para Date
-                const dt = new Date(`${fecha}T${hh}:${mm}:00`);
-                if (dt.getTime() <= Date.now()) {
-                    throw new Error(`El turno de las ${hh}:${mm} hs es en el pasado. No se pueden generar turnos pasados.`);
-                }
-                const dtEnd = new Date(dt.getTime() + duracionMin * 60 * 1000);
-
-                const superpuesto = turnos.find((t) => {
-                    if (t.odontologo_id !== targetOdontologoId) return false;
-                    const tStart = new Date(t.fecha_hora_inicio);
-                    const tEnd = new Date(tStart.getTime() + t.duracion * 60 * 1000);
-                    return dt < tEnd && dtEnd > tStart;
-                });
-
-                if (superpuesto) {
-                    throw new Error(`El turno de las ${hh}:${mm} hs se superpone con un turno ya existente. No se permiten turnos superpuestos para el mismo día.`);
-                }
-
-                promesas.push(
+            if (dtInicio.getTime() <= Date.now()) throw new Error('La hora de inicio seleccionada ya pasó. Seleccioná un horario posterior al actual.');
+            const duracionMin = parseInt(duracion);
+            const slots = generarTurnosParaFecha(fecha, hora_inicio, hora_fin, duracionMin, targetOdontologoId);
+            await Promise.all(
+                slots.map(({ dt }) =>
                     turnosApi.create({
                         odontologo_id: targetOdontologoId,
                         fecha_hora_inicio: dt.toISOString(),
                         duracion: duracionMin
                     })
-                );
-            }
-
-            await Promise.all(promesas);
-
-            setSuccessMsg(`Se generaron correctamente ${cantidadTurnos} turnos`);
+                )
+            );
+            setSuccessMsg(`Se generaron correctamente ${slots.length} turnos`);
             setIsModalOpen(false);
-            setRangoTurnos(prev => ({
-                ...prev,
-                fecha: '',
-                hora_inicio: '09:00',
-                hora_fin: '13:00'
-            }));
+            setUnDiaForm(prev => ({ ...prev, fecha: '', hora_inicio: '09:00', hora_fin: '13:00' }));
+            fetchTurnos();
+        } catch (err: any) {
+            setError(err.message || 'Error al generar los turnos');
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    // ─── Handler carga masiva varios días ───────────────────────────────────
+    const handleCargaMasivaVariosDias = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError(null);
+        setSuccessMsg(null);
+        try {
+            const targetOdontologoId = esOdontologo
+                ? user?.personaId
+                : parseInt(variosD.odontologo_id);
+            if (!targetOdontologoId) throw new Error('Debes seleccionar un profesional odontólogo');
+            const { fecha_desde, fecha_hasta, hora_inicio, hora_fin, duracion, dias_semana } = variosD;
+            if (!fecha_desde || !fecha_hasta) throw new Error('Completá la fecha de inicio y fin del rango');
+            if (fecha_desde < getTodayString()) throw new Error('La fecha de inicio no puede ser en el pasado');
+            if (fecha_hasta < fecha_desde) throw new Error('La fecha de fin debe ser igual o posterior a la fecha de inicio');
+            if (dias_semana.length === 0) throw new Error('Seleccioná al menos un día de la semana');
+            if (!hora_inicio || !hora_fin) throw new Error('Completá los horarios de inicio y fin');
+            const duracionMin = parseInt(duracion);
+            const pad = (n: number) => String(n).padStart(2, '0');
+            const allSlots: { fecha: string; dt: Date }[] = [];
+            let cursor = new Date(`${fecha_desde}T00:00:00`);
+            const hasta = new Date(`${fecha_hasta}T00:00:00`);
+            while (cursor <= hasta) {
+                const diaSemana = cursor.getDay();
+                if (dias_semana.includes(diaSemana)) {
+                    const fechaStr = `${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}-${pad(cursor.getDate())}`;
+                    const dtInicio = new Date(`${fechaStr}T${hora_inicio}:00`);
+                    if (dtInicio.getTime() > Date.now()) {
+                        const slots = generarTurnosParaFecha(fechaStr, hora_inicio, hora_fin, duracionMin, targetOdontologoId);
+                        slots.forEach(({ dt }) => allSlots.push({ fecha: fechaStr, dt }));
+                    }
+                }
+                cursor.setDate(cursor.getDate() + 1);
+            }
+            if (allSlots.length === 0) throw new Error('No se encontraron fechas válidas para generar turnos. Verificá el rango de fechas y los días seleccionados.');
+            await Promise.all(
+                allSlots.map(({ dt }) =>
+                    turnosApi.create({
+                        odontologo_id: targetOdontologoId,
+                        fecha_hora_inicio: dt.toISOString(),
+                        duracion: duracionMin
+                    })
+                )
+            );
+            setSuccessMsg(`Se generaron correctamente ${allSlots.length} turnos en ${new Set(allSlots.map(s => s.fecha)).size} días`);
+            setIsModalOpen(false);
+            setVariosD(prev => ({ ...prev, fecha_desde: '', fecha_hasta: '', dias_semana: [] }));
             fetchTurnos();
         } catch (err: any) {
             setError(err.message || 'Error al generar los turnos');
@@ -301,17 +358,13 @@ export const GestionTurnos: React.FC = () => {
         return 'badge-secondary';
     };
 
-    // Previsualización de cantidad de turnos en rango
-    const calcularPrevisualizacionRango = () => {
-        const { fecha, hora_inicio, hora_fin, duracion } = rangoTurnos;
+    // ─── Previsualización un día ──────────────────────────────────────────
+    const calcularPrevisualizacionUnDia = () => {
+        const { fecha, hora_inicio, hora_fin, duracion } = unDiaForm;
         if (!fecha || !hora_inicio || !hora_fin || !duracion) return 0;
-
-        const hoyStr = getTodayString();
-        if (fecha < hoyStr) return 0;
-
+        if (fecha < getTodayString()) return 0;
         const dtInicio = new Date(`${fecha}T${hora_inicio}:00`);
         if (dtInicio.getTime() <= Date.now()) return 0;
-
         const [hIni, mIni] = hora_inicio.split(':').map(Number);
         const [hFin, mFin] = hora_fin.split(':').map(Number);
         const start = hIni * 60 + mIni;
@@ -319,6 +372,45 @@ export const GestionTurnos: React.FC = () => {
         if (end <= start) return 0;
         return Math.floor((end - start) / parseInt(duracion));
     };
+
+    // ─── Previsualización varios días ─────────────────────────────────────
+    const calcularPrevisualizacionVariosDias = () => {
+        const { fecha_desde, fecha_hasta, hora_inicio, hora_fin, duracion, dias_semana } = variosD;
+        if (!fecha_desde || !fecha_hasta || !hora_inicio || !hora_fin || dias_semana.length === 0) return { turnos: 0, dias: 0 };
+        if (fecha_hasta < fecha_desde) return { turnos: 0, dias: 0 };
+        const [hIni, mIni] = hora_inicio.split(':').map(Number);
+        const [hFin, mFin] = hora_fin.split(':').map(Number);
+        const start = hIni * 60 + mIni;
+        const end = hFin * 60 + mFin;
+        if (end <= start || !duracion) return { turnos: 0, dias: 0 };
+        const turnosPorDia = Math.floor((end - start) / parseInt(duracion));
+        if (turnosPorDia <= 0) return { turnos: 0, dias: 0 };
+        const pad = (n: number) => String(n).padStart(2, '0');
+        let diasCount = 0;
+        let cursor = new Date(`${fecha_desde}T00:00:00`);
+        const hasta = new Date(`${fecha_hasta}T00:00:00`);
+        while (cursor <= hasta) {
+            const diaSemana = cursor.getDay();
+            if (dias_semana.includes(diaSemana)) {
+                const fechaStr = `${cursor.getFullYear()}-${pad(cursor.getMonth() + 1)}-${pad(cursor.getDate())}`;
+                const dtInicio = new Date(`${fechaStr}T${hora_inicio}:00`);
+                if (dtInicio.getTime() > Date.now()) diasCount++;
+            }
+            cursor.setDate(cursor.getDate() + 1);
+        }
+        return { turnos: diasCount * turnosPorDia, dias: diasCount };
+    };
+
+    const toggleDiaSemana = (dia: number) => {
+        setVariosD(prev => ({
+            ...prev,
+            dias_semana: prev.dias_semana.includes(dia)
+                ? prev.dias_semana.filter(d => d !== dia)
+                : [...prev.dias_semana, dia]
+        }));
+    };
+
+    const prevVarios = calcularPrevisualizacionVariosDias();
 
     return (
         <div>
@@ -517,7 +609,7 @@ export const GestionTurnos: React.FC = () => {
             >
                 <div>
                     {/* Selector de modo */}
-                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem', flexWrap: 'wrap' }}>
                         <button
                             type="button"
                             className={`btn ${modoCreacion === 'individual' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
@@ -528,11 +620,19 @@ export const GestionTurnos: React.FC = () => {
                         </button>
                         <button
                             type="button"
-                            className={`btn ${modoCreacion === 'rango' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
-                            onClick={() => setModoCreacion('rango')}
+                            className={`btn ${modoCreacion === 'unDia' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                            onClick={() => setModoCreacion('unDia')}
                         >
                             <Layers size={14} />
-                            <span>Generar Bloque de Turnos</span>
+                            <span>Carga Masiva — Un Día</span>
+                        </button>
+                        <button
+                            type="button"
+                            className={`btn ${modoCreacion === 'variosD' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
+                            onClick={() => setModoCreacion('variosD')}
+                        >
+                            <CalendarRange size={14} />
+                            <span>Carga Masiva — Varios Días</span>
                         </button>
                     </div>
 
@@ -557,8 +657,8 @@ export const GestionTurnos: React.FC = () => {
                         </div>
                     )}
 
-                    {modoCreacion === 'individual' ? (
-                        /* Formulario Individual */
+                    {/* ── Formulario Individual ── */}
+                    {modoCreacion === 'individual' && (
                         <form onSubmit={handleCrearTurnoIndividual}>
                             {esAdmin && (
                                 <div className="form-group">
@@ -623,17 +723,19 @@ export const GestionTurnos: React.FC = () => {
                                 </button>
                             </div>
                         </form>
-                    ) : (
-                        /* Formulario por Rango / Bloque */
-                        <form onSubmit={handleCrearTurnosRango}>
+                    )}
+
+                    {/* ── Formulario Carga Masiva — Un Día ── */}
+                    {modoCreacion === 'unDia' && (
+                        <form onSubmit={handleCargaMasivaUnDia}>
                             {esAdmin && (
                                 <div className="form-group">
                                     <label className="form-label">Profesional Odontólogo *</label>
                                     <select
                                         className="form-control"
                                         required
-                                        value={rangoTurnos.odontologo_id}
-                                        onChange={(e) => setRangoTurnos({ ...rangoTurnos, odontologo_id: e.target.value })}
+                                        value={unDiaForm.odontologo_id}
+                                        onChange={(e) => setUnDiaForm({ ...unDiaForm, odontologo_id: e.target.value })}
                                     >
                                         <option value="">Seleccioná un odontólogo...</option>
                                         {odontologos.map((o) => (
@@ -652,15 +754,12 @@ export const GestionTurnos: React.FC = () => {
                                     required
                                     min={getTodayString()}
                                     className="form-control"
-                                    value={rangoTurnos.fecha}
+                                    value={unDiaForm.fecha}
                                     onChange={(e) => {
                                         const val = e.target.value;
-                                        if (val && val < getTodayString()) {
-                                            setError('No podés seleccionar una fecha en el pasado.');
-                                        } else {
-                                            setError(null);
-                                        }
-                                        setRangoTurnos({ ...rangoTurnos, fecha: val });
+                                        if (val && val < getTodayString()) setError('No podés seleccionar una fecha en el pasado.');
+                                        else setError(null);
+                                        setUnDiaForm({ ...unDiaForm, fecha: val });
                                     }}
                                 />
                             </div>
@@ -668,33 +767,20 @@ export const GestionTurnos: React.FC = () => {
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                                 <div className="form-group">
                                     <label className="form-label">Hora Desde *</label>
-                                    <input
-                                        type="time"
-                                        required
-                                        className="form-control"
-                                        value={rangoTurnos.hora_inicio}
-                                        onChange={(e) => setRangoTurnos({ ...rangoTurnos, hora_inicio: e.target.value })}
-                                    />
+                                    <input type="time" required className="form-control" value={unDiaForm.hora_inicio}
+                                        onChange={(e) => setUnDiaForm({ ...unDiaForm, hora_inicio: e.target.value })} />
                                 </div>
                                 <div className="form-group">
                                     <label className="form-label">Hora Hasta *</label>
-                                    <input
-                                        type="time"
-                                        required
-                                        className="form-control"
-                                        value={rangoTurnos.hora_fin}
-                                        onChange={(e) => setRangoTurnos({ ...rangoTurnos, hora_fin: e.target.value })}
-                                    />
+                                    <input type="time" required className="form-control" value={unDiaForm.hora_fin}
+                                        onChange={(e) => setUnDiaForm({ ...unDiaForm, hora_fin: e.target.value })} />
                                 </div>
                             </div>
 
                             <div className="form-group">
                                 <label className="form-label">Duración de Cada Turno *</label>
-                                <select
-                                    className="form-control"
-                                    value={rangoTurnos.duracion}
-                                    onChange={(e) => setRangoTurnos({ ...rangoTurnos, duracion: e.target.value })}
-                                >
+                                <select className="form-control" value={unDiaForm.duracion}
+                                    onChange={(e) => setUnDiaForm({ ...unDiaForm, duracion: e.target.value })}>
                                     <option value="15">15 minutos</option>
                                     <option value="30">30 minutos (Estándar)</option>
                                     <option value="45">45 minutos</option>
@@ -702,27 +788,104 @@ export const GestionTurnos: React.FC = () => {
                                 </select>
                             </div>
 
-                            {calcularPrevisualizacionRango() > 0 && (
-                                <div style={{
-                                    backgroundColor: 'var(--bg-muted)',
-                                    borderRadius: 'var(--radius-md)',
-                                    padding: '0.75rem 1rem',
-                                    fontSize: '0.85rem',
-                                    color: 'var(--text-main)',
-                                    marginBottom: '1rem',
-                                    border: '1px solid var(--border)'
-                                }}>
-                                    ✨ Se generarán <strong>{calcularPrevisualizacionRango()} turnos</strong> consecutivos de {rangoTurnos.duracion} minutos entre las {rangoTurnos.hora_inicio} hs y las {rangoTurnos.hora_fin} hs.
+                            {calcularPrevisualizacionUnDia() > 0 && (
+                                <div style={{ backgroundColor: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-main)', marginBottom: '1rem', border: '1px solid var(--border)' }}>
+                                    ✨ Se generarán <strong>{calcularPrevisualizacionUnDia()} turnos</strong> consecutivos de {unDiaForm.duracion} minutos entre las {unDiaForm.hora_inicio} hs y las {unDiaForm.hora_fin} hs.
                                 </div>
                             )}
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-                                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>
-                                    Cancelar
-                                </button>
-                                <button type="submit" className="btn btn-primary" disabled={submitting || calcularPrevisualizacionRango() <= 0}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" disabled={submitting || calcularPrevisualizacionUnDia() <= 0}>
                                     <Layers size={16} />
-                                    <span>{submitting ? 'Generando...' : `Generar ${calcularPrevisualizacionRango() > 0 ? `${calcularPrevisualizacionRango()} ` : ''}Turnos`}</span>
+                                    <span>{submitting ? 'Generando...' : `Generar ${calcularPrevisualizacionUnDia() > 0 ? `${calcularPrevisualizacionUnDia()} ` : ''}Turnos`}</span>
+                                </button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* ── Formulario Carga Masiva — Varios Días ── */}
+                    {modoCreacion === 'variosD' && (
+                        <form onSubmit={handleCargaMasivaVariosDias}>
+                            {esAdmin && (
+                                <div className="form-group">
+                                    <label className="form-label">Profesional Odontólogo *</label>
+                                    <select className="form-control" required value={variosD.odontologo_id}
+                                        onChange={(e) => setVariosD({ ...variosD, odontologo_id: e.target.value })}>
+                                        <option value="">Seleccioná un odontólogo...</option>
+                                        {odontologos.map((o) => (
+                                            <option key={o.id} value={o.id}>
+                                                Dr./Dra. {o.nombreCompleto || `${o.usuario?.nombre} ${o.usuario?.apellido}`} ({o.especialidad})
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">Fecha Desde *</label>
+                                    <input type="date" required min={getTodayString()} className="form-control" value={variosD.fecha_desde}
+                                        onChange={(e) => setVariosD({ ...variosD, fecha_desde: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Fecha Hasta *</label>
+                                    <input type="date" required min={variosD.fecha_desde || getTodayString()} className="form-control" value={variosD.fecha_hasta}
+                                        onChange={(e) => setVariosD({ ...variosD, fecha_hasta: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Días de la Semana *</label>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '0.4rem' }}>
+                                    {DIAS_SEMANA.map((dia) => {
+                                        const sel = variosD.dias_semana.includes(dia.valor);
+                                        return (
+                                            <button key={dia.valor} type="button" onClick={() => toggleDiaSemana(dia.valor)}
+                                                style={{ padding: '0.35rem 0.85rem', borderRadius: 'var(--radius-md)', border: sel ? '2px solid var(--primary)' : '2px solid var(--border)', background: sel ? 'var(--primary)' : 'var(--bg-card)', color: sel ? '#fff' : 'var(--text-main)', fontWeight: 600, fontSize: '0.82rem', cursor: 'pointer', transition: 'all 0.15s ease' }}>
+                                                {dia.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div className="form-group">
+                                    <label className="form-label">Hora Desde *</label>
+                                    <input type="time" required className="form-control" value={variosD.hora_inicio}
+                                        onChange={(e) => setVariosD({ ...variosD, hora_inicio: e.target.value })} />
+                                </div>
+                                <div className="form-group">
+                                    <label className="form-label">Hora Hasta *</label>
+                                    <input type="time" required className="form-control" value={variosD.hora_fin}
+                                        onChange={(e) => setVariosD({ ...variosD, hora_fin: e.target.value })} />
+                                </div>
+                            </div>
+
+                            <div className="form-group">
+                                <label className="form-label">Duración de Cada Turno *</label>
+                                <select className="form-control" value={variosD.duracion}
+                                    onChange={(e) => setVariosD({ ...variosD, duracion: e.target.value })}>
+                                    <option value="15">15 minutos</option>
+                                    <option value="30">30 minutos (Estándar)</option>
+                                    <option value="45">45 minutos</option>
+                                    <option value="60">60 minutos (1 hora)</option>
+                                </select>
+                            </div>
+
+                            {prevVarios.dias > 0 && (
+                                <div style={{ backgroundColor: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-main)', marginBottom: '1rem', border: '1px solid var(--border)' }}>
+                                    📅 Se generarán <strong>{prevVarios.turnos} turnos</strong> distribuidos en <strong>{prevVarios.dias} días</strong> ({variosD.duracion} min c/u, de {variosD.hora_inicio} a {variosD.hora_fin} hs).
+
+                                </div>
+                            )}
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
+                                <button type="button" className="btn btn-secondary" onClick={() => setIsModalOpen(false)}>Cancelar</button>
+                                <button type="submit" className="btn btn-primary" disabled={submitting || prevVarios.turnos <= 0}>
+                                    <CalendarRange size={16} />
+                                    <span>{submitting ? 'Generando...' : prevVarios.turnos > 0 ? `Generar ${prevVarios.turnos} Turnos en ${prevVarios.dias} días` : 'Generar Turnos'}</span>
                                 </button>
                             </div>
                         </form>

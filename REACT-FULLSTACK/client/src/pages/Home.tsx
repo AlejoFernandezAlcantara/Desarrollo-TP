@@ -12,56 +12,99 @@ import {
   ShieldCheck,
   Stethoscope
 } from 'lucide-react';
-import { pacientesApi, reservasApi, odontologosApi, mutualesApi } from '../services/api';
+import { pacientesApi, reservasApi, odontologosApi } from '../services/api';
 import './Home.css';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Home: React.FC = () => {
-  const [stats, setStats] = useState({
-    pacientesCount: 0,
-    odontologosCount: 0,
-    reservasHoyCount: 0,
-    mutualesCount: 0,
-    loading: true
-  });
+  const { user } = useAuth();
+  const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
 
-const { user } = useAuth();
-const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
+  const [loading, setLoading] = useState(true);
+  const [pacienteReservasPendientes, setPacienteReservasPendientes] = useState(0);
+  const [turnosPendientesHoy, setTurnosPendientesHoy] = useState(0);
+  const [turnosAtendidosHoy, setTurnosAtendidosHoy] = useState(0);
+
+  // Fecha de hoy local en formato YYYY-MM-DD
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const now = new Date();
+  const hoyStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+
+  // Fecha legible para mostrar como subtítulo (ej: "12 de octubre")
+  const fechaHoyLegible = now.toLocaleDateString('es-AR', {
+    day: 'numeric',
+    month: 'long'
+  });
 
   useEffect(() => {
     const fetchStats = async () => {
+      setLoading(true);
       try {
-        const [pacientes, odontologos, reservas, mutuales] = await Promise.all([
-          pacientesApi.getAll().catch(() => []),
-          odontologosApi.getAll().catch(() => []),
-          reservasApi.getAll().catch(() => []),
-          mutualesApi.getAll().catch(() => [])
-        ]);
+        if (!user) {
+          setLoading(false);
+          return;
+        }
 
-        // Filtrar reservas de hoy aproximadamente o pendientes/confirmadas
-        const hoy = new Date().toISOString().split('T')[0];
-        const turnosHoy = reservas.filter(r => {
-          if (r.turnos && r.turnos.length > 0) {
-            return r.turnos[0].fecha_hora_inicio.startsWith(hoy);
-          }
-          return r.fecha_creacion.startsWith(hoy);
-        });
+        if (user.rol === 'PACIENTE') {
+          // PACIENTE: Solo sus reservas pendientes de atención
+          const pacienteId = user.personaId;
+          const reservas = await reservasApi.getAll({
+            pacienteId: pacienteId || undefined
+          }).catch(() => []);
 
-        setStats({
-          pacientesCount: pacientes.length,
-          odontologosCount: odontologos.length,
-          reservasHoyCount: turnosHoy.length > 0 ? turnosHoy.length : reservas.length,
-          mutualesCount: mutuales.length,
-          loading: false
-        });
+          const pendientes = reservas.filter(
+            (r) => r.estado === 'pendiente' || r.estado === 'confirmada'
+          );
+          setPacienteReservasPendientes(pendientes.length);
+        } else if (user.rol === 'ODONTOLOGO') {
+          // ODONTÓLOGO: Turnos pendientes y atendidos de hoy para este odontólogo
+          const odontologoId = user.personaId;
+          const reservas = await reservasApi.getAll({
+            odontologoId: odontologoId || undefined
+          }).catch(() => []);
+
+          const reservasDeHoy = reservas.filter((r) => {
+            const fechaInicio = r.turnos && r.turnos[0]?.fecha_hora_inicio;
+            return fechaInicio ? fechaInicio.startsWith(hoyStr) : r.fecha_creacion.startsWith(hoyStr);
+          });
+
+          const pendientes = reservasDeHoy.filter(
+            (r) => r.estado === 'pendiente' || r.estado === 'confirmada'
+          );
+          const atendidos = reservasDeHoy.filter(
+            (r) => r.estado === 'realizada'
+          );
+
+          setTurnosPendientesHoy(pendientes.length);
+          setTurnosAtendidosHoy(atendidos.length);
+        } else if (user.rol === 'ADMINISTRADOR') {
+          // ADMINISTRADOR: Turnos pendientes y atendidos de hoy en toda la clínica
+          const reservas = await reservasApi.getAll().catch(() => []);
+
+          const reservasDeHoy = reservas.filter((r) => {
+            const fechaInicio = r.turnos && r.turnos[0]?.fecha_hora_inicio;
+            return fechaInicio ? fechaInicio.startsWith(hoyStr) : r.fecha_creacion.startsWith(hoyStr);
+          });
+
+          const pendientes = reservasDeHoy.filter(
+            (r) => r.estado === 'pendiente' || r.estado === 'confirmada'
+          );
+          const atendidos = reservasDeHoy.filter(
+            (r) => r.estado === 'realizada'
+          );
+
+          setTurnosPendientesHoy(pendientes.length);
+          setTurnosAtendidosHoy(atendidos.length);
+        }
       } catch (err) {
         console.error('Error fetching dashboard stats:', err);
-        setStats(prev => ({ ...prev, loading: false }));
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchStats();
-  }, []);
+  }, [user?.rol, user?.personaId, hoyStr]);
 
   return (
     <div className="home-container">
@@ -87,57 +130,56 @@ const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
                 <span>{user?.rol === 'ODONTOLOGO' ? 'Generar Mis Turnos' : 'Generar Turnos Odontólogo'}</span>
               </Link>
             )}
-            {esStaff && (
-              <Link to="/consultorio" className="btn btn-hero-secondary">
-                <Activity size={18} />
-                <span>Atención en Consultorio</span>
-              </Link>
-            )}
           </div>
         </div>
       </section>
 
-      {/* Stats Counter */}
-      <section className="grid-4" style={{ marginBottom: '2.5rem' }}>
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}>
-            <Users size={26} />
+      {/* Stats Counter Condicional según ROL */}
+      <section
+        className={user?.rol === 'PACIENTE' ? 'grid-1' : 'grid-2'}
+        style={{ marginBottom: '2.5rem', maxWidth: user?.rol === 'PACIENTE' ? '360px' : '720px' }}
+      >
+        {user?.rol === 'PACIENTE' && (
+          <div className="stat-card">
+            <div className="stat-icon-wrapper" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
+              <Clock size={26} />
+            </div>
+            <div>
+              <div className="stat-value">{loading ? '...' : pacienteReservasPendientes}</div>
+              <div className="stat-label">Reservas pendientes</div>
+            </div>
           </div>
-          <div>
-            <div className="stat-value">{stats.loading ? '...' : stats.pacientesCount}</div>
-            <div className="stat-label">Pacientes Registrados</div>
-          </div>
-        </div>
+        )}
 
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ backgroundColor: '#FBF5E8', color: '#B08028' }}>
-            <Stethoscope size={26} />
-          </div>
-          <div>
-            <div className="stat-value">{stats.loading ? '...' : stats.odontologosCount}</div>
-            <div className="stat-label">Odontólogos Activos</div>
-          </div>
-        </div>
+        {(user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR') && (
+          <>
+            <div className="stat-card">
+              <div className="stat-icon-wrapper" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
+                <Clock size={26} />
+              </div>
+              <div>
+                <div className="stat-value">{loading ? '...' : turnosPendientesHoy}</div>
+                <div className="stat-label">Turnos pendientes</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-subtle)', marginTop: '0.15rem' }}>
+                  {fechaHoyLegible}
+                </div>
+              </div>
+            </div>
 
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ backgroundColor: '#fef3c7', color: '#d97706' }}>
-            <Clock size={26} />
-          </div>
-          <div>
-            <div className="stat-value">{stats.loading ? '...' : stats.reservasHoyCount}</div>
-            <div className="stat-label">Turnos Gestionados</div>
-          </div>
-        </div>
-
-        <div className="stat-card">
-          <div className="stat-icon-wrapper" style={{ backgroundColor: '#f5f3ff', color: '#7c3aed' }}>
-            <ShieldCheck size={26} />
-          </div>
-          <div>
-            <div className="stat-value">{stats.loading ? '...' : stats.mutualesCount}</div>
-            <div className="stat-label">Obras Sociales / Mutuales</div>
-          </div>
-        </div>
+            <div className="stat-card">
+              <div className="stat-icon-wrapper" style={{ backgroundColor: '#ecfdf5', color: '#059669' }}>
+                <CheckCircle2 size={26} />
+              </div>
+              <div>
+                <div className="stat-value">{loading ? '...' : turnosAtendidosHoy}</div>
+                <div className="stat-label">Turnos atendidos</div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-subtle)', marginTop: '0.15rem' }}>
+                  {fechaHoyLegible}
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       {/* Main Modules Grid */}

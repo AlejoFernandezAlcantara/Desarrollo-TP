@@ -66,7 +66,33 @@ export const ReservarTurno: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [pacienteSearch, setPacienteSearch] = useState('');
 
-  // Modal para habilitar nuevos turnos libres (solo administrador)
+  // Helpers de fechas y horas
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const getTodayString = () => {
+    const now = new Date();
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  };
+  const getCurrentTimeString = () => {
+    const now = new Date();
+    return `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  };
+  const getHoraDesdeDefault = (selectedDate?: string) => {
+    const today = getTodayString();
+    // Si la fecha es el día actual (o no se seleccionó fecha, asumiendo hoy)
+    if (selectedDate === today) {
+      return getCurrentTimeString();
+    }
+    return '00:00';
+  };
+
+  // Filtros para el paso de selección de turno
+  const [turnoFiltro, setTurnoFiltro] = useState({
+    fecha: '',
+    horaDesde: '00:00',
+    horaHasta: '24:00',
+    duracion: ''
+  });
+
   const [isGenerarTurnoModalOpen, setIsGenerarTurnoModalOpen] = useState(false);
   const [nuevoTurnoData, setNuevoTurnoData] = useState({
     fecha_hora_inicio: '',
@@ -134,7 +160,6 @@ export const ReservarTurno: React.FC = () => {
 
   const getMinDateTimeLocal = () => {
     const now = new Date();
-    const pad = (n: number) => String(n).padStart(2, '0');
     return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
   };
 
@@ -233,6 +258,34 @@ export const ReservarTurno: React.FC = () => {
     const doc = p.nroDocumento || '';
     return fullName.includes(term) || doc.includes(term);
   });
+
+  // Turnos filtrados por fecha, hora y duración
+  const turnosFiltrados = turnosDisponibles.filter((t) => {
+    const dt = new Date(t.fecha_hora_inicio);
+    const fechaStr = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+    const horaStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+
+    if (turnoFiltro.fecha && fechaStr !== turnoFiltro.fecha) return false;
+    if (turnoFiltro.horaDesde && horaStr < turnoFiltro.horaDesde) return false;
+    if (turnoFiltro.horaHasta && turnoFiltro.horaHasta !== '24:00' && horaStr > turnoFiltro.horaHasta) return false;
+    if (turnoFiltro.duracion && t.duracion.toString() !== turnoFiltro.duracion) return false;
+    return true;
+  });
+
+  const hayFiltrosActivos =
+    Boolean(turnoFiltro.fecha) ||
+    Boolean(turnoFiltro.duracion) ||
+    turnoFiltro.horaDesde !== getHoraDesdeDefault(turnoFiltro.fecha) ||
+    (Boolean(turnoFiltro.horaHasta) && turnoFiltro.horaHasta !== '24:00' && turnoFiltro.horaHasta !== '23:59');
+
+  const limpiarFiltros = () => {
+    setTurnoFiltro({
+      fecha: '',
+      horaDesde: '00:00',
+      horaHasta: '24:00',
+      duracion: ''
+    });
+  };
 
   // Navegación del stepper: solo hacia pasos cuyos requisitos ya están cumplidos
   const canGoTo = (key: Step): boolean => {
@@ -378,40 +431,120 @@ export const ReservarTurno: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="selection-grid">
-              {turnosDisponibles.map((t) => {
-                const dateObj = new Date(t.fecha_hora_inicio);
-                const fecha = dateObj.toLocaleDateString('es-AR', {
-                  weekday: 'short',
-                  day: '2-digit',
-                  month: 'short'
-                });
-                const hora = dateObj.toLocaleTimeString('es-AR', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                });
-                const isSelected = selectedTurno?.codigo === t.codigo;
-
-                return (
-                  <div
-                    key={t.codigo}
-                    className={`selectable-card ${isSelected ? 'selected' : ''}`}
-                    onClick={() => handleSelectTurno(t)}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="badge badge-success">Libre</span>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t.duracion} min</span>
-                    </div>
-                    <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.25rem' }}>
-                      {hora} hs
-                    </div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-                      {fecha}
-                    </div>
+            <>
+              {/* Panel de filtros */}
+              <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '1rem 1.25rem', marginBottom: '1.25rem', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    🔍 Filtrar turnos disponibles
+                  </span>
+                  {hayFiltrosActivos && (
+                    <button type="button" className="btn btn-ghost btn-sm" style={{ fontSize: '0.8rem', color: 'var(--danger)' }} onClick={limpiarFiltros}>
+                      ✕ Limpiar filtros
+                    </button>
+                  )}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Fecha</label>
+                    <input
+                      type="date"
+                      className="form-control"
+                      min={getTodayString()}
+                      value={turnoFiltro.fecha}
+                      onChange={(e) => {
+                        const nuevaFecha = e.target.value;
+                        setTurnoFiltro(f => ({
+                          ...f,
+                          fecha: nuevaFecha,
+                          horaDesde: getHoraDesdeDefault(nuevaFecha)
+                        }));
+                      }}
+                    />
                   </div>
-                );
-              })}
-            </div>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Hora desde</label>
+                    <input
+                      type="time"
+                      className="form-control"
+                      value={turnoFiltro.horaDesde}
+                      onChange={(e) => setTurnoFiltro(f => ({ ...f, horaDesde: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Hora hasta</label>
+                    <input
+                      type="time"
+                      className="form-control"
+                      value={turnoFiltro.horaHasta}
+                      onChange={(e) => setTurnoFiltro(f => ({ ...f, horaHasta: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <label style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>Duración</label>
+                    <select
+                      className="form-control"
+                      value={turnoFiltro.duracion}
+                      onChange={(e) => setTurnoFiltro(f => ({ ...f, duracion: e.target.value }))}
+                    >
+                      <option value="">Cualquiera</option>
+                      <option value="15">15 min</option>
+                      <option value="30">30 min</option>
+                      <option value="45">45 min</option>
+                      <option value="60">60 min</option>
+                    </select>
+                  </div>
+                </div>
+                <div style={{ marginTop: '0.6rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  {hayFiltrosActivos
+                    ? `${turnosFiltrados.length} de ${turnosDisponibles.length} turnos coinciden con el filtro`
+                    : `${turnosDisponibles.length} turnos libres disponibles`}
+                </div>
+              </div>
+
+              {turnosFiltrados.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2rem' }}>
+                  <Clock className="empty-state-icon" style={{ width: '2rem', height: '2rem' }} />
+                  <h3 style={{ fontSize: '1rem' }}>Ningún turno coincide con el filtro</h3>
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={limpiarFiltros} style={{ marginTop: '0.5rem' }}>Limpiar filtros</button>
+                </div>
+              ) : (
+                <div className="selection-grid">
+                  {turnosFiltrados.map((t) => {
+                    const dateObj = new Date(t.fecha_hora_inicio);
+                    const fecha = dateObj.toLocaleDateString('es-AR', {
+                      weekday: 'short',
+                      day: '2-digit',
+                      month: 'short'
+                    });
+                    const hora = dateObj.toLocaleTimeString('es-AR', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    });
+                    const isSelected = selectedTurno?.codigo === t.codigo;
+
+                    return (
+                      <div
+                        key={t.codigo}
+                        className={`selectable-card ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleSelectTurno(t)}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span className="badge badge-success">Libre</span>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t.duracion} min</span>
+                        </div>
+                        <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-main)', marginTop: '0.25rem' }}>
+                          {hora} hs
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                          {fecha}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
 
           <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-start' }}>
