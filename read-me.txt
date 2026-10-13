@@ -15,14 +15,23 @@ server/src/utils/validators.ts  aca va el schema validation
 - HACER SCRIPT SIMPLE PARA EJECUTAR BACK/FRONT Y BDD  DE UNA MANERA MAS SENCILLA
 
 
-
 YA HECHO LO DE ARRIBA
 
--TESTING (con vitest)
+-TESTING (con vitest) (playwright)
 -DOCUMENTAR APIS (swagger)
 -RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADO DEL SERVIDOR
 -VALIDAR FORMULARIOS LADO DEL CLIENTE
 -agregar manejo de loading states y notificaciones(toast)
+
+biri biri para agregar si sobra tiempo:
+cache (redis)
+paginacion
+componentes de loading
+animaciones a la UX/UI
+configurar CI/CD
+linting/prettier
+pre-commit hooks
+versionamieto automatico
 
 
 
@@ -77,14 +86,6 @@ zod
 helmet
 
 
-biri biri para agregar si sobra tiempo:
-cache (redis)
-paginacion
-componentes de loading
-animaciones a la UX/UI
-configurar CI/CD
-linting/prettier
-pre-commit hooks
-versionamieto automatico
+
 
 
