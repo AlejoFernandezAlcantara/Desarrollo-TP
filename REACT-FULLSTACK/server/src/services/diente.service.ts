@@ -1,13 +1,6 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { logger } from '../utils/logger';
 import { AppError } from '../middlewares/error.middleware';
-
-const assertId = (id: number) => {
-  if (isNaN(id)) {
-    throw new AppError(400, 'El ID ingresado es inválido');
-  }
-};
 
 export const dienteService = {
   async getAll() {
@@ -21,8 +14,6 @@ export const dienteService = {
   },
 
   async getByIdOrThrow(id: number) { // no puede devolver null, lanza error si no encuentra
-    assertId(id);
-
     const diente = await this.getById(id);
 
     if (!diente) {
@@ -69,17 +60,8 @@ export const dienteService = {
   async delete(id: number) {
     await this.getByIdOrThrow(id);
 
-    try {
-      return await prisma.diente.delete({
-        where: { id }
-      });
-    } catch (error) {
-      // P2003: violación de clave foránea, el diente está referenciado por otros registros (ej. detalles de reserva)
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-        logger.warn('Diente con relaciones activas, no se puede eliminar', { id });
-        throw new AppError(409, 'No se puede eliminar el diente porque tiene registros asociados');
-      }
-      throw error;
-    }
+    return await prisma.diente.delete({
+      where: { id }
+    });
   }
 };

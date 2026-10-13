@@ -18,6 +18,7 @@ import { Reserva, Odontologo } from '../../types';
 import { Modal } from '../../components/Modal';
 import { useAuth } from '../../contexts/AuthContext';
 import './Agenda.css';
+import { formatFecha, formatHora } from '../../utils/fecha';
 
 export const AgendaPage: React.FC = () => {
   const { user } = useAuth();
@@ -38,9 +39,10 @@ export const AgendaPage: React.FC = () => {
     setError(null);
     try {
       const odoId = selectedOdontologoId ? parseInt(selectedOdontologoId) : undefined;
+      // Sólo el personal puede listar odontólogos (el paciente recibiría 403)
       const [resData, odoData] = await Promise.all([
         reservasApi.getAll({ odontologoId: odoId }),
-        odontologosApi.getAll()
+        esStaff ? odontologosApi.getAll() : Promise.resolve([] as Odontologo[])
       ]);
       setReservas(resData);
       setOdontologos(odoData);
@@ -164,13 +166,13 @@ export const AgendaPage: React.FC = () => {
             <tbody>
               {reservas.map((r) => {
                 const turno = r.turnos && r.turnos[0];
-                const dateObj = turno ? new Date(turno.fecha_hora_inicio) : new Date(r.fecha_creacion);
-                const fechaStr = dateObj.toLocaleDateString('es-AR', {
+                                const fechaRef = turno ? turno.fecha_hora_inicio : r.fecha_creacion;
+                const fechaStr = formatFecha(fechaRef, {
                   day: '2-digit',
                   month: 'short',
                   year: 'numeric'
                 });
-                const horaStr = turno ? dateObj.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' }) : '--:--';
+                const horaStr = turno ? formatHora(turno.fecha_hora_inicio) : '--:--';
 
                 const pacienteNombre = `${r.paciente?.usuario?.apellido}, ${r.paciente?.usuario?.nombre}`;
                 const odontologoNombre = r.odontologo

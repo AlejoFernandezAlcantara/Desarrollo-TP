@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { TipoDocumento } from '../../types';
 import './Register.css';
+import { mutualesApi } from '../../services/api';
+import { Mutual } from '../../types';
 
 export const Register: React.FC = () => {
   const { isAuthenticated, registerPaciente } = useAuth();
@@ -30,7 +32,10 @@ export const Register: React.FC = () => {
     tipoDoc: 'DNI' as TipoDocumento,
     nroDocumento: '',
     direccion: '',
-    telefono: ''
+    telefono: '',
+    mutualId: '',// Campo para la mutual
+    nroAfiliado: '', // Campo para el número de afiliado
+    cubre: '100' // Campo para el porcentaje de cobertura
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -38,6 +43,10 @@ export const Register: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mutuales, setMutuales] = useState<Mutual[]>([]);
+  useEffect(() => {
+    mutualesApi.getAll().then(setMutuales).catch(() => setMutuales([]));
+  }, []);
 
   // Redirigir si ya está autenticado
   useEffect(() => {
@@ -91,7 +100,14 @@ export const Register: React.FC = () => {
         direccion: formData.direccion.trim(),
         telefono: formData.telefono.trim() || undefined,
         nroDocumento: formData.nroDocumento.trim(),
-        tipoDoc: formData.tipoDoc
+        tipoDoc: formData.tipoDoc,
+        ...(formData.mutualId
+          ? {
+              mutual_id: parseInt(formData.mutualId),
+              nroAfiliado: formData.nroAfiliado.trim(),
+              cubre: parseInt(formData.cubre) || 0
+            }
+          : {})
       });
 
       setSuccess(true);

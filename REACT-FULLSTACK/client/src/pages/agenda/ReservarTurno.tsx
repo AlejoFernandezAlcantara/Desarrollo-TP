@@ -1,3 +1,4 @@
+import { formatFecha, formatHora, diaAR, horaAR } from '../../utils/fecha';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import {
@@ -8,8 +9,8 @@ import {
   CheckCircle2,
   Plus
 } from 'lucide-react';
-import { odontologosApi, turnosApi, pacientesApi, reservasApi } from '../../services/api';
-import { Odontologo, Turno, Paciente } from '../../types';
+import { odontologosApi, turnosApi, pacientesApi, reservasApi, ApiError } from '../../services/api';
+import { OdontologoResumen, Turno, Paciente } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { Modal } from '../../components/Modal';
 import './Agenda.css';
@@ -46,12 +47,12 @@ export const ReservarTurno: React.FC = () => {
   const [step, setStep] = useState<Step>('odontologo');
 
   // Data State
-  const [odontologos, setOdontologos] = useState<Odontologo[]>([]);
+  const [odontologos, setOdontologos] = useState<OdontologoResumen[]>([]);
   const [turnosDisponibles, setTurnosDisponibles] = useState<Turno[]>([]);
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
 
   // Selection State
-  const [selectedOdontologo, setSelectedOdontologo] = useState<Odontologo | null>(null);
+  const [selectedOdontologo, setSelectedOdontologo] = useState<OdontologoResumen | null>(null);
   const [selectedTurno, setSelectedTurno] = useState<Turno | null>(null);
   const [selectedPaciente, setSelectedPaciente] = useState<Paciente | null>(null);
 
@@ -113,8 +114,17 @@ export const ReservarTurno: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const odos = await odontologosApi.getAll();
-        setOdontologos(odos);
+        if (rol === 'PACIENTE') {
+          // El paciente no puede listar odontólogos: se arma la lista con los que tienen turnos libres
+          const libres = await turnosApi.getDisponibles();
+          const unicos = new Map<number, OdontologoResumen>();
+          libres.forEach((t) => {
+            if (t.odontologo && !unicos.has(t.odontologo.id)) unicos.set(t.odontologo.id, t.odontologo);
+          });
+          setOdontologos([...unicos.values()]);
+        } else {
+          setOdontologos(await odontologosApi.getAll());
+        }
 
         if (rol === 'PACIENTE') {
           // El paciente solo necesita sus propios datos (mutuales incluidas)
@@ -142,7 +152,7 @@ export const ReservarTurno: React.FC = () => {
   }, [rol, personaId, preselectedPacienteId]);
 
   // 2. Al seleccionar un odontólogo, buscar sus turnos libres
-  const handleSelectOdontologo = async (odo: Odontologo) => {
+  const handleSelectOdontologo = async (odo: OdontologoResumen) => {
     setSelectedOdontologo(odo);
     setSelectedTurno(null);
     setError(null);
@@ -233,7 +243,11 @@ export const ReservarTurno: React.FC = () => {
 
       navigate('/agenda');
     } catch (err: any) {
-      setError(err.message || 'Error al confirmar la reserva.');
+      setError(
+        err instanceof ApiError && err.status === 409
+          ? 'Ese turno acaba de ser reservado por otra persona. Elegí otro horario.'
+          : err.message || 'Error al confirmar la reserva.'
+      );
       setSubmitting(false);
 
       // Si el turno se ocupó mientras el usuario elegía (409), refrescar la lista
@@ -261,9 +275,8 @@ export const ReservarTurno: React.FC = () => {
 
   // Turnos filtrados por fecha, hora y duración
   const turnosFiltrados = turnosDisponibles.filter((t) => {
-    const dt = new Date(t.fecha_hora_inicio);
-    const fechaStr = `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
-    const horaStr = `${pad(dt.getHours())}:${pad(dt.getMinutes())}`;
+    const fechaStr = diaAR(t.fecha_hora_inicio);
+    const horaStr = horaAR(t.fecha_hora_inicio);
 
     if (turnoFiltro.fecha && fechaStr !== turnoFiltro.fecha) return false;
     if (turnoFiltro.horaDesde && horaStr < turnoFiltro.horaDesde) return false;
@@ -302,7 +315,7 @@ export const ReservarTurno: React.FC = () => {
   };
 
   const currentIndex = steps.findIndex((s) => s.key === step);
-  const nombreOdo = (odo: Odontologo) =>
+  const nombreOdo = (odo: OdontologoResumen) =>
     odo.nombreCompleto || `${odo.usuario?.nombre ?? ''} ${odo.usuario?.apellido ?? ''}`.trim();
 
   return (
@@ -511,13 +524,12 @@ export const ReservarTurno: React.FC = () => {
               ) : (
                 <div className="selection-grid">
                   {turnosFiltrados.map((t) => {
-                    const dateObj = new Date(t.fecha_hora_inicio);
-                    const fecha = dateObj.toLocaleDateString('es-AR', {
+                    const fecha = formatFecha(t.fecha_hora_inicio, {
                       weekday: 'short',
                       day: '2-digit',
                       month: 'short'
                     });
-                    const hora = dateObj.toLocaleTimeString('es-AR', {
+                    const hora = formatHora(t.fecha_hora_inicio, {
                       hour: '2-digit',
                       minute: '2-digit'
                     });
@@ -651,7 +663,7 @@ export const ReservarTurno: React.FC = () => {
                 Fecha y Hora Cita
               </div>
               <div style={{ fontWeight: 800, fontSize: '1.05rem', marginTop: '0.2rem' }}>
-                {new Date(selectedTurno.fecha_hora_inicio).toLocaleDateString('es-AR', {
+                {formatFecha(selectedTurno.fecha_hora_inicio, {
                   weekday: 'long',
                   day: '2-digit',
                   month: 'long',
@@ -659,7 +671,7 @@ export const ReservarTurno: React.FC = () => {
                 })}
               </div>
               <div style={{ fontSize: '0.85rem', color: 'var(--success)', fontWeight: 700 }}>
-                {new Date(selectedTurno.fecha_hora_inicio).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })} hs ({selectedTurno.duracion} min)
+                {formatHora(selectedTurno.fecha_hora_inicio, { hour: '2-digit', minute: '2-digit' })} hs ({selectedTurno.duracion} min)
               </div>
             </div>
 

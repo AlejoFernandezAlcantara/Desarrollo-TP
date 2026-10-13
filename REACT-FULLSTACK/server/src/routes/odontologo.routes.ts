@@ -14,9 +14,9 @@ import { CreateOdontologoSchema, UpdateOdontologoSchema, AddMutualOdontologoSche
 
 const router = Router();
 
-// Lectura: requiere sesión (el listado incluye datos personales y de matrícula)
-router.get('/', authenticateToken, validateQuery(OdontologoQuerySchema), getOdontologos);
-router.get('/:id', authenticateToken, validateParams(IdParamsSchema), getOdontologoById);
+// Lectura: sólo personal del consultorio (el listado incluye matrícula y datos de contacto)
+router.get('/', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateQuery(OdontologoQuerySchema), getOdontologos);
+router.get('/:id', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), getOdontologoById);
 
 // Alta de odontólogos: sólo administrador
 router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(CreateOdontologoSchema), createOdontologo);

@@ -1,26 +1,20 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
-import { logger } from '../utils/logger';
 import { AppError } from '../middlewares/error.middleware';
+import { UserRole } from '../middlewares/auth.middleware';
 import { reservaService } from './reserva.service';
 import { practicaService } from './practica.service';
 import { dienteService } from './diente.service';
 
-const assertId = (id: number) => {
-  if (isNaN(id)) {
-    throw new AppError(400, 'El ID ingresado es inválido');
-  }
-};
+type SolicitanteDetalle = { rol: UserRole; personaId?: number };
 
 export const detalleService = {
-  async getAll(reserva_id?: number, odontograma_id?: number) {
-    if (reserva_id !== undefined) assertId(reserva_id);
-    if (odontograma_id !== undefined) assertId(odontograma_id);
-
+  async getAll(reserva_id?: number, odontograma_id?: number, solicitante?: SolicitanteDetalle) {
     return await prisma.detalle.findMany({
       where: {
         ...(reserva_id !== undefined && { reserva_id }),
-        ...(odontograma_id !== undefined && { odontograma_id })
+        ...(odontograma_id !== undefined && { odontograma_id }),
+        // El paciente sólo ve los detalles de sus propias reservas
+        ...(solicitante?.rol === 'PACIENTE' && { reserva: { paciente_id: solicitante.personaId } })
       },
       include: {
         practica: true,
@@ -46,12 +40,11 @@ export const detalleService = {
     });
   },
 
-  async getByIdOrThrow(id: number) { // no puede devolver null, lanza error si no encuentra
-    assertId(id);
-
+  async getByIdOrThrow(id: number, solicitante?: SolicitanteDetalle) { // no puede devolver null, lanza error si no encuentra
     const detalle = await this.getById(id);
 
-    if (!detalle) {
+    // Para el paciente, un detalle ajeno se responde como inexistente (404) para no revelar que existe
+    if (!detalle || (solicitante?.rol === 'PACIENTE' && detalle.reserva.paciente_id !== solicitante.personaId)) {
       throw new AppError(404, 'Detalle no encontrado');
     }
 
@@ -65,10 +58,7 @@ export const detalleService = {
     practica_personalizada?: string;
     diente_id?: number;
     observaciones?: string;
-    odontograma_id?: number;
   }) {
-    assertId(data.reserva_id);
-
     // Validar que la reserva exista
     const reserva = await reservaService.getByIdOrThrow(data.reserva_id);
 
@@ -97,12 +87,6 @@ export const detalleService = {
       }
     }
 
-    if (!finalPracticaId) {
-      throw new AppError(400, 'Debe indicar una práctica válida o personalizada');
-    }
-
-    assertId(finalPracticaId);
-
     // Validar que la práctica exista
     await practicaService.getByIdOrThrow(finalPracticaId);
 
@@ -111,31 +95,20 @@ export const detalleService = {
       await dienteService.getByIdOrThrow(data.diente_id);
     }
 
-    let targetOdontogramaId = data.odontograma_id;
-
-    // Si no enviaron el odontograma_id, lo tomamos del paciente de la reserva
-    if (targetOdontogramaId === undefined) {
-      const odontograma = reserva.paciente.odontograma;
-
-      if (odontograma) {
-        targetOdontogramaId = odontograma.id;
-      } else {
-        // Si por alguna razón el paciente no tenía odontograma, se crea al vuelo
-        const nuevoOdontograma = await prisma.odontograma.create({
-          data: {
-            paciente_id: reserva.paciente_id,
-            estado: 'Activo'
-          }
-        });
-        targetOdontogramaId = nuevoOdontograma.id;
-      }
-    }
+    // El odontograma siempre es el del paciente de la reserva; si no tiene, se crea
+    const odontograma = reserva.paciente.odontograma
+      ?? await prisma.odontograma.create({
+        data: {
+          paciente_id: reserva.paciente_id,
+          estado: 'Activo'
+        }
+      });
 
     return await prisma.detalle.create({
       data: {
         reserva_id: data.reserva_id,
         practica_id: finalPracticaId,
-        odontograma_id: targetOdontogramaId,
+        odontograma_id: odontograma.id,
         diente_id: data.diente_id,
         observaciones: data.observaciones
       },
@@ -150,17 +123,8 @@ export const detalleService = {
   async delete(id: number) {
     await this.getByIdOrThrow(id);
 
-    try {
-      return await prisma.detalle.delete({
-        where: { id }
-      });
-    } catch (error) {
-      // P2003: violación de clave foránea
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-        logger.warn('Detalle con relaciones activas, no se puede eliminar', { id });
-        throw new AppError(409, 'No se puede eliminar el detalle porque tiene registros asociados');
-      }
-      throw error;
-    }
+    return await prisma.detalle.delete({
+      where: { id }
+    });
   }
 };

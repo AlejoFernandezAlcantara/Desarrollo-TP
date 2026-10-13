@@ -16,7 +16,7 @@ export const PacienteNuevo: React.FC = () => {
     nombre: '',
     apellido: '',
     email: '',
-    nro_paciente: '',
+    password: '',
     direccion: '',
     telefono: '',
     nroDocumento: '',
@@ -54,7 +54,7 @@ export const PacienteNuevo: React.FC = () => {
         nombre: formData.nombre,
         apellido: formData.apellido,
         email: formData.email,
-        nro_paciente: parseInt(formData.nro_paciente) || Math.floor(1000 + Math.random() * 9000),
+        password: formData.password,
         direccion: formData.direccion,
         telefono: formData.telefono || undefined,
         nroDocumento: formData.nroDocumento,
@@ -166,6 +166,19 @@ export const PacienteNuevo: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               />
             </div>
+                        <div className="form-group">
+              <label className="form-label">Contraseña inicial *</label>
+              <input
+                type="password"
+                required
+                minLength={6}
+                className="form-control"
+                placeholder="Mínimo 6 caracteres"
+                autoComplete="new-password"
+                value={formData.password}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+              />
+            </div>
             <div className="form-group">
               <label className="form-label">Teléfono de Contacto</label>
               <input
@@ -188,16 +201,6 @@ export const PacienteNuevo: React.FC = () => {
                 placeholder="Calle y N°, Barrio, Ciudad"
                 value={formData.direccion}
                 onChange={(e) => setFormData({ ...formData, direccion: e.target.value })}
-              />
-            </div>
-            <div className="form-group" style={{ flex: 1 }}>
-              <label className="form-label">N° Ficha / HC (Opcional)</label>
-              <input
-                type="number"
-                className="form-control"
-                placeholder="Autogenerado"
-                value={formData.nro_paciente}
-                onChange={(e) => setFormData({ ...formData, nro_paciente: e.target.value })}
               />
             </div>
           </div>

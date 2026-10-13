@@ -2,7 +2,6 @@ LISTADO DE COSAS POR HACER- DEJAR ABAJO DEL TODO POR ESCRITO TODO LO REALIZADO S
 
 PRIORIDAD DE ARRIBA A ABAJO 
 
-
 - SUGERIDO HACER UN MIDDLEWARE PARA MANEJO DE ERRORES CENTRALIZADO (ASI NO SE HACE TRY/CATCH POR TODO EL CODIGO)
 en ----->// server/src/middlewares/error.  middleware.ts
 esta hecho solo el de pacientes  incluye routes, controllers y services (verificar)
@@ -12,25 +11,20 @@ server/src/utils/validators.ts  aca va el schema validation
 -HACER UN BUEN LOGGING
 - IMPLEMENTAR HELMET PARA SEGURIDAD -VARIABLES DE ENTORNO - CORS - JWT 
 : implementados en server/src/app.ts y server/src/middlewares/rateLimit.middleware.ts (límite general en /api, límite estricto en login y registro)
-
 -IMPLEMENTAR MIDDLEWARE RATELIMITING (express-rate-limit) (revisar)
+- HACER SCRIPT SIMPLE PARA EJECUTAR BACK/FRONT Y BDD  DE UNA MANERA MAS SENCILLA
 
 
 
 YA HECHO LO DE ARRIBA
 
-
-- HACER SCRIPT SIMPLE PARA EJECUTAR BACK/FRONT Y BDD  DE UNA MANERA MAS SENCILLA
-
 -TESTING (con vitest)
-
 -DOCUMENTAR APIS (swagger)
-
 -RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADO DEL SERVIDOR
-
 -VALIDAR FORMULARIOS LADO DEL CLIENTE
-
 -agregar manejo de loading states y notificaciones(toast)
+
+
 
 consignas que faltan de nuestra propuesta : 
 

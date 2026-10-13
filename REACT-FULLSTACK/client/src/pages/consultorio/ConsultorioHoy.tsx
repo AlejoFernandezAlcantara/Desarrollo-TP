@@ -13,6 +13,7 @@ import {
 import { reservasApi, odontologosApi } from '../../services/api';
 import { Reserva, Odontologo } from '../../types';
 import './Consultorio.css';
+import { formatFecha, formatHora } from '../../utils/fecha';
 
 export const ConsultorioHoy: React.FC = () => {
   const [reservas, setReservas] = useState<Reserva[]>([]);
@@ -109,12 +110,12 @@ export const ConsultorioHoy: React.FC = () => {
         <div className="grid-2">
           {reservas.map((r) => {
             const turno = r.turnos && r.turnos[0];
-            const fechaStr = turno 
-              ? new Date(turno.fecha_hora_inicio).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
+                        const fechaStr = turno
+              ? formatHora(turno.fecha_hora_inicio, { hour: '2-digit', minute: '2-digit' })
               : '--:--';
             const fechaDia = turno
-              ? new Date(turno.fecha_hora_inicio).toLocaleDateString('es-AR', { weekday: 'short', day: '2-digit', month: 'short' })
-              : new Date(r.fecha_creacion).toLocaleDateString('es-AR');
+              ? formatFecha(turno.fecha_hora_inicio, { weekday: 'short', day: '2-digit', month: 'short' })
+              : formatFecha(r.fecha_creacion, {});
 
             const pacienteNombre = `${r.paciente?.usuario?.apellido}, ${r.paciente?.usuario?.nombre}`;
             const isRealizada = r.estado === 'realizada';

@@ -77,10 +77,6 @@ const generarToken = (id: number, email: string, rol: UserRole, personaId?: numb
 
 export const authService = {
   async login(email: string, password: string) {
-    if (!email || !password) {
-      throw new AppError(400, 'Debes proporcionar email y contraseña');
-    }
-
     const usuario = await prisma.usuario.findUnique({
       where: { email: normalizarEmail(email) },
       include: includeRoles
@@ -124,18 +120,6 @@ export const authService = {
   },
 
   async registerPaciente(data: RegisterPacienteData) {
-    if (!data.nombre || !data.apellido || !data.email || !data.password || !data.direccion || !data.nroDocumento || !data.tipoDoc) {
-      throw new AppError(400, 'Todos los campos obligatorios deben ser completados');
-    }
-
-    if (data.password.length < 6) {
-      throw new AppError(400, 'La contraseña debe tener al menos 6 caracteres');
-    }
-
-    if (data.tipoDoc !== 'DNI' && data.tipoDoc !== 'Pasaporte') {
-      throw new AppError(400, 'El tipo de documento debe ser DNI o Pasaporte');
-    }
-
     // pacienteService.create valida el email duplicado, hashea la contraseña y crea el odontograma
     const paciente = await pacienteService.create({
       ...data,

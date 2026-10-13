@@ -6,17 +6,9 @@ import { AppError } from '../middlewares/error.middleware';
 import { mutualService } from './mutual.service';
 import { usuarioPublico } from '../utils/selects';
 
-const assertId = (id: number) => {
-  if (isNaN(id)) {
-    throw new AppError(400, 'El ID ingresado es inválido');
-  }
-};
-
 export const odontologoService = {
   async getAll(mutualId?: number) {
     if (mutualId !== undefined) {
-      assertId(mutualId);
-
       const odontologos = await prisma.odontologo.findMany({
         where: {
           mutuales: {
@@ -73,8 +65,6 @@ export const odontologoService = {
   },
 
   async getByIdOrThrow(id: number) { // no puede devolver null, lanza error si no encuentra
-    assertId(id);
-
     const odontologo = await this.getById(id);
 
     if (!odontologo) {
@@ -94,9 +84,6 @@ export const odontologoService = {
   },
 
   async addMutual(odontologo_id: number, data: { mutual_id: number; nroAfiliado: string }) {
-    assertId(odontologo_id);
-    assertId(data.mutual_id);
-
     await this.getByIdOrThrow(odontologo_id);
     await mutualService.getByIdOrThrow(data.mutual_id);
 
@@ -122,33 +109,30 @@ export const odontologoService = {
   },
 
   async removeMutual(odontologo_id: number, mutual_id: number) {
-  assertId(odontologo_id);
-  assertId(mutual_id);
+    await this.getByIdOrThrow(odontologo_id);
 
-  await this.getByIdOrThrow(odontologo_id);
-
-  const vinculo = await prisma.odontologoMutual.findUnique({
-    where: {
-      odontologo_id_mutual_id: {
-        odontologo_id,
-        mutual_id
+    const vinculo = await prisma.odontologoMutual.findUnique({
+      where: {
+        odontologo_id_mutual_id: {
+          odontologo_id,
+          mutual_id
+        }
       }
+    });
+
+    if (!vinculo) {
+      throw new AppError(404, 'El odontólogo no tiene asociada esa mutual');
     }
-  });
 
-  if (!vinculo) {
-    throw new AppError(404, 'El odontólogo no tiene asociada esa mutual');
-  }
-
-  return await prisma.odontologoMutual.delete({
-    where: {
-      odontologo_id_mutual_id: {
-        odontologo_id,
-        mutual_id
+    return await prisma.odontologoMutual.delete({
+      where: {
+        odontologo_id_mutual_id: {
+          odontologo_id,
+          mutual_id
+        }
       }
-    }
-  });
-},
+    });
+  },
 
   async create(data: {
     nombre: string;
@@ -162,10 +146,6 @@ export const odontologoService = {
     nroDocumento: string;
     tipoDoc: TipoDocumento;
   }) {
-    if (!data.email || !data.nroDocumento) {
-      throw new AppError(400, 'Email y nroDocumento son requeridos');
-    }
-
     let hashToStore = data.password_hash;
     if (data.password) {
       hashToStore = await bcrypt.hash(data.password, 10);
@@ -203,7 +183,7 @@ export const odontologoService = {
           tipoDoc: data.tipoDoc
         },
         include: {
-          usuario: true
+          usuario: { select: usuarioPublico }
         }
       });
     });
@@ -241,7 +221,7 @@ export const odontologoService = {
           tipoDoc: data.tipoDoc
         },
         include: {
-          usuario: true
+          usuario: { select: usuarioPublico }
         }
       });
     });

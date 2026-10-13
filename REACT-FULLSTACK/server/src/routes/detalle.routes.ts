@@ -11,9 +11,9 @@ import { CreateDetalleSchema, DetalleQuerySchema, IdParamsSchema } from '../util
 
 const router = Router();
 
-// Lectura: cualquier usuario autenticado (el service no filtra por dueño, ver nota)
-router.get('/', authenticateToken, validateQuery(DetalleQuerySchema), getDetalles);
-router.get('/:id', authenticateToken, validateParams(IdParamsSchema), getDetalleById);
+// Lectura: el paciente sólo ve los detalles de sus reservas (el service filtra; un detalle ajeno responde 404)
+router.get('/', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADMINISTRADOR'), validateQuery(DetalleQuerySchema), getDetalles);
+router.get('/:id', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), getDetalleById);
 
 // Registrar práctica realizada (CUU 2): odontólogo o administrador
 router.post('/', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateRequest(CreateDetalleSchema), createDetalle);

@@ -35,12 +35,8 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
 
 /* GET /api/auth/me */
 export const getMe = asyncHandler(async (req: Request, res: Response) => {
-  if (!req.user) {
-    res.status(401).json({ error: 'No autenticado' });
-    return;
-  }
-
-  const usuario = await authService.getMe(req.user.id);
+  // authenticateToken garantiza req.user en esta ruta
+  const usuario = await authService.getMe(req.user!.id);
   res.json({ usuario });
 });
 

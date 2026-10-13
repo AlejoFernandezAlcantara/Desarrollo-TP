@@ -1,13 +1,6 @@
-import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { logger } from '../utils/logger';
 import { AppError } from '../middlewares/error.middleware';
-
-const assertId = (id: number) => {
-  if (isNaN(id)) {
-    throw new AppError(400, 'El ID ingresado es inválido');
-  }
-};
 
 export const mutualService = {
   async getAll() {
@@ -21,8 +14,6 @@ export const mutualService = {
   },
 
   async getByIdOrThrow(id: number) { // no puede devolver null, lanza error si no encuentra
-    assertId(id);
-
     const mutual = await this.getById(id);
 
     if (!mutual) {
@@ -69,16 +60,8 @@ export const mutualService = {
   async delete(id: number) {
     await this.getByIdOrThrow(id);
 
-    try {
-      return await prisma.mutual.delete({
-        where: { id }
-      });
-    } catch (error) {
-      // P2003: violación de clave foránea, la mutual tiene relaciones activas
-      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2003') {
-        throw new AppError(409, 'No se puede eliminar la mutual porque tiene pacientes u odontólogos asociados');
-      }
-      throw error;
-    }
+    return await prisma.mutual.delete({
+      where: { id }
+    });
   }
 };

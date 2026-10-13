@@ -17,6 +17,14 @@ import {
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001/api';
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+  }
+}
 async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
   const url = `${API_BASE}${endpoint}`;
   const headers = {
@@ -29,7 +37,12 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     headers,
     credentials: 'include'
   });
-  
+
+  // Sesión vencida: AuthContext escucha este evento y limpia el usuario (ProtectedRoute redirige a /login)
+  if (response.status === 401 && !endpoint.startsWith('/auth/login')) {
+    window.dispatchEvent(new Event('auth:unauthorized'));
+  }
+
   if (!response.ok) {
     let errorMsg = `Error HTTP ${response.status}`;
     try {
@@ -38,7 +51,7 @@ async function request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     } catch {
       // response not JSON
     }
-    throw new Error(errorMsg);
+    throw new ApiError(errorMsg, response.status);
   }
 
   if (response.status === 204) {
@@ -110,9 +123,9 @@ export const odontologosApi = {
       body: JSON.stringify(data)
     }),
   addMutual: (id: number, data: { mutual_id: number; nroAfiliado: string }) =>
-    request<any>(`/odontologos/${id}/mutuales`, {
+    request<any>(`/odontologos/${id}/mutuales/${data.mutual_id}`, {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify({ nroAfiliado: data.nroAfiliado })
     })
 };
 
@@ -126,8 +139,7 @@ export const pacientesApi = {
     nombre: string;
     apellido: string;
     email: string;
-    password_hash?: string;
-    nro_paciente: number;
+    password: string;
     direccion: string;
     telefono?: string;
     nroDocumento: string;
@@ -135,16 +147,11 @@ export const pacientesApi = {
     mutual_id?: number;
     nroAfiliado?: string;
     cubre?: number;
-  }) => {
-    const payload = {
-      ...data,
-      password_hash: data.password_hash || 'pass_paciente123'
-    };
-    return request<Paciente>('/pacientes', {
+  }) =>
+    request<Paciente>('/pacientes', {
       method: 'POST',
-      body: JSON.stringify(payload)
-    });
-  },
+      body: JSON.stringify(data)
+    }),
   update: (id: number, data: any) =>
     request<Paciente>(`/pacientes/${id}`, {
       method: 'PUT',
@@ -152,9 +159,9 @@ export const pacientesApi = {
     }),
   delete: (id: number) => request<void>(`/pacientes/${id}`, { method: 'DELETE' }),
   addMutual: (id: number, data: { mutual_id: number; nroAfiliado: string; cubre?: number }) =>
-    request<any>(`/pacientes/${id}/mutuales`, {
+    request<any>(`/pacientes/${id}/mutuales/${data.mutual_id}`, {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify({ nroAfiliado: data.nroAfiliado, cubre: data.cubre })
     }),
   removeMutual: (id: number, mutualId: number) =>
     request<void>(`/pacientes/${id}/mutuales/${mutualId}`, {
@@ -246,7 +253,6 @@ export const detallesApi = {
     practica_id: number;
     diente_id?: number;
     observaciones?: string;
-    odontograma_id?: number;
   }) =>
     request<Detalle>('/detalles', {
       method: 'POST',

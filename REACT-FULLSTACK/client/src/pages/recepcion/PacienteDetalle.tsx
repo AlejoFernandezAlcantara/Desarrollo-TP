@@ -19,6 +19,7 @@ import { pacientesApi, mutualesApi, reservasApi } from '../../services/api';
 import { Paciente, Mutual, Reserva } from '../../types';
 import { Modal } from '../../components/Modal';
 import './Recepcion.css';
+import { formatFecha } from '../../utils/fecha';
 
 export const PacienteDetalle: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -249,7 +250,7 @@ export const PacienteDetalle: React.FC = () => {
                 const odontologoNombre = r.odontologo 
                   ? `${r.odontologo.usuario?.nombre} ${r.odontologo.usuario?.apellido}`
                   : 'Profesional asignado';
-                const fecha = new Date(r.fecha_creacion).toLocaleDateString('es-AR', {
+                const fecha = formatFecha(r.fecha_creacion, {
                   day: '2-digit',
                   month: 'short',
                   year: 'numeric'

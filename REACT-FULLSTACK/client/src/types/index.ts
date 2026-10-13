@@ -73,7 +73,14 @@ export interface Turno {
   estado: 'libre' | 'ocupado';
   odontologo_id: number;
   reserva_id?: number | null;
-  odontologo?: Odontologo;
+  odontologo?: OdontologoResumen;
+}
+export interface OdontologoResumen {
+  id: number;
+  especialidad: string;
+  nombreCompleto?: string;
+  usuario?: Usuario;
+  nro_Matricula?: number;
 }
 
 export interface Detalle {
@@ -153,4 +160,8 @@ export interface RegisterPacienteDTO {
   telefono?: string;
   nroDocumento: string;
   tipoDoc: TipoDocumento;
+  // Mutual opcional: si se envía mutual_id, nroAfiliado es obligatorio
+  mutual_id?: number;
+  nroAfiliado?: string;
+  cubre?: number;
 }

@@ -28,9 +28,6 @@ export const TelefonoSchema = z
   .regex(/^[\d\-\+\s\(\)]{7,20}$/, 'Teléfono inválido')
   .optional();
 
-// Para IDs que llegan como string desde la URL o query (cuando se valide params)
-export const IdSchema = z.coerce.number().int().positive('ID inválido');
-
 // ─── Paciente ─────────────────────────────────────────────────────────────
 
 const PacienteBaseSchema = z.object({
@@ -46,11 +43,13 @@ const PacienteBaseSchema = z.object({
 // Endpoint público: el usuario envía su contraseña en texto plano
 export const CreatePacienteSchema = PacienteBaseSchema.extend({
   password: PasswordSchema,
-});
-
-// Uso interno (seeds, importaciones, admin): recibe el hash ya generado
-export const CreatePacienteInternoSchema = PacienteBaseSchema.extend({
-  password_hash: z.string().min(1, 'password_hash requerido'),
+  // Mutual opcional al crear: si se envía mutual_id, nroAfiliado es obligatorio
+  mutual_id: z.number().int().positive().optional(),
+  nroAfiliado: z.string().trim().min(1, 'Número de afiliado requerido').max(30).optional(),
+  cubre: z.number().int().min(0).max(100).optional(),
+}).refine((d) => d.mutual_id === undefined || d.nroAfiliado !== undefined, {
+  message: 'nroAfiliado es requerido cuando se envía mutual_id',
+  path: ['nroAfiliado'],
 });
 
 // El email no se modifica desde paciente.service.update
@@ -123,7 +122,7 @@ export const UpdateCaraSchema = CreateCaraSchema.partial();
 
 // ─── Turno ────────────────────────────────────────────────────────────────
 
-// Coincide con ESTADOS_TURNO en turno.service
+// Estados válidos de un turno (los usa turno.service)
 export const EstadoTurnoSchema = z.enum(['libre', 'ocupado']);
 
 export const CreateTurnoSchema = z.object({
@@ -165,12 +164,12 @@ export const FinalizarReservaSchema = z.object({
 
 // ─── Detalle (práctica realizada) ─────────────────────────────────────────
 
+// El odontograma no se envía: siempre es el del paciente de la reserva
 export const CreateDetalleSchema = z.object({
   reserva_id: z.number().int().positive(),
   practica_id: z.number().int().positive().optional(),
   practica_personalizada: z.string().trim().min(1).max(100).optional(),
   diente_id: z.number().int().positive().optional(),
-  odontograma_id: z.number().int().positive().optional(),
   observaciones: z.string().trim().optional(),
 }).refine(
   (data) => data.practica_id !== undefined || (data.practica_personalizada && data.practica_personalizada.trim().length > 0),
@@ -179,7 +178,6 @@ export const CreateDetalleSchema = z.object({
     path: ['practica_id']
   }
 );
-
 
 // ─── Usuario (gestión de cuentas, sólo administrador) ─────────────────────
 
@@ -228,9 +226,20 @@ export const TurnoQuerySchema = z.object({
   estado: filtro(EstadoTurnoSchema),
 });
 
+const fechaExiste = (s: string) => {
+  const [y, m, d] = s.split('-').map(Number);
+  const f = new Date(Date.UTC(y, m - 1, d));
+  return f.getUTCFullYear() === y && f.getUTCMonth() === m - 1 && f.getUTCDate() === d;
+};
+
 export const TurnoDisponiblesQuerySchema = z.object({
   odontologoId: filtro(IdTextoSchema),
-  fecha: filtro(z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'el formato debe ser YYYY-MM-DD')),
+  fecha: filtro(
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, 'el formato debe ser YYYY-MM-DD')
+      .refine(fechaExiste, 'la fecha no existe')
+  ),
 });
 
 export const DetalleQuerySchema = z.object({
@@ -240,4 +249,11 @@ export const DetalleQuerySchema = z.object({
 
 export const OdontologoQuerySchema = z.object({
   mutualId: filtro(IdTextoSchema),
+});
+
+// ─── Login ────────────────────────────────────────────────────────────────
+
+export const LoginSchema = z.object({
+  email: z.string().trim().min(1, 'Email requerido'),
+  password: z.string().min(1, 'Contraseña requerida'),
 });

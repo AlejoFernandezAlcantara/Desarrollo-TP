@@ -6,17 +6,11 @@ import { AppError } from '../middlewares/error.middleware';
 import { mutualService } from './mutual.service';
 import { usuarioPublico } from '../utils/selects';
 
-const assertId = (id: number) => {
-  if (isNaN(id)) {
-    throw new AppError(400, 'El ID ingresado es inválido');
-  }
-};
-
 export const pacienteService = {
   async getAll() {
     return await prisma.paciente.findMany({
       include: {
-        usuario: true,
+        usuario: { select: usuarioPublico },
         mutuales: {
           include: {
             mutual: true
@@ -42,8 +36,6 @@ export const pacienteService = {
   },
 
   async getByIdOrThrow(id: number) { // no puede devolver null, lanza error si no encuentra
-    assertId(id);
-
     const paciente = await this.getById(id);
 
     if (!paciente) {
@@ -77,15 +69,6 @@ export const pacienteService = {
     nroAfiliado?: string;
     cubre?: number;
   }) {
-    if (!data.email || !data.nroDocumento) {
-      throw new AppError(400, 'Email y nroDocumento son requeridos');
-    }
-
-    // Validar rango de cubre (0 a 100) si se envía
-    if (data.cubre !== undefined && (data.cubre < 0 || data.cubre > 100)) {
-      throw new AppError(400, 'El porcentaje de cobertura debe estar entre 0 y 100');
-    }
-
     let hashToStore = data.password_hash;
     if (data.password) {
       hashToStore = await bcrypt.hash(data.password, 10);
@@ -99,6 +82,9 @@ export const pacienteService = {
     if (pacienteExistente) {
       logger.warn('Email ya registrado', { email: data.email });
       throw new AppError(400, 'El email ya está registrado');
+    }
+     if (data.mutual_id !== undefined) {
+      await mutualService.getByIdOrThrow(data.mutual_id);
     }
 
     return await prisma.$transaction(async (tx) => {
@@ -157,7 +143,7 @@ export const pacienteService = {
       return await tx.paciente.findUnique({
         where: { id: paciente.id },
         include: {
-          usuario: true,
+          usuario: { select: usuarioPublico },
           mutuales: {
             include: {
               mutual: true
@@ -199,7 +185,7 @@ export const pacienteService = {
           tipoDoc: data.tipoDoc
         },
         include: {
-          usuario: true,
+          usuario: { select: usuarioPublico },
           mutuales: {
             include: {
               mutual: true
@@ -211,8 +197,6 @@ export const pacienteService = {
   },
 
   async delete(id: number) {
-    assertId(id);
-
     return await prisma.$transaction(async (tx) => {
       // Elimina el usuario en cascada, lo cual borra el paciente, paciente_mutual y odontograma
       const paciente = await tx.paciente.findUnique({
@@ -231,15 +215,8 @@ export const pacienteService = {
   },
 
   async addMutual(paciente_id: number, data: { mutual_id: number; nroAfiliado: string; cubre?: number }) {
-    assertId(paciente_id);
-    assertId(data.mutual_id);
-
     await this.getByIdOrThrow(paciente_id);
     await mutualService.getByIdOrThrow(data.mutual_id);
-
-    if (data.cubre !== undefined && (data.cubre < 0 || data.cubre > 100)) {
-      throw new AppError(400, 'El porcentaje de cobertura debe estar entre 0 y 100');
-    }
 
     return await prisma.pacienteMutual.upsert({
       where: {
@@ -265,31 +242,28 @@ export const pacienteService = {
   },
 
   async removeMutual(paciente_id: number, mutual_id: number) {
-  assertId(paciente_id);
-  assertId(mutual_id);
+    await this.getByIdOrThrow(paciente_id);
 
-  await this.getByIdOrThrow(paciente_id);
-
-  const vinculo = await prisma.pacienteMutual.findUnique({
-    where: {
-      paciente_id_mutual_id: {
-        paciente_id,
-        mutual_id
+    const vinculo = await prisma.pacienteMutual.findUnique({
+      where: {
+        paciente_id_mutual_id: {
+          paciente_id,
+          mutual_id
+        }
       }
-    }
-  });
+    });
 
-  if (!vinculo) {
-    throw new AppError(404, 'El paciente no tiene asociada esa mutual');
+    if (!vinculo) {
+      throw new AppError(404, 'El paciente no tiene asociada esa mutual');
+    }
+
+    return await prisma.pacienteMutual.delete({
+      where: {
+        paciente_id_mutual_id: {
+          paciente_id,
+          mutual_id
+        }
+      }
+    });
   }
-
-  return await prisma.pacienteMutual.delete({
-    where: {
-      paciente_id_mutual_id: {
-        paciente_id,
-        mutual_id
-      }
-    }
-  });
-}
 };

@@ -1,25 +1,21 @@
 import { prisma } from '../lib/prisma';
 import { EstadoReserva, ResultadoReserva } from '@prisma/client';
-import { logger } from '../utils/logger';
 import { AppError } from '../middlewares/error.middleware';
 import { pacienteService } from './paciente.service';
 import { mutualService } from './mutual.service';
 import { usuarioPublico } from '../utils/selects';
+import { UserRole } from '../middlewares/auth.middleware';
 
-const assertId = (id: number) => {
-  if (isNaN(id)) {
-    throw new AppError(400, 'El ID ingresado es inválido');
-  }
-};
+type SolicitanteReserva = { rol: UserRole; personaId?: number };
 
 export const reservaService = {
-  async getAll(paciente_id?: number, odontologo_id?: number, estado?: EstadoReserva) {
-    if (paciente_id !== undefined) assertId(paciente_id);
-    if (odontologo_id !== undefined) assertId(odontologo_id);
+  async getAll(paciente_id?: number, odontologo_id?: number, estado?: EstadoReserva, solicitante?: SolicitanteReserva) {
+    // El paciente sólo ve sus propias reservas, sin importar el filtro que mande
+    const pacienteFiltro = solicitante?.rol === 'PACIENTE' ? solicitante.personaId : paciente_id;
 
     return await prisma.reserva.findMany({
       where: {
-        ...(paciente_id !== undefined && { paciente_id }),
+        ...(pacienteFiltro !== undefined && { paciente_id: pacienteFiltro }),
         ...(odontologo_id !== undefined && { odontologo_id }),
         ...(estado && { estado })
       },
@@ -55,13 +51,13 @@ export const reservaService = {
       include: {
         paciente: {
           include: {
-            usuario: true,
+            usuario: { select: usuarioPublico },
             odontograma: true
           }
         },
         odontologo: {
           include: {
-            usuario: true
+            usuario: { select: usuarioPublico }
           }
         },
         mutual: true,
@@ -77,8 +73,6 @@ export const reservaService = {
   },
 
   async getByIdOrThrow(id_reserva: number) { // no puede devolver null, lanza error si no encuentra
-    assertId(id_reserva);
-
     const reserva = await this.getById(id_reserva);
 
     if (!reserva) {
@@ -95,9 +89,10 @@ export const reservaService = {
     mutual_id?: number;
     observaciones?: string;
     coseguro?: number;
-  }) {
-    assertId(data.paciente_id);
-    assertId(data.turno_codigo);
+  }, solicitante?: SolicitanteReserva) {
+    if (solicitante?.rol === 'PACIENTE' && data.paciente_id !== solicitante.personaId) {
+      throw new AppError(403, 'Solo podés reservar para vos mismo');
+    }
 
     await pacienteService.getByIdOrThrow(data.paciente_id);
 
@@ -146,12 +141,12 @@ export const reservaService = {
         include: {
           paciente: {
             include: {
-              usuario: true
+              usuario: { select: usuarioPublico }
             }
           },
           odontologo: {
             include: {
-              usuario: true
+              usuario: { select: usuarioPublico }
             }
           },
           mutual: true,
@@ -162,9 +157,7 @@ export const reservaService = {
   },
 
   // Cancelar reserva (libera los turnos asociados)
-  async cancelarReserva(id_reserva: number, motivo?: string) {
-    assertId(id_reserva);
-
+  async cancelarReserva(id_reserva: number, motivo?: string, solicitante?: SolicitanteReserva) {
     return await prisma.$transaction(async (tx) => {
       const reserva = await tx.reserva.findUnique({
         where: { id_reserva }
@@ -172,6 +165,14 @@ export const reservaService = {
 
       if (!reserva) {
         throw new AppError(404, 'Reserva no encontrada');
+      }
+
+      if (solicitante?.rol === 'PACIENTE' && reserva.paciente_id !== solicitante.personaId) {
+        throw new AppError(403, 'Solo podés cancelar tus propias reservas');
+      }
+
+      if (solicitante?.rol === 'ODONTOLOGO' && reserva.odontologo_id !== solicitante.personaId) {
+        throw new AppError(403, 'Solo podés cancelar tus propias reservas');
       }
 
       if (reserva.estado !== 'confirmada') {
@@ -204,8 +205,12 @@ export const reservaService = {
   async finalizarReserva(id_reserva: number, data: {
     resultado: ResultadoReserva;
     observaciones?: string;
-  }) {
+  }, solicitante?: SolicitanteReserva) {
     const reserva = await this.getByIdOrThrow(id_reserva);
+
+    if (solicitante?.rol === 'ODONTOLOGO' && reserva.odontologo_id !== solicitante.personaId) {
+      throw new AppError(403, 'Solo podés finalizar tus propias reservas');
+    }
 
     if (reserva.estado !== 'confirmada') {
       throw new AppError(409, `No se puede finalizar una reserva en estado "${reserva.estado}"`);

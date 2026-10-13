@@ -17,6 +17,7 @@ import { Turno, Odontologo } from '../../types';
 import { Modal } from '../../components/Modal';
 import { useAuth } from '../../contexts/AuthContext';
 import './Agenda.css';
+import { formatFecha, formatHora } from '../../utils/fecha';
 
 // ─── Tipos internos ─────────────────────────────────────────────────────────
 type ModoCreacion = 'individual' | 'unDia' | 'variosD';
@@ -536,14 +537,13 @@ export const GestionTurnos: React.FC = () => {
                         </thead>
                         <tbody>
                             {turnos.map((t) => {
-                                const dateObj = new Date(t.fecha_hora_inicio);
-                                const fechaStr = dateObj.toLocaleDateString('es-AR', {
+                                const fechaStr = formatFecha(t.fecha_hora_inicio, {  
                                     weekday: 'long',
                                     day: '2-digit',
                                     month: 'long',
                                     year: 'numeric'
                                 });
-                                const horaStr = dateObj.toLocaleTimeString('es-AR', {
+                                const horaStr = formatHora(t.fecha_hora_inicio, {
                                     hour: '2-digit',
                                     minute: '2-digit'
                                 });
@@ -913,13 +913,13 @@ export const GestionTurnos: React.FC = () => {
                             }}
                         >
                             <div style={{ fontWeight: 800, fontSize: '1.1rem' }}>
-                                {new Date(deletingTurno.fecha_hora_inicio).toLocaleTimeString('es-AR', {
+                                {formatHora(deletingTurno.fecha_hora_inicio, {
                                     hour: '2-digit',
                                     minute: '2-digit'
                                 })} hs
                             </div>
                             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
-                                {new Date(deletingTurno.fecha_hora_inicio).toLocaleDateString('es-AR', {
+                                {formatFecha(deletingTurno.fecha_hora_inicio, {
                                     weekday: 'long',
                                     day: '2-digit',
                                     month: 'long',

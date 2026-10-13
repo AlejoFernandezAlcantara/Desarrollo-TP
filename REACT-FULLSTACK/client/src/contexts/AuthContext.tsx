@@ -33,6 +33,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkSession();
   }, []);
 
+  // Si cualquier request responde 401, se limpia el usuario y ProtectedRoute redirige al login
+  useEffect(() => {
+    const onUnauthorized = () => setUser(null);
+    window.addEventListener('auth:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('auth:unauthorized', onUnauthorized);
+  }, []);
+
   const login = async (email: string, password: string): Promise<AuthUser> => {
     const data = await authApi.login(email, password);
     setUser(data.usuario);

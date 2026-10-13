@@ -8,7 +8,7 @@ export const getDetalles = asyncHandler(async (req: Request, res: Response) => {
   const reservaId = req.query.reservaId ? parseInt(req.query.reservaId as string) : undefined;
   const odontogramaId = req.query.odontogramaId ? parseInt(req.query.odontogramaId as string) : undefined;
 
-  const detalles = await detalleService.getAll(reservaId, odontogramaId);
+  const detalles = await detalleService.getAll(reservaId, odontogramaId, req.user);
   logger.debug('Detalles obtenidos', { cantidad: detalles.length, reservaId, odontogramaId });
 
   res.json({
@@ -22,7 +22,7 @@ export const getDetalles = asyncHandler(async (req: Request, res: Response) => {
 export const getDetalleById = asyncHandler(async (req: Request, res: Response) => {
   const detalleId = parseInt(req.params.id as string);
 
-  const detalle = await detalleService.getByIdOrThrow(detalleId);
+  const detalle = await detalleService.getByIdOrThrow(detalleId, req.user);
   logger.debug('Detalle encontrado', { detalleId });
 
   res.json({

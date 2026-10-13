@@ -15,6 +15,7 @@ import {
 import { pacientesApi, reservasApi, odontologosApi } from '../services/api';
 import './Home.css';
 import { useAuth } from '../contexts/AuthContext';
+import { diaAR, hoyAR } from '../utils/fecha';
 
 export const Home: React.FC = () => {
   const { user } = useAuth();
@@ -28,7 +29,7 @@ export const Home: React.FC = () => {
   // Fecha de hoy local en formato YYYY-MM-DD
   const pad = (n: number) => String(n).padStart(2, '0');
   const now = new Date();
-  const hoyStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  const hoyStr = hoyAR();
 
   // Fecha legible para mostrar como subtítulo (ej: "12 de octubre")
   const fechaHoyLegible = now.toLocaleDateString('es-AR', {
@@ -65,7 +66,7 @@ export const Home: React.FC = () => {
 
           const reservasDeHoy = reservas.filter((r) => {
             const fechaInicio = r.turnos && r.turnos[0]?.fecha_hora_inicio;
-            return fechaInicio ? fechaInicio.startsWith(hoyStr) : r.fecha_creacion.startsWith(hoyStr);
+            return diaAR(fechaInicio || r.fecha_creacion) === hoyStr;
           });
 
           const pendientes = reservasDeHoy.filter(
@@ -83,7 +84,7 @@ export const Home: React.FC = () => {
 
           const reservasDeHoy = reservas.filter((r) => {
             const fechaInicio = r.turnos && r.turnos[0]?.fecha_hora_inicio;
-            return fechaInicio ? fechaInicio.startsWith(hoyStr) : r.fecha_creacion.startsWith(hoyStr);
+             return diaAR(fechaInicio || r.fecha_creacion) === hoyStr;
           });
 
           const pendientes = reservasDeHoy.filter(

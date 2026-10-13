@@ -19,12 +19,6 @@ type UsuarioUpdateData = {
   password_hash?: string;
 };
 
-const assertId = (id: number) => {
-  if (isNaN(id)) {
-    throw new AppError(400, 'El ID ingresado es inválido');
-  }
-};
-
 const excludePassword = <T extends { password_hash?: string }>(user: T | null): Omit<T, 'password_hash'> | null => {
   if (!user) return null;
   const { password_hash, ...userWithoutPassword } = user;
@@ -55,7 +49,6 @@ export const getById = async (id: number) => { // puede devolver null
 };
 
 export const getByIdOrThrow = async (id: number) => { // no puede devolver null, lanza error si no encuentra
-  assertId(id);
 
   const usuario = await getById(id);
 
@@ -74,10 +67,6 @@ export const getByEmail = async (email: string) => {
 
 export const create = async (data: UsuarioCreateData) => {
   const { password, password_hash, ...campos } = data;
-
-  if (!campos.email) {
-    throw new AppError(400, 'Email requerido');
-  }
 
   const hash = password ? await bcrypt.hash(password, 10) : password_hash;
 
