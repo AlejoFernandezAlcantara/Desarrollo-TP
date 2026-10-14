@@ -45,6 +45,13 @@
   --shadow-xl: 0 20px 25px -5px rgba(41, 37, 36, 0.07), 0 8px 10px -6px rgba(41, 37, 36, 0.04);
 
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* Alias usados por Consultorio.css / Odontograma (antes sin definir) */
+  --bg-card: var(--bg-surface);
+  --bg-muted: var(--bg-table-header);
+  --border: var(--border-light);
+  --success-border: #bbf7d0;
+  --success-dark: #166534;
 }
 
 :root[data-theme="dark"] {
@@ -78,6 +85,9 @@
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+
+  --success-border: rgba(22, 163, 74, 0.3);
+  --success-dark: #4ade80;
 }
 
 * {
@@ -93,6 +103,12 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
 }
 
 /* Scrollbar styling */
@@ -123,7 +139,7 @@ body {
   max-width: 1280px;
   width: 100%;
   margin: 0 auto;
-  padding: 2rem 1.5rem;
+  padding: 1rem;
 }
 
 /* Buttons */
@@ -210,7 +226,7 @@ body {
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-light);
   box-shadow: 0 4px 12px -2px rgba(45, 30, 15, 0.08), 0 2px 4px -1px rgba(45, 30, 15, 0.05);
-  padding: 1.5rem;
+  padding: 1.25rem;
   transition: var(--transition);
 }
 
@@ -220,8 +236,10 @@ body {
 
 .card-header {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1.25rem;
 }
 
@@ -298,7 +316,7 @@ body {
 .form-control {
   width: 100%;
   padding: 0.625rem 0.875rem;
-  font-size: 0.9375rem;
+  font-size: 1rem; /* 16px: evita el zoom automático de iOS al enfocar */
   font-family: inherit;
   color: var(--text-main);
   background-color: var(--bg-surface);
@@ -315,13 +333,14 @@ body {
 
 .form-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1rem;
 }
 
 /* Tables */
 .table-container {
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-light);
   background: var(--bg-surface);
@@ -338,13 +357,13 @@ body {
   background-color: var(--bg-table-header);
   color: var(--text-muted);
   font-weight: 600;
-  padding: 0.75rem 1rem;
+  padding: 0.625rem 0.75rem;
   border-bottom: 1px solid var(--border-light);
   white-space: nowrap;
 }
 
 .table td {
-  padding: 0.875rem 1rem;
+  padding: 0.75rem;
   border-bottom: 1px solid var(--border-light);
   color: var(--text-secondary);
 }
@@ -406,7 +425,7 @@ body {
 }
 
 .page-header-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.025em;
   color: var(--text-main);
@@ -427,18 +446,56 @@ body {
 
 .grid-2 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
   gap: 1.5rem;
 }
 
 .grid-3 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
   gap: 1.5rem;
 }
 
 .grid-4 {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1.25rem;
+}
+
+/* ==========================================================================
+   RESPONSIVE (mobile-first)
+   Base = móvil (< 640px). Se amplía con min-width:
+     SM ≥ 640px · MD ≥ 768px · LG ≥ 1024px
+   ========================================================================== */
+
+/* Split de 2 columnas que colapsa a 1 en móvil */
+.grid-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+/* Objetivos táctiles de al menos 44px en pantallas táctiles */
+@media (pointer: coarse) {
+  .btn:not(.btn-sm),
+  .form-control {
+    min-height: 44px;
+  }
+}
+
+@media (min-width: 640px) {
+  .main-content { padding: 1.5rem; }
+  .card { padding: 1.5rem; }
+  .page-header-title { font-size: 1.75rem; }
+  .grid-split { grid-template-columns: 1fr 1fr; }
+  .table th { padding: 0.75rem 1rem; }
+  .table td { padding: 0.875rem 1rem; }
+}
+
+@media (min-width: 768px) {
+  .form-control { font-size: 0.9375rem; }
+}
+
+@media (min-width: 1024px) {
+  .main-content { padding: 2rem 1.5rem; }
 }

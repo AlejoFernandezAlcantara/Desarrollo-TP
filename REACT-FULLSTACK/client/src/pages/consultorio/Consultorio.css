@@ -1,10 +1,9 @@
 /* Odontograma Visual Styles - Compatible con Modo Oscuro */
-/* Odontograma Visual Styles - Compatible con Modo Oscuro */
 .odontograma-container {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: 1rem;
   margin-bottom: 1.5rem;
   color: var(--text-main);
 }
@@ -21,8 +20,11 @@
 }
 
 .odontograma-quadrant {
-  display: flex;
+  /* móvil: 4 dientes por fila (2 filas por cuadrante) */
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.35rem;
+  width: 100%;
 }
 
 .odontograma-divider {
@@ -30,6 +32,7 @@
   background-color: var(--border-light);
   margin: 0 0.5rem;
   height: 60px;
+  display: none; /* los cuadrantes van apilados hasta LG */
 }
 
 /* Dientes individuales (con borde) */
@@ -43,7 +46,7 @@
   align-items: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  min-width: 50px;
+  min-width: 0;
   position: relative;
 }
 
@@ -138,8 +141,10 @@
 /* Consulta finalizada - usa variables para modo oscuro */
 .consultation-summary-bar {
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  gap: 0.75rem;
   background: var(--success-light, #f0fdf4);
   border: 1px solid var(--success-border, #bbf7d0);
   padding: 1rem 1.25rem;
@@ -152,4 +157,30 @@
   background: rgba(22, 163, 74, 0.15);
   border-color: rgba(22, 163, 74, 0.3);
   color: #4ade80;
+}
+
+/* Responsive (mobile-first) */
+@media (min-width: 640px) {
+  .odontograma-container { padding: 1.5rem; }
+  .odontograma-arch { padding: 1rem; }
+
+  .odontograma-quadrant {
+    display: flex;
+    width: auto;
+  }
+
+  .odontograma-container .tooth-item { min-width: 44px; }
+
+  .consultation-summary-bar {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1024px) {
+  .odontograma-divider { display: block; }
+}
+
+@media (min-width: 1200px) {
+  .odontograma-container .tooth-item { min-width: 50px; }
 }
