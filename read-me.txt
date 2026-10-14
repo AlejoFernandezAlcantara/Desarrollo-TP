@@ -1,5 +1,3 @@
-LISTADO DE COSAS POR HACER- DEJAR ABAJO DEL TODO POR ESCRITO TODO LO REALIZADO SIN BORRAR NADA
-
 PRIORIDAD DE ARRIBA A ABAJO 
 
 - SUGERIDO HACER UN MIDDLEWARE PARA MANEJO DE ERRORES CENTRALIZADO (ASI NO SE HACE TRY/CATCH POR TODO EL CODIGO)
@@ -17,7 +15,7 @@ server/src/utils/validators.ts  aca va el schema validation
 YA HECHO LO DE ARRIBA
 
 -TESTING (con vitest) (playwright)
--DOCUMENTAR APIS (swagger)
+-DOCUMENTAR APIS (swagger) (chequear todas las apis)
 -README AL FRONT,CHANGELOG Y COMENTARIOS EN TODO EL CODIGO (documentacion)
 -agregar manejo de loading states y notificaciones(toast)
 

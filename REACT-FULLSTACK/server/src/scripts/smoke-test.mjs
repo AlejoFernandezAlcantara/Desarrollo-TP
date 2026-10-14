@@ -339,6 +339,20 @@ async function main() {
     expectStatus(r, 200, 'finalizar propia');
     expect(r.json.data.estado === 'realizada', 'estado no quedó realizada');
   });
+    await test('odontólogo carga una práctica (201) y no puede editarla (403)', async () => {
+    const c = await req('POST', '/practicas', {
+      cookie: s.odonto.cookie,
+      body: { codigo: 'OD' + RUN, detalle: 'Práctica especial ' + RUN, precio: 900 },
+    });
+    expectStatus(c, 201, 'odontólogo crea práctica');
+
+    const p = c.json.data;
+    expectStatus(
+      await req('PUT', `/practicas/${p.id}`, { cookie: s.odonto.cookie, body: { precio: 1 } }),
+      403,
+      'odontólogo edita práctica'
+    );
+  });
 
   // ── Mutuales del paciente ───────────────────────────────────────────────
   console.log('\nMutuales del paciente');

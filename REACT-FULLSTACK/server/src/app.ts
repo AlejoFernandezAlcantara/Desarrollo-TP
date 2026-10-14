@@ -7,7 +7,8 @@ import { AppError, errorHandler } from './middlewares/error.middleware';
 import { env } from './config/env';
 import helmet from 'helmet';
 import { apiLimiter, authLimiter } from './middlewares/rateLimit.middleware';
-
+import swaggerUi from 'swagger-ui-express';
+import { swaggerSpec } from './docs/swagger';
 const app: Application = express();
 
 // Middlewares
@@ -18,6 +19,8 @@ app.use(cors({
 }));
 app.use(cookieParser());
 app.use(express.json());
+// Documentación de la API: http://localhost:3001/api/docs
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec as any));
 
 // Rate limit: general para toda la API y estricto para login/registro
 app.use('/api', apiLimiter);
