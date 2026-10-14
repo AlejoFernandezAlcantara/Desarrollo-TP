@@ -24,7 +24,7 @@ docker ps (Estado de los contenedores)
 
 REVISAR BDD:
 docker compose exec db mysql -uroot -padmin consultorioBdd
-(se ejecuta query desde consola como si fuera workbench)
+(se ejecuta query desde consola como si fuera workbench).
 
 
 
