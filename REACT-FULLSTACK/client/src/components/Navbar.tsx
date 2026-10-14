@@ -13,8 +13,10 @@ import {
   LogIn,
   User as UserIcon,
   Sun,
-  Moon
+  Moon,
+  HeartHandshake
 } from 'lucide-react';
+
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import './Navbar.css';
@@ -68,7 +70,9 @@ export const Navbar: React.FC = () => {
   const canViewRecepcion = user?.rol === 'ADMINISTRADOR';
   const canViewConsultorio = user?.rol === 'ADMINISTRADOR' || user?.rol === 'ODONTOLOGO';
   const canViewGenerarTurnos = user?.rol === 'ADMINISTRADOR' || user?.rol === 'ODONTOLOGO';
+  const canViewMutuales = user?.rol === 'PACIENTE' || user?.rol === 'ODONTOLOGO';
   const canViewAgenda = true; // Todos pueden ver agenda o turnos según su contexto
+
 
   return (
     <>
@@ -213,6 +217,18 @@ export const Navbar: React.FC = () => {
               <span>Reservar Turnos</span>
             </NavLink>
           )}
+
+          {canViewMutuales && (
+            <NavLink
+              to="/mis-mutuales"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={closeSidebar}
+            >
+              <HeartHandshake size={19} />
+              <span>{user?.rol === 'PACIENTE' ? 'Mis Obras Sociales' : 'Mutuales de Atención'}</span>
+            </NavLink>
+          )}
+
 
           {canViewGenerarTurnos && (
             <NavLink

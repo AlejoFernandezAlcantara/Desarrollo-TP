@@ -32,6 +32,11 @@ RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADO DEL SERVI
 VALIDAR FORMULARIOS LADO DEL CLIENTE
 
 consignas que faltan de nuestra propuesta : 
+    
+    1. CRUD Practica si
+    2. CRUD Mutual si (revisar)
+    3. CRUD Odontologo si
+    4. CRUD Diente creo q no (chequear)
 
     1. CRUD paciente {depende de} CRUD Mutual (se relacionan pero faltan cositas)
     2. CRUD Cara {depende de} CRUD Diente (falta implementar en algo concreto)

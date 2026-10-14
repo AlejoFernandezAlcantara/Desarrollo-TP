@@ -12,8 +12,11 @@ import {
   EstadoReserva,
   AuthUser,
   LoginResponse,
-  RegisterPacienteDTO
+  RegisterPacienteDTO,
+  PacienteMutual,
+  OdontologoMutual
 } from '../types';
+
 
 const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:3001/api';
 
@@ -126,7 +129,8 @@ export const odontologosApi = {
     request<any>(`/odontologos/${id}/mutuales/${data.mutual_id}`, {
       method: 'POST',
       body: JSON.stringify({ nroAfiliado: data.nroAfiliado })
-    })
+    }),
+  getMutuales: (id: number) => request<OdontologoMutual[]>(`/odontologos/${id}/mutuales`)
 };
 
 // -------------------------------------------------------------------
@@ -135,7 +139,9 @@ export const odontologosApi = {
 export const pacientesApi = {
   getAll: () => request<Paciente[]>('/pacientes'),
   getById: (id: number) => request<Paciente>(`/pacientes/${id}`),
+  getMutuales: (id: number) => request<PacienteMutual[]>(`/pacientes/${id}/mutuales`),
   create: (data: {
+
     nombre: string;
     apellido: string;
     email: string;

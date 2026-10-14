@@ -81,7 +81,9 @@ export interface OdontologoResumen {
   nombreCompleto?: string;
   usuario?: Usuario;
   nro_Matricula?: number;
+  mutuales?: OdontologoMutual[];
 }
+
 
 export interface Detalle {
   id: number;

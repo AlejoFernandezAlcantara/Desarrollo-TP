@@ -82,3 +82,17 @@ export const soloPropioSiPaciente = (req: Request, res: Response, next: NextFunc
 
   next();
 };
+
+/**
+ * Si el usuario es ODONTOLOGO, solo puede acceder a su propio registro (:id === personaId).
+ * Administradores pasan sin restricción.
+ */
+export const soloPropioSiOdontologo = (req: Request, res: Response, next: NextFunction): void => {
+  if (req.user?.rol === 'ODONTOLOGO' && Number(req.params.id) !== req.user.personaId) {
+    res.status(403).json({ error: 'Acceso denegado. Solo puedes consultar tus propios datos.' });
+    return;
+  }
+
+  next();
+};
+

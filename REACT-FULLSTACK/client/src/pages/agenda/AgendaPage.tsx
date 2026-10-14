@@ -11,21 +11,26 @@ import {
   RefreshCw,
   Stethoscope,
   Activity,
-  Filter
+  Filter,
+  HeartHandshake,
+  X
 } from 'lucide-react';
-import { reservasApi, odontologosApi } from '../../services/api';
-import { Reserva, Odontologo } from '../../types';
+import { reservasApi, odontologosApi, mutualesApi } from '../../services/api';
+import { Reserva, Odontologo, Mutual } from '../../types';
 import { Modal } from '../../components/Modal';
 import { useAuth } from '../../contexts/AuthContext';
 import './Agenda.css';
 import { formatFecha, formatHora } from '../../utils/fecha';
+
 
 export const AgendaPage: React.FC = () => {
   const { user } = useAuth();
   const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [odontologos, setOdontologos] = useState<Odontologo[]>([]);
+  const [mutuales, setMutuales] = useState<Mutual[]>([]);
   const [selectedOdontologoId, setSelectedOdontologoId] = useState<string>('');
+  const [selectedMutualId, setSelectedMutualId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -33,6 +38,13 @@ export const AgendaPage: React.FC = () => {
   const [cancelingReserva, setCancelingReserva] = useState<Reserva | null>(null);
   const [motivoCancelacion, setMotivoCancelacion] = useState('');
   const [submittingCancel, setSubmittingCancel] = useState(false);
+
+  // Cargar catálogo de mutuales
+  useEffect(() => {
+    mutualesApi.getAll().then(setMutuales).catch((err) => {
+      console.error('Error cargando mutuales:', err);
+    });
+  }, []);
 
   const fetchAgenda = async () => {
     setLoading(true);
@@ -42,7 +54,13 @@ export const AgendaPage: React.FC = () => {
       // Sólo el personal puede listar odontólogos (el paciente recibiría 403)
       const [resData, odoData] = await Promise.all([
         reservasApi.getAll({ odontologoId: odoId }),
-        esStaff ? odontologosApi.getAll() : Promise.resolve([] as Odontologo[])
+        esStaff
+          ? odontologosApi.getAll(
+              selectedMutualId && selectedMutualId !== 'particular'
+                ? parseInt(selectedMutualId)
+                : undefined
+            )
+          : Promise.resolve([] as Odontologo[])
       ]);
       setReservas(resData);
       setOdontologos(odoData);
@@ -56,6 +74,18 @@ export const AgendaPage: React.FC = () => {
   useEffect(() => {
     fetchAgenda();
   }, [selectedOdontologoId]);
+
+  // Si es staff y cambia la mutual seleccionada, acotar los profesionales a los que atienden esa mutual
+  useEffect(() => {
+    if (!esStaff) return;
+    const mId = selectedMutualId && selectedMutualId !== 'particular' ? parseInt(selectedMutualId) : undefined;
+    odontologosApi.getAll(mId).then((odos) => {
+      setOdontologos(odos);
+      if (selectedOdontologoId && !odos.some((o) => o.id === parseInt(selectedOdontologoId))) {
+        setSelectedOdontologoId('');
+      }
+    }).catch(console.error);
+  }, [selectedMutualId, esStaff]);
 
   const handleOpenCancel = (r: Reserva) => {
     setCancelingReserva(r);
@@ -75,6 +105,24 @@ export const AgendaPage: React.FC = () => {
     } finally {
       setSubmittingCancel(false);
     }
+  };
+
+  // Filtrado de reservas en el cliente por mutual
+  const reservasFiltradas = reservas.filter((r) => {
+    if (selectedMutualId === 'particular') {
+      return !r.mutual_id;
+    }
+    if (selectedMutualId) {
+      return r.mutual_id === parseInt(selectedMutualId);
+    }
+    return true;
+  });
+
+  const hayFiltrosActivos = Boolean(selectedOdontologoId) || Boolean(selectedMutualId);
+
+  const limpiarFiltros = () => {
+    setSelectedOdontologoId('');
+    setSelectedMutualId('');
   };
 
   return (
@@ -105,25 +153,63 @@ export const AgendaPage: React.FC = () => {
 
       {/* Barra de Filtros */}
       <div className="card" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+          {/* Filtro por Obra Social (Mutual) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Filter size={18} style={{ color: 'var(--primary)' }} />
-            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Filtrar por Profesional:</span>
+            <HeartHandshake size={18} style={{ color: 'var(--primary)' }} />
+            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Obra Social:</span>
+            <select
+              className="form-control"
+              style={{ minWidth: '220px' }}
+              value={selectedMutualId}
+              onChange={(e) => setSelectedMutualId(e.target.value)}
+            >
+              <option value="">Todas las obras sociales</option>
+              <option value="particular">Particular / Sin mutual</option>
+              {mutuales.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.nombre}
+                </option>
+              ))}
+            </select>
           </div>
 
-          <select
-            className="form-control"
-            style={{ maxWidth: '320px' }}
-            value={selectedOdontologoId}
-            onChange={(e) => setSelectedOdontologoId(e.target.value)}
-          >
-            <option value="">Todos los profesionales</option>
-            {odontologos.map((o) => (
-              <option key={o.id} value={o.id}>
-                Dr./Dra. {o.nombreCompleto || `${o.usuario?.nombre} ${o.usuario?.apellido}`} ({o.especialidad})
-              </option>
-            ))}
-          </select>
+          {/* Filtro por Profesional (Staff) */}
+          {esStaff && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Filter size={18} style={{ color: 'var(--primary)' }} />
+              <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Profesional:</span>
+              <select
+                className="form-control"
+                style={{ minWidth: '240px' }}
+                value={selectedOdontologoId}
+                onChange={(e) => setSelectedOdontologoId(e.target.value)}
+              >
+                <option value="">Todos los profesionales</option>
+                {odontologos.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    Dr./Dra. {o.nombreCompleto || `${o.usuario?.nombre} ${o.usuario?.apellido}`} ({o.especialidad})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {hayFiltrosActivos && (
+            <button
+              type="button"
+              className="btn btn-ghost btn-sm"
+              style={{ color: 'var(--danger)', fontSize: '0.85rem' }}
+              onClick={limpiarFiltros}
+            >
+              <X size={15} />
+              <span>Limpiar filtros</span>
+            </button>
+          )}
+
+          <div style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            {reservasFiltradas.length} de {reservas.length} reservas
+          </div>
         </div>
       </div>
 
@@ -149,6 +235,17 @@ export const AgendaPage: React.FC = () => {
             </Link>
           </div>
         </div>
+      ) : reservasFiltradas.length === 0 ? (
+        <div className="card empty-state" style={{ padding: '3rem 2rem' }}>
+          <HeartHandshake className="empty-state-icon" style={{ width: '3rem', height: '3rem' }} />
+          <h3>No hay reservas que coincidan con los filtros</h3>
+          <p style={{ maxWidth: '460px', margin: '0.5rem auto 1.5rem auto', color: 'var(--text-muted)' }}>
+            No se encontraron turnos agendados para la combinación de obra social y profesional seleccionados.
+          </p>
+          <button type="button" className="btn btn-secondary" onClick={limpiarFiltros}>
+            Restablecer filtros
+          </button>
+        </div>
       ) : (
         <div className="table-container">
           <table className="table">
@@ -164,7 +261,8 @@ export const AgendaPage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {reservas.map((r) => {
+              {reservasFiltradas.map((r) => {
+
                 const turno = r.turnos && r.turnos[0];
                                 const fechaRef = turno ? turno.fecha_hora_inicio : r.fecha_creacion;
                 const fechaStr = formatFecha(fechaRef, {

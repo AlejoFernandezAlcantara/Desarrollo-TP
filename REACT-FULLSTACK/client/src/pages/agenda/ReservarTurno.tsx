@@ -7,13 +7,17 @@ import {
   Clock,
   Stethoscope,
   CheckCircle2,
-  Plus
+  Plus,
+  HeartHandshake,
+  Info
 } from 'lucide-react';
-import { odontologosApi, turnosApi, pacientesApi, reservasApi, ApiError } from '../../services/api';
-import { OdontologoResumen, Turno, Paciente } from '../../types';
+import { odontologosApi, turnosApi, pacientesApi, reservasApi, mutualesApi, ApiError } from '../../services/api';
+import { OdontologoResumen, Turno, Paciente, Mutual, OdontologoMutual } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+
 import { Modal } from '../../components/Modal';
 import './Agenda.css';
+
 
 type Step = 'odontologo' | 'turno' | 'paciente' | 'confirmacion';
 
@@ -100,11 +104,26 @@ export const ReservarTurno: React.FC = () => {
     duracion: '30'
   });
 
+  const [catalogoMutuales, setCatalogoMutuales] = useState<Mutual[]>([]);
+  const [filtroMutualOdontologo, setFiltroMutualOdontologo] = useState<string>('');
+
   // Fija el paciente de la reserva y preselecciona su primera mutual
   const aplicarPaciente = (p: Paciente) => {
     setSelectedPaciente(p);
     setSelectedMutualId(p.mutuales && p.mutuales.length > 0 ? p.mutuales[0].mutual_id.toString() : '');
   };
+
+  // Asegurar que la mutual seleccionada sea compatible con el odontólogo
+  useEffect(() => {
+    if (selectedOdontologo && selectedPaciente) {
+      const compatibles = selectedPaciente.mutuales?.filter((pm) =>
+        selectedOdontologo.mutuales?.some((om) => om.mutual_id === pm.mutual_id)
+      ) || [];
+      if (selectedMutualId && !compatibles.some((pm) => pm.mutual_id.toString() === selectedMutualId)) {
+        setSelectedMutualId(compatibles.length > 0 ? compatibles[0].mutual_id.toString() : '');
+      }
+    }
+  }, [selectedOdontologo, selectedPaciente]);
 
   // 1. Carga inicial según el rol
   useEffect(() => {
@@ -114,6 +133,10 @@ export const ReservarTurno: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
+        // Cargar catálogo de obras sociales para el filtro
+        const muts = await mutualesApi.getAll().catch(() => [] as Mutual[]);
+        setCatalogoMutuales(muts);
+
         if (rol === 'PACIENTE') {
           // El paciente no puede listar odontólogos: se arma la lista con los que tienen turnos libres
           const libres = await turnosApi.getDisponibles();
@@ -131,7 +154,11 @@ export const ReservarTurno: React.FC = () => {
           if (personaId == null) {
             throw new Error('Tu usuario no tiene un perfil de paciente asociado.');
           }
-          aplicarPaciente(await pacientesApi.getById(personaId));
+          const pacData = await pacientesApi.getById(personaId);
+          aplicarPaciente(pacData);
+          if (pacData.mutuales && pacData.mutuales.length > 0) {
+            setFiltroMutualOdontologo(pacData.mutuales[0].mutual_id.toString());
+          }
         } else {
           // El personal necesita el padrón para elegir a quién reservarle
           const pacs = await pacientesApi.getAll();
@@ -150,6 +177,7 @@ export const ReservarTurno: React.FC = () => {
     };
     initData();
   }, [rol, personaId, preselectedPacienteId]);
+
 
   // 2. Al seleccionar un odontólogo, buscar sus turnos libres
   const handleSelectOdontologo = async (odo: OdontologoResumen) => {
@@ -266,6 +294,11 @@ export const ReservarTurno: React.FC = () => {
     }
   };
 
+  const odontologosFiltrados = odontologos.filter((odo: OdontologoResumen) => {
+    if (!filtroMutualOdontologo) return true;
+    return odo.mutuales?.some((m) => m.mutual_id === parseInt(filtroMutualOdontologo));
+  });
+
   const filteredPacientes = pacientes.filter((p) => {
     const term = pacienteSearch.toLowerCase();
     const fullName = `${p.usuario?.nombre} ${p.usuario?.apellido}`.toLowerCase();
@@ -374,36 +407,119 @@ export const ReservarTurno: React.FC = () => {
           ) : odontologos.length === 0 ? (
             <div className="empty-state">
               <Stethoscope className="empty-state-icon" />
-              <h3>No hay odontólogos registrados</h3>
-              <p>Todavía no hay profesionales disponibles para reservar.</p>
+              <h3>No hay odontólogos disponibles</h3>
+              <p>Todavía no hay profesionales con turnos disponibles para reservar.</p>
             </div>
           ) : (
-            <div className="selection-grid">
-              {odontologos.map((odo) => {
-                const isSelected = selectedOdontologo?.id === odo.id;
-                return (
-                  <div
-                    key={odo.id}
-                    className={`selectable-card ${isSelected ? 'selected' : ''}`}
-                    onClick={() => handleSelectOdontologo(odo)}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                      <Stethoscope size={18} style={{ color: 'var(--primary)' }} />
-                      <span className="badge badge-primary">{odo.especialidad}</span>
-                    </div>
-                    <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>
-                      Dr./Dra. {nombreOdo(odo)}
-                    </div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                      Matrícula: {odo.nro_Matricula}
-                    </div>
+            <>
+              {/* Barra de Filtro por Obra Social */}
+              <div style={{ background: 'var(--bg-muted)', borderRadius: 'var(--radius-md)', padding: '0.875rem 1.25rem', marginBottom: '1.25rem', border: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+                    <HeartHandshake size={18} style={{ color: 'var(--primary)' }} />
+                    <span style={{ fontWeight: 600, fontSize: '0.875rem' }}>Filtrar por Obra Social:</span>
+                    <select
+                      className="form-control"
+                      style={{ minWidth: '240px', maxWidth: '320px' }}
+                      value={filtroMutualOdontologo}
+                      onChange={(e) => setFiltroMutualOdontologo(e.target.value)}
+                    >
+                      <option value="">Todas las obras sociales</option>
+                      {catalogoMutuales.map((m) => {
+                        const esPropia = selectedPaciente?.mutuales?.some((pm) => pm.mutual_id === m.id);
+                        return (
+                          <option key={m.id} value={m.id}>
+                            {m.nombre} {esPropia ? '(tu obra social)' : ''}
+                          </option>
+                        );
+                      })}
+                    </select>
+
+                    {filtroMutualOdontologo && (
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-sm"
+                        style={{ fontSize: '0.8rem', color: 'var(--danger)' }}
+                        onClick={() => setFiltroMutualOdontologo('')}
+                      >
+                        ✕ Ver todos los profesionales
+                      </button>
+                    )}
                   </div>
-                );
-              })}
-            </div>
+
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                    {odontologosFiltrados.length} de {odontologos.length} profesionales
+                  </div>
+                </div>
+              </div>
+
+              {odontologosFiltrados.length === 0 ? (
+                <div className="empty-state" style={{ padding: '2.5rem 1.5rem' }}>
+                  <HeartHandshake className="empty-state-icon" style={{ width: '2.5rem', height: '2.5rem' }} />
+                  <h3>Ningún profesional disponible atiende con esa obra social</h3>
+                  <p style={{ maxWidth: '420px', margin: '0.5rem auto 1rem auto', color: 'var(--text-muted)' }}>
+                    Actualmente no hay odontólogos con turnos libres que atiendan con la mutual seleccionada.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setFiltroMutualOdontologo('')}
+                  >
+                    Ver todos los profesionales
+                  </button>
+                </div>
+              ) : (
+                <div className="selection-grid">
+                  {odontologosFiltrados.map((odo) => {
+                    const isSelected = selectedOdontologo?.id === odo.id;
+                    return (
+                      <div
+                        key={odo.id}
+                        className={`selectable-card ${isSelected ? 'selected' : ''}`}
+                        onClick={() => handleSelectOdontologo(odo)}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                          <Stethoscope size={18} style={{ color: 'var(--primary)' }} />
+                          <span className="badge badge-primary">{odo.especialidad}</span>
+                        </div>
+                        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-main)' }}>
+                          Dr./Dra. {nombreOdo(odo)}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Matrícula: {odo.nro_Matricula}
+                        </div>
+
+                        {/* Badges de Obras Sociales */}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.6rem' }}>
+                          {odo.mutuales && odo.mutuales.length > 0 ? (
+                            <>
+                              {odo.mutuales.slice(0, 3).map((m: OdontologoMutual) => (
+                                <span key={m.mutual_id} className="badge badge-secondary" style={{ fontSize: '0.72rem' }}>
+                                  {m.mutual?.nombre || 'Mutual'}
+                                </span>
+                              ))}
+                              {odo.mutuales.length > 3 && (
+                                <span className="badge badge-secondary" style={{ fontSize: '0.72rem' }}>
+                                  +{odo.mutuales.length - 3}
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <span className="badge badge-secondary" style={{ fontSize: '0.72rem', opacity: 0.8 }}>
+                              Solo particular
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
+
 
       {/* PASO: SELECCIONAR TURNO LIBRE */}
       {step === 'turno' && selectedOdontologo && (
@@ -692,21 +808,43 @@ export const ReservarTurno: React.FC = () => {
                 <label className="form-label" style={{ fontSize: '0.8rem', textTransform: 'uppercase' }}>
                   {esPaciente ? 'Obra Social / Mutual' : 'Mutual a Imputar'}
                 </label>
-                <select
-                  className="form-control"
-                  value={selectedMutualId}
-                  onChange={(e) => setSelectedMutualId(e.target.value)}
-                >
-                  <option value="">Particular / Sin Mutual</option>
-                  {selectedPaciente.mutuales?.map((pm) => (
-                    <option key={pm.mutual_id} value={pm.mutual_id}>
-                      {pm.mutual?.nombre} (Af: {pm.nroAfiliado})
-                    </option>
-                  ))}
-                </select>
+                {(() => {
+                  const mutualesCompatibles = selectedPaciente.mutuales?.filter((pm) =>
+                    selectedOdontologo.mutuales?.some((om) => om.mutual_id === pm.mutual_id)
+                  ) || [];
+                  const tieneMutualesSinConvenio =
+                    (selectedPaciente.mutuales?.length || 0) > 0 && mutualesCompatibles.length === 0;
+
+                  return (
+                    <>
+                      <select
+                        className="form-control"
+                        value={selectedMutualId}
+                        onChange={(e) => setSelectedMutualId(e.target.value)}
+                      >
+                        <option value="">Particular / Sin Mutual</option>
+                        {mutualesCompatibles.map((pm) => (
+                          <option key={pm.mutual_id} value={pm.mutual_id}>
+                            {pm.mutual?.nombre} (Af: {pm.nroAfiliado})
+                          </option>
+                        ))}
+                      </select>
+
+                      {tieneMutualesSinConvenio && (
+                        <div style={{ marginTop: '0.4rem', fontSize: '0.78rem', color: '#b45309', display: 'flex', alignItems: 'flex-start', gap: '0.35rem' }}>
+                          <Info size={14} style={{ flexShrink: 0, marginTop: '2px' }} />
+                          <span>
+                            El profesional no atiende con tus obras sociales ({selectedPaciente.mutuales?.map((m) => m.mutual?.nombre).join(', ')}). La consulta se reservará como Particular.
+                          </span>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             </div>
           </div>
+
 
           <div className="form-row">
             {!esPaciente && (

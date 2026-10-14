@@ -16,7 +16,9 @@ import { ReservarTurno } from './pages/agenda/ReservarTurno';
 import { GestionTurnos } from './pages/agenda/GestionTurnos';
 import { ConsultorioHoy } from './pages/consultorio/ConsultorioHoy';
 import { AtencionConsulta } from './pages/consultorio/AtencionConsulta';
+import { MutualesPage } from './pages/mutuales/MutualesPage';
 import './App.css';
+
 
 export const App: React.FC = () => {
   return (
@@ -163,8 +165,19 @@ export const App: React.FC = () => {
                   }
                 />
 
+                {/* Módulo Obras Sociales / Mutuales (Pacientes y Odontólogos) */}
+                <Route
+                  path="/mis-mutuales"
+                  element={
+                    <ProtectedRoute allowedRoles={['PACIENTE', 'ODONTOLOGO']}>
+                      <MutualesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
                 {/* Ruta por defecto */}
                 <Route path="*" element={<Navigate to="/" replace />} />
+
               </Routes>
             </main>
 

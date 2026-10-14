@@ -192,9 +192,11 @@ export const swaggerSpec = {
         properties: {
           id: { type: 'integer' },
           nombreCompleto: { type: 'string', example: 'Juan Pérez' },
-          especialidad: { type: 'string' }
+          especialidad: { type: 'string' },
+          mutuales: refList('OdontologoMutual')
         }
       },
+
       Practica: {
         type: 'object',
         properties: {
@@ -654,6 +656,16 @@ export const swaggerSpec = {
         responses: { 204: noContent, ...ERR_AUTH, ...ERR_NOTFOUND }
       }
     },
+    '/pacientes/{id}/mutuales': {
+      parameters: [idPath('id', 'ID del paciente')],
+      get: {
+        tags: ['Pacientes'],
+        summary: 'Listar mutuales asociadas al paciente',
+        description: 'Roles: PACIENTE (sólo la propia), ODONTOLOGO, ADMINISTRADOR',
+        security: [SEG],
+        responses: { 200: okLista(ref('PacienteMutual')), ...ERR_AUTH, ...ERR_VALID, ...ERR_NOTFOUND }
+      }
+    },
     '/pacientes/{id}/mutuales/{mutualId}': {
       parameters: [idPath('id', 'ID del paciente'), idPath('mutualId', 'ID de la mutual')],
       post: {
@@ -692,7 +704,18 @@ export const swaggerSpec = {
         responses: { 201: created(ref('Odontologo')), ...ERR_AUTH, ...ERR_VALID }
       }
     },
+    '/odontologos/{id}/mutuales': {
+      parameters: [idPath('id', 'ID del odontólogo')],
+      get: {
+        tags: ['Odontólogos'],
+        summary: 'Listar mutuales asociadas al odontólogo',
+        description: 'Roles: ODONTOLOGO (sólo las propias), ADMINISTRADOR',
+        security: [SEG],
+        responses: { 200: okLista(ref('OdontologoMutual')), ...ERR_AUTH, ...ERR_VALID, ...ERR_NOTFOUND }
+      }
+    },
     '/odontologos/{id}': {
+
       parameters: [idPath()],
       get: {
         tags: ['Odontólogos'],

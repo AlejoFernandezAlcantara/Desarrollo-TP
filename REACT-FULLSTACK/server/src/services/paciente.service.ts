@@ -265,5 +265,16 @@ export const pacienteService = {
         }
       }
     });
+  },
+
+  async getMutuales(id: number) {
+    await this.getByIdOrThrow(id);
+
+    return await prisma.pacienteMutual.findMany({
+      where: { paciente_id: id },
+      include: {
+        mutual: true
+      }
+    });
   }
-};
+};

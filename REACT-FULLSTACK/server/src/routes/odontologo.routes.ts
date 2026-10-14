@@ -6,9 +6,10 @@ import {
   updateOdontologo,
   deleteOdontologo,
   addMutualToOdontologo,
-  removeMutualFromOdontologo
+  removeMutualFromOdontologo,
+  getMutualesDeOdontologo
 } from '../controllers/odontologo.controller';
-import { authenticateToken, authorizeRoles } from '../middlewares/auth.middleware';
+import { authenticateToken, authorizeRoles, soloPropioSiOdontologo } from '../middlewares/auth.middleware';
 import { validateParams, validateQuery, validateRequest } from '../middlewares/validation.middleware';
 import { CreateOdontologoSchema, UpdateOdontologoSchema, AddMutualOdontologoSchema, IdParamsSchema, MutualParamsSchema, OdontologoQuerySchema } from '../utils/validators';
 
@@ -16,7 +17,9 @@ const router = Router();
 
 // Lectura: sólo personal del consultorio (el listado incluye matrícula y datos de contacto)
 router.get('/', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateQuery(OdontologoQuerySchema), getOdontologos);
+router.get('/:id/mutuales', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), soloPropioSiOdontologo, getMutualesDeOdontologo);
 router.get('/:id', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), getOdontologoById);
+
 
 // Alta de odontólogos: sólo administrador
 router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(CreateOdontologoSchema), createOdontologo);

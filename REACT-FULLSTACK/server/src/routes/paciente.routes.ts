@@ -6,7 +6,8 @@ import {
   updatePaciente,
   deletePaciente,
   addMutualToPaciente,
-  removeMutualFromPaciente
+  removeMutualFromPaciente,
+  getMutualesDePaciente
 } from '../controllers/paciente.controller';
 import { authenticateToken, authorizeRoles, soloPropioSiPaciente } from '../middlewares/auth.middleware';
 import { validateParams, validateRequest } from '../middlewares/validation.middleware';
@@ -17,7 +18,9 @@ const router = Router();
 // Lectura: datos clínicos y personales, requiere sesión.
 // Padrón completo: odontólogo y administrador. Ficha individual: además el propio paciente (sólo la suya).
 router.get('/', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), getPacientes);
+router.get('/:id/mutuales', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), soloPropioSiPaciente, getMutualesDePaciente);
 router.get('/:id', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), soloPropioSiPaciente, getPacienteById);
+
 
 // Alta, edición y baja: sólo administrador
 router.post('/', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateRequest(CreatePacienteSchema), createPaciente);

@@ -14,6 +14,7 @@ coverage/
 # Logs
 logs
 *.log
+.pids/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -42,4 +43,3 @@ Thumbs.db
 
 # Swap files
 *.sw?
-``

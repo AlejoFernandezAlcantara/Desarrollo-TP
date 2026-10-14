@@ -99,3 +99,17 @@ export const removeMutualFromOdontologo = asyncHandler(async (req: Request, res:
 
   res.status(204).send();
 });
+
+/* GET /api/odontologos/:id/mutuales */
+export const getMutualesDeOdontologo = asyncHandler(async (req: Request, res: Response) => {
+  const odontologoId = parseInt(req.params.id as string);
+
+  const mutuales = await odontologoService.getMutuales(odontologoId);
+  logger.debug('Mutuales de odontólogo obtenidas', { odontologoId, total: mutuales.length });
+
+  res.json({
+    success: true,
+    data: mutuales,
+    total: mutuales.length,
+  });
+});

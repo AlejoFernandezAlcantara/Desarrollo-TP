@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { ApiError, odontologosApi, pacientesApi, authApi, detallesApi } from './api';
+import { ApiError, odontologosApi, pacientesApi, authApi } from './api';
 
 const respuesta = (body: unknown, status = 200) =>
   new Response(body === null ? null : JSON.stringify(body), {
@@ -110,5 +110,23 @@ describe('contratos con el back', () => {
     expect(body).not.toHaveProperty('password_hash');
   });
 
-  
-});
+  it('obtener mutuales de odontólogo llama a /odontologos/:id/mutuales', async () => {
+    const fetchMock = mockFetch(respuesta({ success: true, data: [{ odontologo_id: 2, mutual_id: 1, nroAfiliado: 'M-1' }] }));
+
+    const res = await odontologosApi.getMutuales(2);
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/odontologos\/2\/mutuales$/);
+    expect(res).toEqual([{ odontologo_id: 2, mutual_id: 1, nroAfiliado: 'M-1' }]);
+  });
+
+  it('obtener mutuales de paciente llama a /pacientes/:id/mutuales', async () => {
+    const fetchMock = mockFetch(respuesta({ success: true, data: [{ paciente_id: 5, mutual_id: 2, nroAfiliado: 'P-9' }] }));
+
+    const res = await pacientesApi.getMutuales(5);
+
+    const [url] = fetchMock.mock.calls[0];
+    expect(url).toMatch(/\/pacientes\/5\/mutuales$/);
+    expect(res).toEqual([{ paciente_id: 5, mutual_id: 2, nroAfiliado: 'P-9' }]);
+  });
+});

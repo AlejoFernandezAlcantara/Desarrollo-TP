@@ -234,5 +234,16 @@ export const odontologoService = {
     return await prisma.usuario.delete({
       where: { id }
     });
+  },
+
+  async getMutuales(id: number) {
+    await this.getByIdOrThrow(id);
+
+    return await prisma.odontologoMutual.findMany({
+      where: { odontologo_id: id },
+      include: {
+        mutual: true
+      }
+    });
   }
-};
+};

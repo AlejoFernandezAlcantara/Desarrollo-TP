@@ -101,7 +101,12 @@ export const turnoService = {
       include: {
         odontologo: {
           include: {
-            usuario: { select: usuarioPublico }
+            usuario: { select: usuarioPublico },
+            mutuales: {
+              include: {
+                mutual: true
+              }
+            }
           }
         }
       },
@@ -119,10 +124,20 @@ export const turnoService = {
       odontologo: {
         id: t.odontologo.id,
         nombreCompleto: `${t.odontologo.usuario.nombre} ${t.odontologo.usuario.apellido}`,
-        especialidad: t.odontologo.especialidad
+        especialidad: t.odontologo.especialidad,
+        mutuales: t.odontologo.mutuales.map((om) => ({
+          odontologo_id: om.odontologo_id,
+          mutual_id: om.mutual_id,
+          mutual: {
+            id: om.mutual.id,
+            nombre: om.mutual.nombre,
+            cuit: om.mutual.cuit
+          }
+        }))
       }
     }));
   },
+
 
   async getById(codigo: number) { // puede devolver null
     return await prisma.turno.findUnique({

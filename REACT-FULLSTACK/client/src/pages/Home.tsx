@@ -10,8 +10,10 @@ import {
   ArrowRight,
   Clock,
   ShieldCheck,
-  Stethoscope
+  Stethoscope,
+  HeartHandshake
 } from 'lucide-react';
+
 import { pacientesApi, reservasApi, odontologosApi } from '../services/api';
 import './Home.css';
 import { useAuth } from '../contexts/AuthContext';
@@ -245,8 +247,30 @@ export const Home: React.FC = () => {
           </Link>
         )}  
 
+        {/* Card Mis Obras Sociales / Mutuales */}
+        {(user?.rol === 'PACIENTE' || user?.rol === 'ODONTOLOGO') && (
+          <Link to="/mis-mutuales" className="quick-action-card">
+            <div className="action-icon-circle" style={{ backgroundColor: '#e0f2fe', color: '#0284c7' }}>
+              <HeartHandshake size={24} />
+            </div>
+            <h3 className="quick-action-title">
+              {user?.rol === 'PACIENTE' ? 'Mis Obras Sociales' : 'Mutuales con las que Trabajo'}
+            </h3>
+            <p className="quick-action-desc">
+              {user?.rol === 'PACIENTE'
+                ? 'Consultá las mutuales asociadas a tu cuenta, tus números de afiliado y el estado de tu cobertura médica.'
+                : 'Consultá el catálogo de mutuales con las que tenés convenio habilitado para atender pacientes en el consultorio.'}
+            </p>
+            <div className="quick-action-link">
+              <span>{user?.rol === 'PACIENTE' ? 'Ver mis obras sociales' : 'Ver convenios'}</span>
+              <ArrowRight size={16} />
+            </div>
+          </Link>
+        )}
+
         {/* Card Recepción */}
         {user?.rol === 'ADMINISTRADOR' && (
+
           <Link to="/recepcion" className="quick-action-card">
             <div className="action-icon-circle" style={{ backgroundColor: '#f5f3ff', color: '#6366f1' }}>
               <Users size={24} />

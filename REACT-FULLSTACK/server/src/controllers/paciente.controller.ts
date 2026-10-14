@@ -100,3 +100,17 @@ export const removeMutualFromPaciente = asyncHandler(async (req: Request, res: R
 
   res.status(204).send();
 });
+
+/* GET /api/pacientes/:id/mutuales */
+export const getMutualesDePaciente = asyncHandler(async (req: Request, res: Response) => {
+  const pacienteId = parseInt(req.params.id as string);
+
+  const mutuales = await pacienteService.getMutuales(pacienteId);
+  logger.debug('Mutuales de paciente obtenidas', { pacienteId, total: mutuales.length });
+
+  res.json({
+    success: true,
+    data: mutuales,
+    total: mutuales.length,
+  });
+});

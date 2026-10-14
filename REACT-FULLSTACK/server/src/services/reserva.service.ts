@@ -114,7 +114,35 @@ export const reservaService = {
         throw new AppError(409, 'El turno seleccionado ya no está disponible');
       }
 
+      // Validar mutual con odontólogo y paciente si se imputa una mutual
+      if (data.mutual_id !== undefined) {
+        const atiende = await tx.odontologoMutual.findUnique({
+          where: {
+            odontologo_id_mutual_id: {
+              odontologo_id: turno.odontologo_id,
+              mutual_id: data.mutual_id
+            }
+          }
+        });
+        if (!atiende) {
+          throw new AppError(400, 'El odontólogo seleccionado no trabaja con esa obra social');
+        }
+
+        const afiliado = await tx.pacienteMutual.findUnique({
+          where: {
+            paciente_id_mutual_id: {
+              paciente_id: data.paciente_id,
+              mutual_id: data.mutual_id
+            }
+          }
+        });
+        if (!afiliado) {
+          throw new AppError(400, 'El paciente no está afiliado a esa obra social');
+        }
+      }
+
       // 2. Crear la reserva
+
       const reserva = await tx.reserva.create({
         data: {
           paciente_id: data.paciente_id,
