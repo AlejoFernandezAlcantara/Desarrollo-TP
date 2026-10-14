@@ -89,16 +89,16 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: '0.75rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
             <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--bg-card)', border: '1.5px solid #cbd5e1' }} />
             <span>Sin tratamientos</span>
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
             <span style={{ width: 10, height: 10, borderRadius: 2, background: '#fef3c7', border: '1.5px solid #f59e0b' }} />
             <span>Con Práctica Realizada</span>
           </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
             <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--primary-light)', border: '1.5px solid var(--primary)' }} />
             <span>Seleccionado</span>
           </span>

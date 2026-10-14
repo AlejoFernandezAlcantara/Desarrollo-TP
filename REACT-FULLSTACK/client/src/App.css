@@ -11,10 +11,18 @@
 .app-footer-inner {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.75rem;
+}
+
+/* Responsive (mobile-first) */
+@media (min-width: 640px) {
+  .app-footer-inner {
+    padding: 0 1.5rem;
+    justify-content: space-between;
+  }
 }

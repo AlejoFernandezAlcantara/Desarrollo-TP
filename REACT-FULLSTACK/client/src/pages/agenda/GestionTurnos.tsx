@@ -764,7 +764,7 @@ export const GestionTurnos: React.FC = () => {
                                 />
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="grid-split">
                                 <div className="form-group">
                                     <label className="form-label">Hora Desde *</label>
                                     <input type="time" required className="form-control" value={unDiaForm.hora_inicio}
@@ -822,7 +822,7 @@ export const GestionTurnos: React.FC = () => {
                                 </div>
                             )}
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="grid-split">
                                 <div className="form-group">
                                     <label className="form-label">Fecha Desde *</label>
                                     <input type="date" required min={getTodayString()} className="form-control" value={variosD.fecha_desde}
@@ -850,7 +850,7 @@ export const GestionTurnos: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div className="grid-split">
                                 <div className="form-group">
                                     <label className="form-label">Hora Desde *</label>
                                     <input type="time" required className="form-control" value={variosD.hora_inicio}
