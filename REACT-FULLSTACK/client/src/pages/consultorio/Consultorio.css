@@ -1,17 +1,22 @@
-/* Odontograma Visual Styles */
+/* Odontograma Visual Styles - Compatible con Modo Oscuro */
+/* Odontograma Visual Styles - Compatible con Modo Oscuro */
 .odontograma-container {
-  background: #ffffff;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  border: 1px solid var(--border-light);
   padding: 1.5rem;
   margin-bottom: 1.5rem;
+  color: var(--text-main);
 }
 
 .odontograma-arch {
+  background: var(--bg-muted);
+  border-radius: var(--radius-md);
+  padding: 1rem;
   display: flex;
   justify-content: center;
-  gap: 0.35rem;
-  margin-bottom: 1.25rem;
+  align-items: center;
+  gap: 1rem;
   flex-wrap: wrap;
 }
 
@@ -24,46 +29,44 @@
   width: 2px;
   background-color: var(--border-light);
   margin: 0 0.5rem;
+  height: 60px;
 }
 
-.tooth-item {
-  width: 44px;
-  height: 64px;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 6px;
-  background-color: #F9F1E4;
+/* Dientes individuales (con borde) */
+.odontograma-container .tooth-item {
+  background: #f7efe6;
+  border: 1px solid #d9d2ca;
+  border-radius: 8px;
+  padding: 0.5rem 0.35rem;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.25rem 0.2rem;
   cursor: pointer;
-  transition: var(--transition);
-  user-select: none;
+  transition: all 0.2s ease;
+  min-width: 50px;
   position: relative;
 }
 
-.tooth-item:hover {
+.odontograma-container .tooth-item:hover {
   border-color: var(--primary);
-  background-color: var(--primary-light);
   transform: translateY(-2px);
 }
 
-.tooth-item.selected {
-  border-color: var(--primary);
-  background-color: var(--primary-light);
-  box-shadow: 0 0 0 2px var(--primary);
+.odontograma-container .tooth-item.has-treatment {
+  background: #fdf0cf;
+  border-color: #f59e0b;
 }
 
-.tooth-item.has-treatment {
-  border-color: #f59e0b;
-  background-color: #fef3c7;
+.odontograma-container .tooth-item.selected {
+  background: var(--primary-light);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.25);
 }
 
 .tooth-number {
-  font-size: 0.75rem;
+  color: var(--text-main);
   font-weight: 700;
-  color: var(--text-secondary);
+  font-size: 0.8rem;
 }
 
 .tooth-icon {
@@ -74,6 +77,19 @@
   justify-content: center;
 }
 
+/* Contorno del diente: el SVG usa stroke="currentColor", se controla con color */
+.odontograma-container .tooth-icon svg {
+  color: #94a3b8;
+}
+
+.odontograma-container .tooth-item.has-treatment .tooth-icon svg {
+  color: #f59e0b;
+}
+
+.odontograma-container .tooth-item.selected .tooth-icon svg {
+  color: var(--primary);
+}
+
 .tooth-badge {
   position: absolute;
   top: -4px;
@@ -82,16 +98,58 @@
   height: 10px;
   border-radius: 50%;
   background-color: #f59e0b;
-  border: 1.5px solid white;
+  border: 1.5px solid var(--bg-card);
 }
 
+/* Ajustes específicos para Modo Oscuro */
+[data-theme='dark'] .odontograma-container .tooth-item {
+  background: rgba(148, 163, 184, 0.08);
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+[data-theme='dark'] .odontograma-container .tooth-item:hover {
+  border-color: var(--primary);
+}
+
+[data-theme='dark'] .odontograma-container .tooth-item.selected {
+  background: var(--primary-light);
+  border-color: var(--primary);
+}
+
+[data-theme='dark'] .odontograma-container .tooth-item.has-treatment {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #fbbf24;
+}
+
+[data-theme='dark'] .odontograma-container .tooth-item.has-treatment .tooth-number,
+[data-theme='dark'] .odontograma-container .tooth-item.has-treatment span {
+  color: #fbbf24;
+}
+
+[data-theme='dark'] .odontograma-container .tooth-item.has-treatment .tooth-icon svg {
+  color: #fbbf24;
+}
+
+[data-theme='dark'] .tooth-badge {
+  border-color: var(--bg-card);
+  background-color: #fbbf24;
+}
+
+/* Consulta finalizada - usa variables para modo oscuro */
 .consultation-summary-bar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--success-light, #f0fdf4);
+  border: 1px solid var(--success-border, #bbf7d0);
   padding: 1rem 1.25rem;
   border-radius: var(--radius-md);
   margin-bottom: 1.5rem;
+  color: var(--success-dark, #166534);
+}
+
+[data-theme='dark'] .consultation-summary-bar {
+  background: rgba(22, 163, 74, 0.15);
+  border-color: rgba(22, 163, 74, 0.3);
+  color: #4ade80;
 }

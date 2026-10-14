@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { 
-  ArrowLeft, 
-  Activity, 
-  CheckCircle, 
-  Plus, 
-  Trash2, 
-  User, 
-  Shield, 
-  Clock, 
+import {
+  ArrowLeft,
+  Activity,
+  CheckCircle,
+  Plus,
+  Trash2,
+  User,
+  Shield,
+  Clock,
   FileText,
   AlertCircle,
   Award
@@ -27,13 +27,13 @@ export const AtencionConsulta: React.FC = () => {
   const [practicas, setPracticas] = useState<Practica[]>([]);
   const [detalles, setDetalles] = useState<Detalle[]>([]);
   const [dientes, setDientes] = useState<Diente[]>([]);
-  
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Practice registration form state (CUU 2)
   const [selectedPracticaId, setSelectedPracticaId] = useState<string>('');
-  const [selectedDienteNumero, setSelectedDienteNumero] = useState<number | null>(null);
+  const [selectedDientes, setSelectedDientes] = useState<number[]>([]); // ← Cambiado: array para múltiples dientes
   const [practicaObservaciones, setPracticaObservaciones] = useState('');
   const [submittingPractica, setSubmittingPractica] = useState(false);
 
@@ -71,7 +71,7 @@ export const AtencionConsulta: React.FC = () => {
     fetchConsultaData();
   }, [reservaId]);
 
-  // Manejar el registro de una práctica (CUU 2)
+  // Manejar el registro de prácticas (ahora soporta múltiples dientes)
   const handleAddPractica = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reservaId || !selectedPracticaId) return;
@@ -79,22 +79,32 @@ export const AtencionConsulta: React.FC = () => {
     setError(null);
 
     try {
-      // Buscar ID del diente correspondiente al número si se seleccionó uno
-      let dienteId: number | undefined = undefined;
-      if (selectedDienteNumero) {
-        const foundDiente = dientes.find(d => d.numero === selectedDienteNumero);
-        dienteId = foundDiente ? foundDiente.id : selectedDienteNumero;
+      // Si no hay dientes seleccionados, creamos una práctica general
+      if (selectedDientes.length === 0) {
+        await detallesApi.create({
+          reserva_id: reservaId,
+          practica_id: parseInt(selectedPracticaId),
+          diente_id: undefined,
+          observaciones: practicaObservaciones || undefined
+        });
+      } else {
+        // Crear un detalle por cada diente seleccionado
+        for (const numeroDiente of selectedDientes) {
+          // Buscar ID del diente correspondiente al número
+          const foundDiente = dientes.find(d => d.numero === numeroDiente);
+          const dienteId = foundDiente ? foundDiente.id : numeroDiente;
+
+          await detallesApi.create({
+            reserva_id: reservaId,
+            practica_id: parseInt(selectedPracticaId),
+            diente_id: dienteId,
+            observaciones: practicaObservaciones || undefined
+          });
+        }
       }
 
-      await detallesApi.create({
-        reserva_id: reservaId,
-        practica_id: parseInt(selectedPracticaId),
-        diente_id: dienteId,
-        observaciones: practicaObservaciones || undefined
-      });
-
       setPracticaObservaciones('');
-      setSelectedDienteNumero(null);
+      setSelectedDientes([]); // Limpiar selección después de aplicar
       // Recargar detalles
       const nuevosDetalles = await detallesApi.getAll(reservaId);
       setDetalles(nuevosDetalles);
@@ -174,11 +184,11 @@ export const AtencionConsulta: React.FC = () => {
       </div>
 
       {/* Banner de Consulta y Paciente */}
-      <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(to right, #F9F1E4, #f1f5f9)' }}>
+      <div className="card" style={{ marginBottom: '1.5rem', background: 'linear-gradient(to right, var(--bg-muted), var(--bg-card))' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <h2 style={{ fontSize: '1.5rem', fontWeight: 800 }}>Paciente: {pacienteNombre}</h2>
+              <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-main)' }}>Paciente: {pacienteNombre}</h2>
               <span className="badge badge-secondary">HC #{paciente?.nro_paciente}</span>
             </div>
             <div style={{ display: 'flex', gap: '1rem', marginTop: '0.4rem', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
@@ -201,16 +211,16 @@ export const AtencionConsulta: React.FC = () => {
         </div>
 
         {reserva.observaciones && (
-          <div style={{ marginTop: '0.85rem', padding: '0.5rem 0.75rem', background: '#ffffff', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.85rem' }}>
+          <div style={{ marginTop: '0.85rem', padding: '0.5rem 0.75rem', background: 'var(--bg-card)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-light)', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             <strong>Motivo / Nota de admisión:</strong> {reserva.observaciones}
           </div>
         )}
       </div>
 
-      {/* Odontograma Interactivo */}
+      {/* Odontograma Interactivo - Actualizado para selección múltiple */}
       <Odontograma
-        selectedDienteNumero={selectedDienteNumero}
-        onSelectDiente={setSelectedDienteNumero}
+        selectedDientes={selectedDientes}
+        onSelectDientes={setSelectedDientes}
         detalles={detalles}
       />
 
@@ -224,27 +234,53 @@ export const AtencionConsulta: React.FC = () => {
                   Registrar Práctica en la Consulta
                 </h3>
                 <p className="card-subtitle">
-                  Aplica tratamientos y asócialos al odontograma del paciente
+                  {selectedDientes.length > 0
+                    ? `Se aplicará a ${selectedDientes.length} pieza(s) dental(es)`
+                    : 'Aplica tratamientos y asócialos al odontograma del paciente'}
                 </p>
               </div>
             </div>
 
             <form onSubmit={handleAddPractica}>
               <div className="form-group">
-                <label className="form-label">Pieza Dental Seleccionada</label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                  <div className="form-control" style={{ background: '#F9F1E4', fontWeight: 700, color: selectedDienteNumero ? 'var(--primary)' : 'var(--text-muted)' }}>
-                    {selectedDienteNumero 
-                      ? `Pieza N° ${selectedDienteNumero} (Seleccionada en odontograma)` 
-                      : 'Práctica General (Sin diente específico)'}
+                <label className="form-label">Piezas Dentales Seleccionadas</label>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div className="form-control" style={{
+                    background: 'var(--bg-muted)',
+                    fontWeight: 700,
+                    color: selectedDientes.length > 0 ? 'var(--primary)' : 'var(--text-muted)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem'
+                  }}>
+                    {selectedDientes.length > 0 ? (
+                      <>
+                        <span>{selectedDientes.length} pieza(s):</span>
+                        <span style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
+                          {selectedDientes.sort((a, b) => a - b).map(num => (
+                            <span key={num} style={{
+                              background: 'var(--primary)',
+                              color: 'white',
+                              padding: '0.1rem 0.4rem',
+                              borderRadius: '4px',
+                              fontSize: '0.75rem'
+                            }}>
+                              {num}
+                            </span>
+                          ))}
+                        </span>
+                      </>
+                    ) : (
+                      'Práctica General (Sin diente específico)'
+                    )}
                   </div>
-                  {selectedDienteNumero && (
-                    <button 
-                      type="button" 
+                  {selectedDientes.length > 0 && (
+                    <button
+                      type="button"
                       className="btn btn-ghost btn-sm"
-                      onClick={() => setSelectedDienteNumero(null)}
+                      onClick={() => setSelectedDientes([])}
                     >
-                      Deseleccionar
+                      Limpiar
                     </button>
                   )}
                 </div>
@@ -284,25 +320,31 @@ export const AtencionConsulta: React.FC = () => {
                 style={{ width: '100%', marginTop: '0.75rem' }}
               >
                 <Plus size={18} />
-                <span>{submittingPractica ? 'Registrando...' : 'Registrar Práctica Realizada'}</span>
+                <span>
+                  {submittingPractica
+                    ? 'Registrando...'
+                    : selectedDientes.length > 0
+                      ? `Aplicar a ${selectedDientes.length} diente(s)`
+                      : 'Registrar Práctica General'}
+                </span>
               </button>
             </form>
           </div>
         ) : (
-          <div className="card" style={{ background: '#f0fdf4', borderColor: '#bbf7d0' }}>
+          <div className="card" style={{ background: 'var(--success-light, #f0fdf4)', borderColor: 'var(--success-border, #bbf7d0)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' }}>
-              <Award size={28} style={{ color: '#16a34a' }} />
+              <Award size={28} style={{ color: 'var(--success, #16a34a)' }} />
               <div>
-                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: '#166534' }}>
+                <h3 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--success-dark, #166534)' }}>
                   Consulta Finalizada con Éxito
                 </h3>
-                <div style={{ fontSize: '0.85rem', color: '#15803d' }}>
+                <div style={{ fontSize: '0.85rem', color: 'var(--success, #15803d)' }}>
                   Resultado registrado: <strong>{reserva.resultado?.toUpperCase()}</strong>
                 </div>
               </div>
             </div>
             {reserva.observaciones && (
-              <p style={{ fontSize: '0.9rem', color: '#166534', marginTop: '0.5rem' }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--success-dark, #166534)', marginTop: '0.5rem' }}>
                 {reserva.observaciones}
               </p>
             )}
@@ -335,7 +377,7 @@ export const AtencionConsulta: React.FC = () => {
                     justifyContent: 'space-between',
                     alignItems: 'center',
                     padding: '0.85rem',
-                    background: '#F9F1E4',
+                    background: 'var(--bg-muted)',
                     borderRadius: 'var(--radius-md)',
                     border: '1px solid var(--border-light)'
                   }}
@@ -343,7 +385,7 @@ export const AtencionConsulta: React.FC = () => {
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                       <span className="badge badge-primary">{d.practica?.codigo}</span>
-                      <strong style={{ fontSize: '0.9rem' }}>{d.practica?.detalle}</strong>
+                      <strong style={{ fontSize: '0.9rem', color: 'var(--text-main)' }}>{d.practica?.detalle}</strong>
                     </div>
 
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
@@ -370,7 +412,7 @@ export const AtencionConsulta: React.FC = () => {
           {/* Botón de Cierre de Consulta */}
           {!isFinalizada && (
             <div style={{ marginTop: '1.75rem', borderTop: '1px solid var(--border-light)', paddingTop: '1.25rem' }}>
-              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.5rem' }}>
+              <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-main)' }}>
                 Finalizar Atención Médica
               </h4>
 
