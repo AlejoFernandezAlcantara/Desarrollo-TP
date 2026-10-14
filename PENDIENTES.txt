@@ -47,7 +47,7 @@ Frontend-regularidad:
     - Utilizar HTML5(si)
     - Utilizar CSS según las directrices de alguna biblioteca de componentes, guía de estilo o framework de CSS y la metodología propuesta por el framework de frontend elegido. Se sugiere el uso de biblioteca de componentes; preprocesadores: sass, scss, less, stylus, etc o frameworks de css: Pico.css, Bulma, Material, Tailwind, Bootstrap, etc.(si)
     - Guía de estilos sugerida Airbnb Javascript https://github.com/airbnb/javascript (no /  es opcional asi q ya fue)
-    - Aplicar la estrategia mobile-first para la escritura del código css de la aplicación (no / falta ver si es responsive)
+    - Aplicar la estrategia mobile-first para la escritura del código css de la aplicación (ya es responsive)
     - La app debe visualizarse correctamente en al menos 3 diferentes breakpoints: SM, MD, LG (no / se probo en pc)
     - Seguir buenas prácticas de UX/UI (Que no requiera manual de usuario o explicaciones específicas para utilizar la interfaz ) (incheckeable)
     -Las app debe mostrar las siguientes características entre sus componentes: 
