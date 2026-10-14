@@ -14,13 +14,11 @@ server/src/utils/validators.ts  aca va el schema validation
 -IMPLEMENTAR MIDDLEWARE RATELIMITING (express-rate-limit) (revisar)
 - HACER SCRIPT SIMPLE PARA EJECUTAR BACK/FRONT Y BDD  DE UNA MANERA MAS SENCILLA
 
-
 YA HECHO LO DE ARRIBA
 
 -TESTING (con vitest) (playwright)
 -DOCUMENTAR APIS (swagger)
--RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADO DEL SERVIDOR
--VALIDAR FORMULARIOS LADO DEL CLIENTE
+-README AL FRONT,CHANGELOG Y COMENTARIOS EN TODO EL CODIGO (documentacion)
 -agregar manejo de loading states y notificaciones(toast)
 
 biri biri para agregar si sobra tiempo:
@@ -32,8 +30,8 @@ configurar CI/CD
 linting/prettier
 pre-commit hooks
 versionamieto automatico
-
-
+RECOMENDABLE USAR TANSTACK QUERY PARA MANEJO DE DATOS remotos DEL LADO DEL SERVIDOR
+VALIDAR FORMULARIOS LADO DEL CLIENTE
 
 consignas que faltan de nuestra propuesta : 
 
@@ -75,7 +73,6 @@ Backend-regularidad
     Realizarse mediante capas. (si / creo)
     Validar entrada de datos, manejar e informar apropiadamente los errores a través de la API. (si/ checkeable)
     Las dependencias para ejecución, desarrollo y test deben estar correctamente registradas para ser instaladas automáticamente (e.j. package.json). (si/creo)
-
 
 stack: MERN
 Backend : Node.js + Express + Prisma
