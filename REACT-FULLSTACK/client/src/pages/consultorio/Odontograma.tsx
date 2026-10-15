@@ -6,12 +6,14 @@ interface OdontogramaProps {
   selectedDientes: number[];  // Cambiado: ahora es array para selección múltiple
   onSelectDientes: (numeros: number[]) => void;  // Cambiado
   detalles: Detalle[];
+  readOnly?: boolean;  // Consulta finalizada: se puede ver pero no seleccionar
 }
 
 export const Odontograma: React.FC<OdontogramaProps> = ({
   selectedDientes,
   onSelectDientes,
-  detalles
+  detalles,
+  readOnly = false
 }) => {
   // Cuadrantes FDI
   const q1 = [18, 17, 16, 15, 14, 13, 12, 11];
@@ -22,10 +24,12 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
   const renderTooth = (numero: number) => {
     const isSelected = selectedDientes.includes(numero);
     // Chequear si este diente tiene alguna práctica realizada en los detalles
-    const tratamientos = detalles.filter(d => d.diente?.numero === numero || d.diente_id === numero);
+    const tratamientos = detalles.filter(d => d.diente?.numero === numero);
     const hasTreatment = tratamientos.length > 0;
 
     const handleClick = () => {
+      if (readOnly) return;
+
       if (isSelected) {
         // Si ya está seleccionado, lo quitamos del array
         onSelectDientes(selectedDientes.filter(n => n !== numero));
@@ -40,6 +44,7 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
         key={numero}
         className={`tooth-item ${isSelected ? 'selected' : ''} ${hasTreatment ? 'has-treatment' : ''}`}
         onClick={handleClick}
+        style={readOnly ? { cursor: 'default' } : undefined}
         title={`Pieza dental N° ${numero}${hasTreatment ? ` (${tratamientos.length} práctica(s))` : ''}`}
       >
         {hasTreatment && <div className="tooth-badge" />}
@@ -85,7 +90,9 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
             )}
           </h4>
           <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Haz clic sobre varias piezas dentales para seleccionarlas y aplicar la misma práctica.
+            {readOnly
+              ? 'Consulta finalizada: el odontograma es de solo lectura.'
+              : 'Haz clic sobre varias piezas dentales para seleccionarlas y aplicar la misma práctica.'}
           </p>
         </div>
 
@@ -124,7 +131,7 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
             ✕ Limpiar selección ({selectedDientes.length})
           </button>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Seleccionados: {selectedDientes.sort((a, b) => a - b).join(', ')}
+            Seleccionados: {[...selectedDientes].sort((a, b) => a - b).join(', ')}
           </span>
         </div>
       )}

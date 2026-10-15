@@ -222,6 +222,7 @@ export const AtencionConsulta: React.FC = () => {
         selectedDientes={selectedDientes}
         onSelectDientes={setSelectedDientes}
         detalles={detalles}
+        readOnly={isFinalizada}
       />
 
       <div className="grid-2" style={{ alignItems: 'start' }}>
