@@ -14,7 +14,10 @@ import {
   LoginResponse,
   RegisterPacienteDTO,
   PacienteMutual,
-  OdontologoMutual
+  OdontologoMutual,
+  Perfil, 
+  UpdatePerfilDTO, 
+  CambiarPasswordDTO
 } from '../types';
 
 
@@ -294,4 +297,12 @@ export const authApi = {
     request<{ mensaje: string }>('/auth/logout', {
       method: 'POST'
     })
+};
+
+export const perfilApi = {
+  get: () => request<Perfil>('/perfil'),
+  update: (data: UpdatePerfilDTO) =>
+    request<Perfil>('/perfil', { method: 'PUT', body: JSON.stringify(data) }),
+  cambiarPassword: (data: CambiarPasswordDTO) =>
+    request<{ message: string }>('/perfil/password', { method: 'PUT', body: JSON.stringify(data) })
 };

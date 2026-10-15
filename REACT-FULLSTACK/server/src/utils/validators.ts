@@ -191,6 +191,45 @@ export const CreateUsuarioSchema = z.object({
 // Los campos que no figuran acá (id, activo, password_hash...) se descartan
 export const UpdateUsuarioSchema = CreateUsuarioSchema.partial();
 
+// ─── Perfil (cada usuario edita sus propios datos) ────────────────────────
+
+// Teléfono editable: un texto vacío o null borra el teléfono (se guarda NULL)
+const TelefonoPerfilSchema = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+  z.string().trim().regex(/^[\d\-\+\s\(\)]{7,20}$/, 'Teléfono inválido').nullable().optional()
+);
+
+// Campos que el PACIENTE puede editar. No incluye email ni nro_paciente.
+export const UpdatePerfilPacienteSchema = z.object({
+  nombre: z.string().trim().min(1, 'Nombre requerido').max(50),
+  apellido: z.string().trim().min(1, 'Apellido requerido').max(50),
+  direccion: z.string().trim().min(5, 'Dirección requerida').max(100),
+  telefono: TelefonoPerfilSchema,
+  nroDocumento: DocumentoSchema,
+  tipoDoc: TipoDocumentoSchema,
+}).partial();
+
+// Campos que el ODONTÓLOGO puede editar. No incluye email ni nro_Matricula.
+export const UpdatePerfilOdontologoSchema = z.object({
+  nombre: z.string().trim().min(1, 'Nombre requerido').max(50),
+  apellido: z.string().trim().min(1, 'Apellido requerido').max(50),
+  especialidad: z.string().trim().min(3, 'Especialidad requerida').max(50),
+  telefono: TelefonoPerfilSchema,
+  nroDocumento: DocumentoSchema,
+  tipoDoc: TipoDocumentoSchema,
+}).partial();
+
+export type UpdatePerfilPacienteInput = z.infer<typeof UpdatePerfilPacienteSchema>;
+export type UpdatePerfilOdontologoInput = z.infer<typeof UpdatePerfilOdontologoSchema>;
+
+export const CambiarPasswordSchema = z.object({
+  passwordActual: z.string().min(1, 'La contraseña actual es requerida'),
+  passwordNueva: PasswordSchema,
+}).refine((d) => d.passwordActual !== d.passwordNueva, {
+  message: 'La nueva contraseña debe ser distinta a la actual',
+  path: ['passwordNueva'],
+});
+
 // ─── Parámetros de URL ────────────────────────────────────────────────────
 
 // Los params llegan como texto: se exige un entero positivo que entre en un INT de MySQL

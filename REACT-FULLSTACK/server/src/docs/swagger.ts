@@ -90,7 +90,8 @@ export const swaggerSpec = {
     { name: 'Caras', description: 'Caras del diente y su vínculo con cada diente' },
     { name: 'Turnos', description: 'Agenda de turnos de los odontólogos' },
     { name: 'Reservas', description: 'Reservas de turnos y su seguimiento' },
-    { name: 'Detalles', description: 'Prácticas realizadas en una consulta (historia clínica)' }
+    { name: 'Detalles', description: 'Prácticas realizadas en una consulta (historia clínica)' },
+    { name: 'Perfil', description: 'Datos personales del paciente u odontólogo logueado' }
   ],
 
   components: {
@@ -344,6 +345,49 @@ export const swaggerSpec = {
           telefono: { type: 'string' },
           nroDocumento: { type: 'string' },
           tipoDoc: ref('TipoDocumento')
+        }
+      },
+      Perfil: {
+        type: 'object',
+        description:
+          'Datos personales del usuario logueado. Los campos propios del paciente (nro_paciente, direccion) o del ' +
+          'odontólogo (nro_Matricula, especialidad) aparecen según el rol.',
+        properties: {
+          rol: { type: 'string', enum: ['PACIENTE', 'ODONTOLOGO'] },
+          id: { type: 'integer' },
+          nombre: { type: 'string' },
+          apellido: { type: 'string' },
+          email: { type: 'string', description: 'Solo lectura' },
+          telefono: { type: 'string', nullable: true },
+          nroDocumento: { type: 'string' },
+          tipoDoc: ref('TipoDocumento'),
+          nro_paciente: { type: 'integer', description: 'Solo pacientes. Solo lectura' },
+          direccion: { type: 'string', description: 'Solo pacientes' },
+          nro_Matricula: { type: 'integer', description: 'Solo odontólogos. Solo lectura' },
+          especialidad: { type: 'string', description: 'Solo odontólogos' }
+        }
+      },
+      UpdatePerfilRequest: {
+        type: 'object',
+        description:
+          'Campos opcionales. Email, nro_paciente y nro_Matricula no se pueden modificar (se ignoran si se envían). ' +
+          'direccion aplica a pacientes y especialidad a odontólogos. Un telefono vacío o null borra el teléfono.',
+        properties: {
+          nombre: { type: 'string', maxLength: 50 },
+          apellido: { type: 'string', maxLength: 50 },
+          direccion: { type: 'string', minLength: 5, maxLength: 100 },
+          especialidad: { type: 'string', minLength: 3, maxLength: 50 },
+          telefono: { type: 'string', nullable: true },
+          nroDocumento: { type: 'string' },
+          tipoDoc: ref('TipoDocumento')
+        }
+      },
+      CambiarPasswordRequest: {
+        type: 'object',
+        required: ['passwordActual', 'passwordNueva'],
+        properties: {
+          passwordActual: { type: 'string' },
+          passwordNueva: { type: 'string', minLength: 6, maxLength: 72 }
         }
       },
       CreateUsuarioRequest: {
@@ -1120,6 +1164,38 @@ export const swaggerSpec = {
         description: SOLO_ADMIN,
         security: [SEG],
         responses: { 204: noContent, ...ERR_AUTH, ...ERR_VALID, ...ERR_NOTFOUND }
+      }
+    },
+
+    // ─────────────────────────── PERFIL ───────────────────────────
+    '/perfil': {
+      get: {
+        tags: ['Perfil'],
+        summary: 'Ver mis datos personales',
+        description: 'Roles: PACIENTE, ODONTOLOGO. Siempre devuelve los datos del usuario logueado.',
+        security: [SEG],
+        responses: { 200: ok(ref('Perfil')), ...ERR_AUTH, ...ERR_NOTFOUND }
+      },
+      put: {
+        tags: ['Perfil'],
+        summary: 'Editar mis datos personales',
+        description:
+          'Roles: PACIENTE, ODONTOLOGO. No permite modificar email, nro_paciente ni nro_Matricula.',
+        security: [SEG],
+        requestBody: jsonBody('UpdatePerfilRequest'),
+        responses: { 200: ok(ref('Perfil'), 'Datos actualizados'), ...ERR_AUTH, ...ERR_VALID, ...ERR_NOTFOUND }
+      }
+    },
+    '/perfil/password': {
+      put: {
+        tags: ['Perfil'],
+        summary: 'Cambiar mi contraseña',
+        description:
+          'Roles: PACIENTE, ODONTOLOGO. Requiere la contraseña actual (si es incorrecta responde 400). ' +
+          'Tiene límite de intentos fallidos.',
+        security: [SEG],
+        requestBody: jsonBody('CambiarPasswordRequest'),
+        responses: { 200: { description: 'Contraseña actualizada' }, ...ERR_AUTH, ...ERR_VALID }
       }
     }
   }

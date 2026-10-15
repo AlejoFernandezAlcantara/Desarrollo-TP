@@ -27,6 +27,7 @@ app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec as any));
 app.use('/api', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/perfil/password', authLimiter);
 
 // Rutas principales
 app.use('/api', routes);
