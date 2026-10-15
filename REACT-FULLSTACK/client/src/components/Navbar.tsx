@@ -14,7 +14,8 @@ import {
   User as UserIcon,
   Sun,
   Moon,
-  HeartHandshake
+  HeartHandshake,
+  UserCog
 } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -72,7 +73,7 @@ export const Navbar: React.FC = () => {
   const canViewGenerarTurnos = user?.rol === 'ADMINISTRADOR' || user?.rol === 'ODONTOLOGO';
   const canViewMutuales = user?.rol === 'PACIENTE' || user?.rol === 'ODONTOLOGO';
   const canViewAgenda = true; // Todos pueden ver agenda o turnos según su contexto
-
+  const canViewPerfil = user?.rol === 'PACIENTE' || user?.rol === 'ODONTOLOGO'; 
 
   return (
     <>
@@ -273,8 +274,18 @@ export const Navbar: React.FC = () => {
               <span>Administración</span>
             </NavLink>
           )}
+        
+          {canViewPerfil && (
+            <NavLink
+              to="/perfil"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={closeSidebar}
+            >
+              <UserCog size={19} />
+              <span>Mi Perfil</span>
+            </NavLink>
+          )}
         </nav>
-
         {/* Footer del sidebar con cambio de tema y logout */}
         <div className="sidebar-footer">
           <button

@@ -1,0 +1,124 @@
+/* Mobile-first: una columna por defecto, dos columnas desde 640px */
+.perfil-container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.perfil-card {
+  margin-bottom: 1.5rem;
+}
+
+.perfil-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.perfil-card-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  color: var(--primary);
+  background: var(--primary-light);
+  flex-shrink: 0;
+}
+
+/* Vista de solo lectura */
+.perfil-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem 1.5rem;
+}
+
+.perfil-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-light);
+  min-width: 0;
+}
+
+.perfil-field-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.perfil-field-value {
+  font-size: 1rem;
+  color: var(--text-main);
+  overflow-wrap: anywhere;
+}
+
+.perfil-field-empty {
+  color: var(--text-subtle);
+}
+
+.perfil-lock {
+  display: inline-flex;
+  color: var(--text-subtle);
+}
+
+/* Campos que no se pueden modificar */
+.form-control[readonly] {
+  background-color: var(--bg-muted);
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+.perfil-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Mensajes de éxito / error */
+.perfil-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1.25rem;
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.perfil-alert svg {
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.perfil-alert-success {
+  background: var(--success-light);
+  color: var(--success-dark);
+  border: 1px solid var(--success-border);
+}
+
+.perfil-alert-error {
+  background: var(--danger-light);
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.perfil-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .perfil-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

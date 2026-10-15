@@ -167,3 +167,24 @@ export interface RegisterPacienteDTO {
   nroAfiliado?: string;
   cubre?: number;
 }
+
+interface PerfilBase {
+  id: number; nombre: string; apellido: string;
+  email: string; // solo lectura
+  telefono: string | null; nroDocumento: string; tipoDoc: TipoDocumento;
+}
+export interface PerfilPaciente extends PerfilBase {
+  rol: 'PACIENTE'; nro_paciente: number; direccion: string;
+}
+export interface PerfilOdontologo extends PerfilBase {
+  rol: 'ODONTOLOGO'; nro_Matricula: number; especialidad: string;
+}
+export type Perfil = PerfilPaciente | PerfilOdontologo;
+
+export interface UpdatePerfilDTO {
+  nombre?: string; apellido?: string;
+  telefono?: string | null; // null borra el teléfono
+  nroDocumento?: string; tipoDoc?: TipoDocumento;
+  direccion?: string; especialidad?: string;
+}
+export interface CambiarPasswordDTO { passwordActual: string; passwordNueva: string; }

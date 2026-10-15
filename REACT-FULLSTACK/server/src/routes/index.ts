@@ -10,7 +10,7 @@ import caraRoutes from './cara.routes';
 import turnoRoutes from './turno.routes';
 import reservaRoutes from './reserva.routes';
 import detalleRoutes from './detalle.routes';
-
+import perfilRoutes from './perfil.routes';       
 const router = Router();
 
 router.get('/', (req, res) => {
@@ -29,7 +29,8 @@ router.get('/', (req, res) => {
       '/api/caras',
       '/api/turnos',
       '/api/reservas',
-      '/api/detalles'
+      '/api/detalles',
+      '/api/perfil'
     ]
   });
 });
@@ -46,5 +47,6 @@ router.use('/caras', caraRoutes);
 router.use('/turnos', turnoRoutes);
 router.use('/reservas', reservaRoutes);
 router.use('/detalles', detalleRoutes);
+router.use('/perfil', perfilRoutes);
 
 export default router;

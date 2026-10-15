@@ -17,6 +17,7 @@ import { GestionTurnos } from './pages/agenda/GestionTurnos';
 import { ConsultorioHoy } from './pages/consultorio/ConsultorioHoy';
 import { AtencionConsulta } from './pages/consultorio/AtencionConsulta';
 import { MutualesPage } from './pages/mutuales/MutualesPage';
+import { PerfilPage } from './pages/perfil/PerfilPage';
 import './App.css';
 
 
@@ -171,6 +172,16 @@ export const App: React.FC = () => {
                   element={
                     <ProtectedRoute allowedRoles={['PACIENTE', 'ODONTOLOGO']}>
                       <MutualesPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Módulo Perfil (Pacientes y Odontólogos) */}
+                <Route
+                  path="/perfil"
+                  element={
+                    <ProtectedRoute allowedRoles={['PACIENTE', 'ODONTOLOGO']}>
+                      <PerfilPage />
                     </ProtectedRoute>
                   }
                 />
