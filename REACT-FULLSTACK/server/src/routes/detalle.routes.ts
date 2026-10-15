@@ -19,6 +19,6 @@ router.get('/:id', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', '
 router.post('/', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateRequest(CreateDetalleSchema), createDetalle);
 
 // Eliminar un registro clínico: sólo administrador
-router.delete('/:id', authenticateToken, authorizeRoles('ADMINISTRADOR'), validateParams(IdParamsSchema), deleteDetalle);
+router.delete('/:id', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), deleteDetalle);
 
 export default router;

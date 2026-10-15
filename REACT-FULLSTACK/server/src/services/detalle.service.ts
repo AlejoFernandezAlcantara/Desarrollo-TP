@@ -62,6 +62,11 @@ export const detalleService = {
     // Validar que la reserva exista
     const reserva = await reservaService.getByIdOrThrow(data.reserva_id);
 
+    // No se pueden cargar prácticas en una consulta ya cerrada o cancelada
+    if (reserva.estado === 'realizada' || reserva.estado === 'cancelada') {
+      throw new AppError(409, `No se pueden registrar prácticas en una reserva ${reserva.estado}`);
+    }
+
     let finalPracticaId = data.practica_id;
 
     // Si viene práctica personalizada, buscarla o crearla en el catálogo
@@ -120,8 +125,18 @@ export const detalleService = {
     });
   },
 
-  async delete(id: number) {
-    await this.getByIdOrThrow(id);
+  async delete(id: number, solicitante?: SolicitanteDetalle) {
+    const detalle = await this.getByIdOrThrow(id);
+
+    // El odontólogo sólo puede quitar prácticas de sus propias consultas y mientras no estén cerradas
+    if (solicitante?.rol === 'ODONTOLOGO') {
+      if (detalle.reserva.odontologo_id !== solicitante.personaId) {
+        throw new AppError(403, 'Sólo podés quitar prácticas de tus propias consultas');
+      }
+      if (detalle.reserva.estado === 'realizada' || detalle.reserva.estado === 'cancelada') {
+        throw new AppError(409, 'No se pueden quitar prácticas de una consulta ya cerrada');
+      }
+    }
 
     return await prisma.detalle.delete({
       where: { id }

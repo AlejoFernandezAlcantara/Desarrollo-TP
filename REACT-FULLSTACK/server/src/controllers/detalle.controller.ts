@@ -52,7 +52,7 @@ export const createDetalle = asyncHandler(async (req: Request, res: Response) =>
 export const deleteDetalle = asyncHandler(async (req: Request, res: Response) => {
   const detalleId = parseInt(req.params.id as string);
 
-  await detalleService.delete(detalleId);
+  await detalleService.delete(detalleId, req.user);
   logger.info('Detalle eliminado exitosamente', { detalleId });
 
   res.status(204).send();
