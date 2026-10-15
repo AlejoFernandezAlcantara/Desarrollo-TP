@@ -10,6 +10,7 @@ import { apiLimiter, authLimiter } from './middlewares/rateLimit.middleware';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './docs/swagger';
 const app: Application = express();
+app.set('trust proxy', 1);
 
 // Middlewares
 app.use(helmet());
