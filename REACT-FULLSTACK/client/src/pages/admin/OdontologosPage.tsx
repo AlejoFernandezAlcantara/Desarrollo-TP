@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Stethoscope, Link2, RefreshCw, Eye, EyeOff, CalendarPlus } from 'lucide-react';
+import { Plus, Search, Stethoscope, Link2, RefreshCw, Eye, EyeOff, CalendarPlus, X } from 'lucide-react';
 import { odontologosApi, mutualesApi } from '../../services/api';
 import { Odontologo, Mutual, TipoDocumento } from '../../types';
 import { Modal } from '../../components/Modal';
+
 
 export const OdontologosPage: React.FC = () => {
   const [odontologos, setOdontologos] = useState<Odontologo[]>([]);
@@ -127,6 +128,16 @@ export const OdontologosPage: React.FC = () => {
     }
   };
 
+  const handleRemoveMutual = async (odo: Odontologo, mutualId: number, nombreMutual?: string) => {
+  if (!window.confirm(`¿Desasignar ${nombreMutual || 'esta mutual'} del Dr./Dra. ${odo.usuario?.nombre || ''} ${odo.usuario?.apellido || ''}?`)) return;
+  try {
+    await odontologosApi.removeMutual(odo.id, mutualId);
+    fetchData();
+  } catch (err: any) {
+    alert(err.message || 'Error al desasignar la mutual');
+  }
+};
+
   const filtered = odontologos.filter((o) => {
     const fullName = `${o.usuario?.nombre || ''} ${o.usuario?.apellido || ''} ${o.nombreCompleto || ''}`.toLowerCase();
     const matricula = o.nro_Matricula?.toString() || '';
@@ -215,6 +226,24 @@ export const OdontologosPage: React.FC = () => {
                           {o.mutuales.map((om) => (
                             <span key={om.mutual_id} className="badge badge-success">
                               {om.mutual?.nombre} ({om.nroAfiliado})
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveMutual(o, om.mutual_id, om.mutual?.nombre)}
+                                title="Desasignar mutual"
+                                aria-label={`Desasignar ${om.mutual?.nombre || 'mutual'}`}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  background: 'none',
+                                  border: 'none',
+                                  padding: 0,
+                                  marginLeft: '0.25rem',
+                                  cursor: 'pointer',
+                                  color: 'inherit'
+                                }}
+                              >
+                                <X size={12} />
+                              </button>
                             </span>
                           ))}
                         </div>

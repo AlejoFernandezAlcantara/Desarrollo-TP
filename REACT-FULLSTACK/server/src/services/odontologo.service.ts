@@ -6,6 +6,7 @@ import { AppError } from '../middlewares/error.middleware';
 import { mutualService } from './mutual.service';
 import { usuarioPublico } from '../utils/selects';
 
+
 export const odontologoService = {
   async getAll(mutualId?: number) {
     if (mutualId !== undefined) {
@@ -246,4 +247,4 @@ export const odontologoService = {
       }
     });
   }
-};
+};

@@ -133,6 +133,8 @@ export const odontologosApi = {
       method: 'POST',
       body: JSON.stringify({ nroAfiliado: data.nroAfiliado })
     }),
+  removeMutual: (id: number, mutualId: number) => 
+    request<void>(`/odontologos/${id}/mutuales/${mutualId}`, { method: 'DELETE' }),
   getMutuales: (id: number) => request<OdontologoMutual[]>(`/odontologos/${id}/mutuales`)
 };
 
