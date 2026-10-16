@@ -80,6 +80,41 @@
   color: var(--text-muted);
 }
 
+/* Input de contraseña con botón de ver/ocultar */
+.perfil-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.perfil-input-password {
+  padding-right: 2.75rem;
+}
+
+.perfil-input-toggle {
+  position: absolute;
+  right: 0.5rem;
+  display: flex;
+  align-items: center;
+  padding: 0.4rem;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.perfil-input-toggle:hover {
+  color: var(--text-main);
+  background-color: var(--bg-surface-hover);
+}
+
+.perfil-input-toggle:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
 /* Mensajes de éxito / error */
 .perfil-alert {
   display: flex;

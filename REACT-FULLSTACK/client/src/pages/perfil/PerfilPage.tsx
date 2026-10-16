@@ -8,7 +8,9 @@ import {
   KeyRound,
   AlertCircle,
   CheckCircle,
-  RefreshCw
+  RefreshCw,
+  Eye,
+  EyeOff 
 } from 'lucide-react';
 import { perfilApi } from '../../services/api';
 import { Perfil, TipoDocumento, UpdatePerfilDTO } from '../../types';
@@ -82,6 +84,28 @@ const Campo: React.FC<{
     {hint && <span className="perfil-hint">{hint}</span>}
   </div>
 );
+
+// Input de contraseña con botón para mostrar/ocultar (mismo patrón que el login)
+type PasswordInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'className'>;
+
+const PasswordInput: React.FC<PasswordInputProps> = (props) => {
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <div className="perfil-input-wrapper">
+      <input {...props} type={visible ? 'text' : 'password'} className="form-control perfil-input-password" />
+      <button
+        type="button"
+        className="perfil-input-toggle"
+        onClick={() => setVisible((v) => !v)}
+        aria-label={visible ? 'Ocultar contraseña' : 'Ver contraseña'}
+        title={visible ? 'Ocultar contraseña' : 'Ver contraseña'}
+      >
+        {visible ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  );
+};
 
 // ─── Página ────────────────────────────────────────────────────────────────
 
@@ -459,12 +483,10 @@ export const PerfilPage: React.FC = () => {
           )}
 
           <Campo id="perfil-pw-actual" label="Contraseña actual *">
-            <input
+            <PasswordInput
               id="perfil-pw-actual"
-              type="password"
               required
               autoComplete="current-password"
-              className="form-control"
               value={password.actual}
               onChange={(e) => setPassword({ ...password, actual: e.target.value })}
             />
@@ -472,27 +494,23 @@ export const PerfilPage: React.FC = () => {
 
           <div className="form-row">
             <Campo id="perfil-pw-nueva" label="Nueva contraseña *" hint="Entre 6 y 72 caracteres.">
-              <input
-                id="perfil-pw-nueva"
-                type="password"
+              <PasswordInput
+                id="perfil-pw-nueva"                
                 required
                 minLength={6}
                 maxLength={72}
                 autoComplete="new-password"
-                className="form-control"
                 value={password.nueva}
                 onChange={(e) => setPassword({ ...password, nueva: e.target.value })}
               />
             </Campo>
             <Campo id="perfil-pw-confirmar" label="Repetir nueva contraseña *">
-              <input
+              <PasswordInput
                 id="perfil-pw-confirmar"
-                type="password"
                 required
                 minLength={6}
                 maxLength={72}
                 autoComplete="new-password"
-                className="form-control"
                 value={password.confirmar}
                 onChange={(e) => setPassword({ ...password, confirmar: e.target.value })}
               />
