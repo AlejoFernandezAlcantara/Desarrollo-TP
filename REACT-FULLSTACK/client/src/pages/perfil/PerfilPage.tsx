@@ -15,6 +15,7 @@ import {
 import { perfilApi } from '../../services/api';
 import { Perfil, TipoDocumento, UpdatePerfilDTO } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
+import { BackButton } from '../../components/BackButton';
 import './Perfil.css';
 
 interface PerfilForm {
@@ -247,283 +248,286 @@ export const PerfilPage: React.FC = () => {
   const esPaciente = perfil.rol === 'PACIENTE';
 
   return (
-    <div className="perfil-container">
-      <div className="page-header">
-        <div>
-          <h1 className="page-header-title">Mi Perfil</h1>
-          <p className="page-header-desc">
-            Consultá y actualizá tus datos personales. El email y la matrícula no se pueden modificar desde aquí.
-          </p>
-        </div>
-      </div>
-
-      {success && (
-        <div className="perfil-alert perfil-alert-success" role="status">
-          <CheckCircle size={18} />
-          <span>{success}</span>
-        </div>
-      )}
-
-      {/* ── Datos personales ── */}
-      <div className="card perfil-card">
-        <div className="card-header">
-          <div className="perfil-card-title">
-            <span className="perfil-card-icon">
-              <User size={18} />
-            </span>
-            <h2 className="card-title" style={{ fontSize: '1.1rem' }}>
-              Datos personales
-            </h2>
+    <div> 
+      <BackButton />
+      <div className="perfil-container">
+        <div className="page-header">
+          <div>
+            <h1 className="page-header-title">Mi Perfil</h1>
+            <p className="page-header-desc">
+              Consultá y actualizá tus datos personales. El email y la matrícula no se pueden modificar desde aquí.
+            </p>
           </div>
-          {!editing && (
-            <button type="button" className="btn btn-secondary btn-sm" onClick={empezarEdicion}>
-              <Pencil size={14} />
-              <span>Editar datos</span>
-            </button>
+        </div>
+
+        {success && (
+          <div className="perfil-alert perfil-alert-success" role="status">
+            <CheckCircle size={18} />
+            <span>{success}</span>
+          </div>
+        )}
+
+        {/* ── Datos personales ── */}
+        <div className="card perfil-card">
+          <div className="card-header">
+            <div className="perfil-card-title">
+              <span className="perfil-card-icon">
+                <User size={18} />
+              </span>
+              <h2 className="card-title" style={{ fontSize: '1.1rem' }}>
+                Datos personales
+              </h2>
+            </div>
+            {!editing && (
+              <button type="button" className="btn btn-secondary btn-sm" onClick={empezarEdicion}>
+                <Pencil size={14} />
+                <span>Editar datos</span>
+              </button>
+            )}
+          </div>
+
+          {!editing ? (
+            <div className="perfil-grid">
+              <Dato label="Nombre" value={perfil.nombre} />
+              <Dato label="Apellido" value={perfil.apellido} />
+              <Dato label="Email" value={perfil.email} locked />
+              <Dato label="Teléfono" value={perfil.telefono} />
+              <Dato label="Tipo de documento" value={perfil.tipoDoc} />
+              <Dato label="Número de documento" value={perfil.nroDocumento} />
+              {perfil.rol === 'PACIENTE' ? (
+                <>
+                  <Dato label="N° de paciente" value={perfil.nro_paciente} locked />
+                  <Dato label="Dirección" value={perfil.direccion} />
+                </>
+              ) : (
+                <>
+                  <Dato label="Matrícula" value={perfil.nro_Matricula} locked />
+                  <Dato label="Especialidad" value={perfil.especialidad} />
+                </>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={handleGuardar}>
+              {formError && (
+                <div className="perfil-alert perfil-alert-error" role="alert">
+                  <AlertCircle size={18} />
+                  <span>{formError}</span>
+                </div>
+              )}
+
+              <div className="form-row">
+                <Campo id="perfil-nombre" label="Nombre *">
+                  <input
+                    id="perfil-nombre"
+                    type="text"
+                    required
+                    maxLength={50}
+                    className="form-control"
+                    value={form.nombre}
+                    onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  />
+                </Campo>
+                <Campo id="perfil-apellido" label="Apellido *">
+                  <input
+                    id="perfil-apellido"
+                    type="text"
+                    required
+                    maxLength={50}
+                    className="form-control"
+                    value={form.apellido}
+                    onChange={(e) => setForm({ ...form, apellido: e.target.value })}
+                  />
+                </Campo>
+              </div>
+
+              <div className="form-row">
+                <Campo id="perfil-email" label="Email" hint="No se puede modificar.">
+                  <input
+                    id="perfil-email"
+                    type="email"
+                    readOnly
+                    tabIndex={-1}
+                    className="form-control"
+                    value={perfil.email}
+                  />
+                </Campo>
+                <Campo id="perfil-telefono" label="Teléfono" hint="Dejalo vacío si no querés informar uno.">
+                  <input
+                    id="perfil-telefono"
+                    type="tel"
+                    className="form-control"
+                    placeholder="Ej: +54 9 341 555-1234"
+                    pattern="[0-9+\s\(\)\-]{7,20}"
+                    title="Entre 7 y 20 caracteres: números, espacios, +, - y paréntesis"
+                    value={form.telefono}
+                    onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                  />
+                </Campo>
+              </div>
+
+              <div className="form-row">
+                <Campo id="perfil-tipodoc" label="Tipo de documento *">
+                  <select
+                    id="perfil-tipodoc"
+                    className="form-control"
+                    value={form.tipoDoc}
+                    onChange={(e) => setForm({ ...form, tipoDoc: e.target.value as TipoDocumento })}
+                  >
+                    <option value="DNI">DNI</option>
+                    <option value="Pasaporte">Pasaporte</option>
+                  </select>
+                </Campo>
+                <Campo id="perfil-nrodoc" label="Número de documento *">
+                  <input
+                    id="perfil-nrodoc"
+                    type="text"
+                    required
+                    pattern="[A-Za-z0-9]{7,20}"
+                    title="Entre 7 y 20 letras o números, sin puntos ni espacios"
+                    className="form-control"
+                    value={form.nroDocumento}
+                    onChange={(e) => setForm({ ...form, nroDocumento: e.target.value })}
+                  />
+                </Campo>
+              </div>
+
+              {esPaciente ? (
+                <div className="form-row">
+                  <Campo id="perfil-nropaciente" label="N° de paciente" hint="No se puede modificar.">
+                    <input
+                      id="perfil-nropaciente"
+                      type="text"
+                      readOnly
+                      tabIndex={-1}
+                      className="form-control"
+                      value={perfil.rol === 'PACIENTE' ? perfil.nro_paciente : ''}
+                    />
+                  </Campo>
+                  <Campo id="perfil-direccion" label="Dirección *">
+                    <input
+                      id="perfil-direccion"
+                      type="text"
+                      required
+                      minLength={5}
+                      maxLength={100}
+                      className="form-control"
+                      placeholder="Calle y N°, Barrio, Ciudad"
+                      value={form.direccion}
+                      onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+                    />
+                  </Campo>
+                </div>
+              ) : (
+                <div className="form-row">
+                  <Campo id="perfil-matricula" label="Matrícula" hint="No se puede modificar.">
+                    <input
+                      id="perfil-matricula"
+                      type="text"
+                      readOnly
+                      tabIndex={-1}
+                      className="form-control"
+                      value={perfil.rol === 'ODONTOLOGO' ? perfil.nro_Matricula : ''}
+                    />
+                  </Campo>
+                  <Campo id="perfil-especialidad" label="Especialidad *">
+                    <input
+                      id="perfil-especialidad"
+                      type="text"
+                      required
+                      minLength={3}
+                      maxLength={50}
+                      className="form-control"
+                      value={form.especialidad}
+                      onChange={(e) => setForm({ ...form, especialidad: e.target.value })}
+                    />
+                  </Campo>
+                </div>
+              )}
+
+              <div className="perfil-actions">
+                <button type="button" className="btn btn-secondary" onClick={cancelarEdicion} disabled={saving}>
+                  <X size={16} />
+                  <span>Cancelar</span>
+                </button>
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  <Save size={16} />
+                  <span>{saving ? 'Guardando...' : 'Guardar cambios'}</span>
+                </button>
+              </div>
+            </form>
           )}
         </div>
 
-        {!editing ? (
-          <div className="perfil-grid">
-            <Dato label="Nombre" value={perfil.nombre} />
-            <Dato label="Apellido" value={perfil.apellido} />
-            <Dato label="Email" value={perfil.email} locked />
-            <Dato label="Teléfono" value={perfil.telefono} />
-            <Dato label="Tipo de documento" value={perfil.tipoDoc} />
-            <Dato label="Número de documento" value={perfil.nroDocumento} />
-            {perfil.rol === 'PACIENTE' ? (
-              <>
-                <Dato label="N° de paciente" value={perfil.nro_paciente} locked />
-                <Dato label="Dirección" value={perfil.direccion} />
-              </>
-            ) : (
-              <>
-                <Dato label="Matrícula" value={perfil.nro_Matricula} locked />
-                <Dato label="Especialidad" value={perfil.especialidad} />
-              </>
-            )}
+        {/* ── Cambio de contraseña ── */}
+        <div className="card perfil-card">
+          <div className="card-header">
+            <div className="perfil-card-title">
+              <span className="perfil-card-icon">
+                <KeyRound size={18} />
+              </span>
+              <h2 className="card-title" style={{ fontSize: '1.1rem' }}>
+                Cambiar contraseña
+              </h2>
+            </div>
           </div>
-        ) : (
-          <form onSubmit={handleGuardar}>
-            {formError && (
+
+          <form onSubmit={handleCambiarPassword}>
+            {passwordError && (
               <div className="perfil-alert perfil-alert-error" role="alert">
                 <AlertCircle size={18} />
-                <span>{formError}</span>
+                <span>{passwordError}</span>
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className="perfil-alert perfil-alert-success" role="status">
+                <CheckCircle size={18} />
+                <span>{passwordSuccess}</span>
               </div>
             )}
 
+            <Campo id="perfil-pw-actual" label="Contraseña actual *">
+              <PasswordInput
+                id="perfil-pw-actual"
+                required
+                autoComplete="current-password"
+                value={password.actual}
+                onChange={(e) => setPassword({ ...password, actual: e.target.value })}
+              />
+            </Campo>
+
             <div className="form-row">
-              <Campo id="perfil-nombre" label="Nombre *">
-                <input
-                  id="perfil-nombre"
-                  type="text"
+              <Campo id="perfil-pw-nueva" label="Nueva contraseña *" hint="Entre 6 y 72 caracteres.">
+                <PasswordInput
+                  id="perfil-pw-nueva"                
                   required
-                  maxLength={50}
-                  className="form-control"
-                  value={form.nombre}
-                  onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  minLength={6}
+                  maxLength={72}
+                  autoComplete="new-password"
+                  value={password.nueva}
+                  onChange={(e) => setPassword({ ...password, nueva: e.target.value })}
                 />
               </Campo>
-              <Campo id="perfil-apellido" label="Apellido *">
-                <input
-                  id="perfil-apellido"
-                  type="text"
+              <Campo id="perfil-pw-confirmar" label="Repetir nueva contraseña *">
+                <PasswordInput
+                  id="perfil-pw-confirmar"
                   required
-                  maxLength={50}
-                  className="form-control"
-                  value={form.apellido}
-                  onChange={(e) => setForm({ ...form, apellido: e.target.value })}
+                  minLength={6}
+                  maxLength={72}
+                  autoComplete="new-password"
+                  value={password.confirmar}
+                  onChange={(e) => setPassword({ ...password, confirmar: e.target.value })}
                 />
               </Campo>
             </div>
-
-            <div className="form-row">
-              <Campo id="perfil-email" label="Email" hint="No se puede modificar.">
-                <input
-                  id="perfil-email"
-                  type="email"
-                  readOnly
-                  tabIndex={-1}
-                  className="form-control"
-                  value={perfil.email}
-                />
-              </Campo>
-              <Campo id="perfil-telefono" label="Teléfono" hint="Dejalo vacío si no querés informar uno.">
-                <input
-                  id="perfil-telefono"
-                  type="tel"
-                  className="form-control"
-                  placeholder="Ej: +54 9 341 555-1234"
-                  pattern="[0-9+\s\(\)\-]{7,20}"
-                  title="Entre 7 y 20 caracteres: números, espacios, +, - y paréntesis"
-                  value={form.telefono}
-                  onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-                />
-              </Campo>
-            </div>
-
-            <div className="form-row">
-              <Campo id="perfil-tipodoc" label="Tipo de documento *">
-                <select
-                  id="perfil-tipodoc"
-                  className="form-control"
-                  value={form.tipoDoc}
-                  onChange={(e) => setForm({ ...form, tipoDoc: e.target.value as TipoDocumento })}
-                >
-                  <option value="DNI">DNI</option>
-                  <option value="Pasaporte">Pasaporte</option>
-                </select>
-              </Campo>
-              <Campo id="perfil-nrodoc" label="Número de documento *">
-                <input
-                  id="perfil-nrodoc"
-                  type="text"
-                  required
-                  pattern="[A-Za-z0-9]{7,20}"
-                  title="Entre 7 y 20 letras o números, sin puntos ni espacios"
-                  className="form-control"
-                  value={form.nroDocumento}
-                  onChange={(e) => setForm({ ...form, nroDocumento: e.target.value })}
-                />
-              </Campo>
-            </div>
-
-            {esPaciente ? (
-              <div className="form-row">
-                <Campo id="perfil-nropaciente" label="N° de paciente" hint="No se puede modificar.">
-                  <input
-                    id="perfil-nropaciente"
-                    type="text"
-                    readOnly
-                    tabIndex={-1}
-                    className="form-control"
-                    value={perfil.rol === 'PACIENTE' ? perfil.nro_paciente : ''}
-                  />
-                </Campo>
-                <Campo id="perfil-direccion" label="Dirección *">
-                  <input
-                    id="perfil-direccion"
-                    type="text"
-                    required
-                    minLength={5}
-                    maxLength={100}
-                    className="form-control"
-                    placeholder="Calle y N°, Barrio, Ciudad"
-                    value={form.direccion}
-                    onChange={(e) => setForm({ ...form, direccion: e.target.value })}
-                  />
-                </Campo>
-              </div>
-            ) : (
-              <div className="form-row">
-                <Campo id="perfil-matricula" label="Matrícula" hint="No se puede modificar.">
-                  <input
-                    id="perfil-matricula"
-                    type="text"
-                    readOnly
-                    tabIndex={-1}
-                    className="form-control"
-                    value={perfil.rol === 'ODONTOLOGO' ? perfil.nro_Matricula : ''}
-                  />
-                </Campo>
-                <Campo id="perfil-especialidad" label="Especialidad *">
-                  <input
-                    id="perfil-especialidad"
-                    type="text"
-                    required
-                    minLength={3}
-                    maxLength={50}
-                    className="form-control"
-                    value={form.especialidad}
-                    onChange={(e) => setForm({ ...form, especialidad: e.target.value })}
-                  />
-                </Campo>
-              </div>
-            )}
 
             <div className="perfil-actions">
-              <button type="button" className="btn btn-secondary" onClick={cancelarEdicion} disabled={saving}>
-                <X size={16} />
-                <span>Cancelar</span>
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={saving}>
-                <Save size={16} />
-                <span>{saving ? 'Guardando...' : 'Guardar cambios'}</span>
+              <button type="submit" className="btn btn-primary" disabled={savingPassword}>
+                <Lock size={16} />
+                <span>{savingPassword ? 'Actualizando...' : 'Actualizar contraseña'}</span>
               </button>
             </div>
           </form>
-        )}
-      </div>
-
-      {/* ── Cambio de contraseña ── */}
-      <div className="card perfil-card">
-        <div className="card-header">
-          <div className="perfil-card-title">
-            <span className="perfil-card-icon">
-              <KeyRound size={18} />
-            </span>
-            <h2 className="card-title" style={{ fontSize: '1.1rem' }}>
-              Cambiar contraseña
-            </h2>
-          </div>
         </div>
-
-        <form onSubmit={handleCambiarPassword}>
-          {passwordError && (
-            <div className="perfil-alert perfil-alert-error" role="alert">
-              <AlertCircle size={18} />
-              <span>{passwordError}</span>
-            </div>
-          )}
-          {passwordSuccess && (
-            <div className="perfil-alert perfil-alert-success" role="status">
-              <CheckCircle size={18} />
-              <span>{passwordSuccess}</span>
-            </div>
-          )}
-
-          <Campo id="perfil-pw-actual" label="Contraseña actual *">
-            <PasswordInput
-              id="perfil-pw-actual"
-              required
-              autoComplete="current-password"
-              value={password.actual}
-              onChange={(e) => setPassword({ ...password, actual: e.target.value })}
-            />
-          </Campo>
-
-          <div className="form-row">
-            <Campo id="perfil-pw-nueva" label="Nueva contraseña *" hint="Entre 6 y 72 caracteres.">
-              <PasswordInput
-                id="perfil-pw-nueva"                
-                required
-                minLength={6}
-                maxLength={72}
-                autoComplete="new-password"
-                value={password.nueva}
-                onChange={(e) => setPassword({ ...password, nueva: e.target.value })}
-              />
-            </Campo>
-            <Campo id="perfil-pw-confirmar" label="Repetir nueva contraseña *">
-              <PasswordInput
-                id="perfil-pw-confirmar"
-                required
-                minLength={6}
-                maxLength={72}
-                autoComplete="new-password"
-                value={password.confirmar}
-                onChange={(e) => setPassword({ ...password, confirmar: e.target.value })}
-              />
-            </Campo>
-          </div>
-
-          <div className="perfil-actions">
-            <button type="submit" className="btn btn-primary" disabled={savingPassword}>
-              <Lock size={16} />
-              <span>{savingPassword ? 'Actualizando...' : 'Actualizar contraseña'}</span>
-            </button>
-          </div>
-        </form>
       </div>
     </div>
   );

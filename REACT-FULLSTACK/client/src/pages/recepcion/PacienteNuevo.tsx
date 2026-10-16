@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, UserPlus, Shield, User, FileText } from 'lucide-react';
+import {UserPlus, Shield, User, FileText } from 'lucide-react';
 import { pacientesApi, mutualesApi } from '../../services/api';
 import { Mutual, TipoDocumento } from '../../types';
+import { BackButton } from '../../components/BackButton';
 import './Recepcion.css';
 
 export const PacienteNuevo: React.FC = () => {
@@ -78,10 +79,7 @@ export const PacienteNuevo: React.FC = () => {
   return (
     <div style={{ maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ marginBottom: '1.5rem' }}>
-        <Link to="/recepcion" className="btn btn-ghost btn-sm" style={{ marginBottom: '0.75rem' }}>
-          <ArrowLeft size={16} />
-          <span>Volver al Padrón de Pacientes</span>
-        </Link>
+        <BackButton fallback="/recepcion" />
         <h1 className="page-header-title">Alta de Nuevo Paciente</h1>
         <p className="page-header-desc">
           Registra los datos personales, crea la Historia Clínica y su Odontograma inicial automáticamente.

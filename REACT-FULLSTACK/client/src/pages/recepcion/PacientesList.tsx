@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, User, Eye, Phone, MapPin, RefreshCw, Calendar } from 'lucide-react';
+import { BackButton } from '../../components/BackButton';
 import { pacientesApi } from '../../services/api';
 import { Paciente } from '../../types';
 import './Recepcion.css';
@@ -38,7 +39,8 @@ export const PacientesList: React.FC = () => {
 
   return (
     <div>
-      <div className="page-header">
+      <BackButton />
+      <div className="page-header"> 
         <div>
           <h1 className="page-header-title">Módulo de Pacientes</h1>
           <p className="page-header-desc">Registro, búsqueda y administración de fichas médicas de pacientes</p>

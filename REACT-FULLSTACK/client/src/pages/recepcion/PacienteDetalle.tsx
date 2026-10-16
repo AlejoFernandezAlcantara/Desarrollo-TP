@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { BackButton } from '../../components/BackButton';
 import { 
-  ArrowLeft, 
   User, 
   Calendar, 
   Shield, 
@@ -111,9 +111,7 @@ export const PacienteDetalle: React.FC = () => {
         <AlertTriangle className="empty-state-icon" style={{ color: 'var(--danger)' }} />
         <h3>Error al cargar ficha</h3>
         <p>{error || 'El paciente solicitado no existe.'}</p>
-        <Link to="/recepcion" className="btn btn-secondary" style={{ marginTop: '1rem' }}>
-          Volver al listado
-        </Link>
+        <BackButton fallback="/recepcion" />
       </div>
     );
   }
@@ -123,10 +121,8 @@ export const PacienteDetalle: React.FC = () => {
 
   return (
     <div>
-      <Link to="/recepcion" className="btn btn-ghost btn-sm" style={{ marginBottom: '1rem' }}>
-        <ArrowLeft size={16} />
-        <span>Volver a Pacientes</span>
-      </Link>
+      
+      <BackButton fallback="/recepcion" />
 
       {/* Header Ficha Paciente */}
       <div className="card patient-detail-header">

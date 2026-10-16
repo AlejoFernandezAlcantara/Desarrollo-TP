@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { reservasApi, odontologosApi } from '../../services/api';
 import { Reserva, Odontologo } from '../../types';
+import { BackButton } from '../../components/BackButton';
 import './Consultorio.css';
 import { formatFecha, formatHora } from '../../utils/fecha';
 
@@ -46,6 +47,7 @@ export const ConsultorioHoy: React.FC = () => {
 
   return (
     <div>
+      <BackButton />
       <div className="page-header">
         <div>
           <h1 className="page-header-title">Consultorio Clínico & Atención</h1>

@@ -19,6 +19,7 @@ import { reservasApi, odontologosApi, mutualesApi } from '../../services/api';
 import { Reserva, Odontologo, Mutual } from '../../types';
 import { Modal } from '../../components/Modal';
 import { useAuth } from '../../contexts/AuthContext';
+import { BackButton } from '../../components/BackButton';
 import './Agenda.css';
 import { formatFecha, formatHora } from '../../utils/fecha';
 
@@ -127,6 +128,7 @@ export const AgendaPage: React.FC = () => {
 
   return (
     <div>
+      <BackButton />
       <div className="page-header">
         <div>
           <h1 className="page-header-title">Agenda de Turnos</h1>

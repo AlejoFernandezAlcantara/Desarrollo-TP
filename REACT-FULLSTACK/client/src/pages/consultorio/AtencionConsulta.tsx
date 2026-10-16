@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import {
-  ArrowLeft,
+import { useParams, useNavigate,  } from 'react-router-dom';
+  import {
   Activity,
   CheckCircle,
   Plus,
@@ -13,6 +12,7 @@ import {
   AlertCircle,
   Award
 } from 'lucide-react';
+import { BackButton } from '../../components/BackButton';
 import { reservasApi, practicasApi, detallesApi, dientesApi } from '../../services/api';
 import { Reserva, Practica, Detalle, Diente, ResultadoReserva } from '../../types';
 import { Odontograma } from './Odontograma';
@@ -159,9 +159,7 @@ export const AtencionConsulta: React.FC = () => {
         <AlertCircle className="empty-state-icon" style={{ color: 'var(--danger)' }} />
         <h3>No se pudo cargar la consulta</h3>
         <p>{error || 'La reserva especificada no existe.'}</p>
-        <Link to="/consultorio" className="btn btn-secondary" style={{ marginTop: '1rem' }}>
-          Volver al Consultorio
-        </Link>
+        <BackButton fallback="/consultorio" />
       </div>
     );
   }
@@ -173,11 +171,7 @@ export const AtencionConsulta: React.FC = () => {
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-        <Link to="/consultorio" className="btn btn-ghost btn-sm">
-          <ArrowLeft size={16} />
-          <span>Volver al Consultorio de Hoy</span>
-        </Link>
-
+        <BackButton fallback="/consultorio" />
         <span className={`badge ${isFinalizada ? 'badge-success' : 'badge-primary'}`} style={{ fontSize: '0.85rem' }}>
           Estado: {reserva.estado.toUpperCase()}
         </span>
