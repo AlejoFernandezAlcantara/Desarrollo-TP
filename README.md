@@ -4,6 +4,20 @@ Aplicación web full stack para la gestión de un consultorio odontológico: pac
 
 Trabajo práctico de **Desarrollo de Software**.
 
+## Aplicación desplegada
+
+La aplicación se puede probar en línea, sin instalar nada:
+
+| Parte | Servicio | Enlace |
+|-------|----------|--------|
+| **Frontend** | Vercel | https://consultorio-carestia-1.vercel.app/ |
+| **Backend (API)** | Render | https://consultorio-backend-v0ar.onrender.com/api |
+| **Base de datos** | MySQL | Accedida por el backend mediante Prisma |
+
+- Documentación de la API (Swagger): https://consultorio-backend-v0ar.onrender.com/api/docs
+- El frontend en Vercel redirige las llamadas `/api/*` al backend en Render (ver `REACT-FULLSTACK/client/vercel.json`).
+- Para ingresar se pueden usar los usuarios de la sección [Usuarios de prueba](#usuarios-de-prueba).
+
 ## Integrantes
 
 | Legajo | Integrante |
@@ -19,7 +33,8 @@ Trabajo práctico de **Desarrollo de Software**.
 |-------|-------|
 | **Frontend** | React 19, TypeScript, Vite, React Router, React Query, React Hook Form, Vitest |
 | **Backend** | Node.js, Express 5, TypeScript, Prisma (ORM), Zod (validación), JWT, Helmet, Swagger |
-| **Base de datos** | MySQL 8 (en Docker) |
+| **Base de datos** | MySQL 8 (en Docker para desarrollo local) |
+| **Despliegue** | Frontend en Vercel, backend en Render, base de datos MySQL |
 
 Frontend y backend son independientes y se comunican por una API REST.
 
@@ -84,6 +99,10 @@ Se crean automáticamente al iniciar. Hay tres niveles de acceso:
 | Paciente | `paciente@consultorio.com` | `Paciente123!` |
 
 También se puede registrar un paciente nuevo desde la pantalla de registro.
+
+## Datos precargados: dientes y caras
+
+Las piezas dentales (numeración FDI), sus caras y la relación Diente-Cara son datos fijos. Se cargan automáticamente al iniciar el proyecto (script `seed_dientes.ts`, que ejecutan `iniciar.bat` e `iniciar.sh`) y por eso no tienen una pantalla de gestión. El backend igualmente expone sus endpoints REST completos, restringidos al rol Administrador y documentados en Swagger.
 
 ## Ejecución manual (alternativa)
 
@@ -176,6 +195,12 @@ Desarrollo-TP/
             ├── middlewares/      Autenticación, roles, validación, errores
             └── docs/             Especificación Swagger
 ```
+
+## Documentación del proyecto
+
+- [Documentación (`docs/`)](docs/README.md): minutas de reunión y avance, seguimiento de features y bugs, y enlaces a los pull requests.
+- [Propuesta del trabajo práctico](https://github.com/AlejoFernandezAlcantara/Desarrollo-TP/blob/main/Propuesta.md) (rama `main`).
+- Documentación de la API: Swagger, en `/api/docs` del backend.
 
 ## Solución de problemas
 
