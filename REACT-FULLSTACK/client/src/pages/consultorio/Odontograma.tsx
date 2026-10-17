@@ -1,0 +1,168 @@
+import React from 'react';
+import { Detalle } from '../../types';
+import './Consultorio.css';
+
+interface OdontogramaProps {
+  selectedDientes: number[];  // Cambiado: ahora es array para selección múltiple
+  onSelectDientes: (numeros: number[]) => void;  // Cambiado
+  detalles: Detalle[];
+  readOnly?: boolean;  // Consulta finalizada: se puede ver pero no seleccionar
+}
+
+export const Odontograma: React.FC<OdontogramaProps> = ({
+  selectedDientes,
+  onSelectDientes,
+  detalles,
+  readOnly = false
+}) => {
+  // Cuadrantes FDI
+  const q1 = [18, 17, 16, 15, 14, 13, 12, 11];
+  const q2 = [21, 22, 23, 24, 25, 26, 27, 28];
+  const q4 = [48, 47, 46, 45, 44, 43, 42, 41];
+  const q3 = [31, 32, 33, 34, 35, 36, 37, 38];
+
+  const renderTooth = (numero: number) => {
+    const isSelected = selectedDientes.includes(numero);
+    // Chequear si este diente tiene alguna práctica realizada en los detalles
+    const tratamientos = detalles.filter(d => d.diente?.numero === numero);
+    const hasTreatment = tratamientos.length > 0;
+
+    const handleClick = () => {
+      if (readOnly) return;
+
+      if (isSelected) {
+        // Si ya está seleccionado, lo quitamos del array
+        onSelectDientes(selectedDientes.filter(n => n !== numero));
+      } else {
+        // Si no está seleccionado, lo agregamos al array
+        onSelectDientes([...selectedDientes, numero]);
+      }
+    };
+
+    return (
+      <div
+        key={numero}
+        className={`tooth-item ${isSelected ? 'selected' : ''} ${hasTreatment ? 'has-treatment' : ''}`}
+        onClick={handleClick}
+        style={readOnly ? { cursor: 'default' } : undefined}
+        title={`Pieza dental N° ${numero}${hasTreatment ? ` (${tratamientos.length} práctica(s))` : ''}`}
+      >
+        {hasTreatment && <div className="tooth-badge" />}
+        <span className="tooth-number">{numero}</span>
+
+        {/* SVG simplificado que representa una muela o diente */}
+        <div className="tooth-icon">
+          <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M7 4C7 2.5 8.5 2 12 2C15.5 2 17 2.5 17 4C17 6 18 10 18 14C18 18 16.5 22 14.5 22C12.5 22 12.5 17 12 17C11.5 17 11.5 22 9.5 22C7.5 22 6 18 6 14C6 10 7 6 7 4Z"
+              fill={hasTreatment ? '#fef3c7' : isSelected ? 'var(--primary-light)' : 'var(--bg-card)'}
+            />
+          </svg>
+        </div>
+
+        <span style={{ fontSize: '0.65rem', color: hasTreatment ? 'var(--warning, #d97706)' : 'var(--text-subtle)', fontWeight: 600 }}>
+          {hasTreatment ? `${tratamientos.length}p` : 'Sano'}
+        </span>
+      </div>
+    );
+  };
+
+  // Verificar si hay selección múltiple para mostrar el indicador
+  const multipleSelection = selectedDientes.length > 1;
+
+  return (
+    <div className="odontograma-container">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+        <div>
+          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
+            Odontograma Dental Interactivo (FDI)
+            {multipleSelection && (
+              <span style={{
+                marginLeft: '0.5rem',
+                fontSize: '0.75rem',
+                background: 'var(--primary)',
+                color: 'white',
+                padding: '0.2rem 0.6rem',
+                borderRadius: '12px',
+                fontWeight: 600
+              }}>
+                {selectedDientes.length} seleccionados
+              </span>
+            )}
+          </h4>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+            {readOnly
+              ? 'Consulta finalizada: el odontograma es de solo lectura.'
+              : 'Haz clic sobre varias piezas dentales para seleccionarlas y aplicar la misma práctica.'}
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--bg-card)', border: '1.5px solid #cbd5e1' }} />
+            <span>Sin tratamientos</span>
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: '#fef3c7', border: '1.5px solid #f59e0b' }} />
+            <span>Con Práctica Realizada</span>
+          </span>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
+            <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--primary-light)', border: '1.5px solid var(--primary)' }} />
+            <span>Seleccionado</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Botón para limpiar selección cuando hay dientes seleccionados */}
+      {selectedDientes.length > 0 && (
+        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <button
+            onClick={() => onSelectDientes([])}
+            style={{
+              fontSize: '0.75rem',
+              padding: '0.4rem 0.8rem',
+              background: 'var(--bg-muted)',
+              border: '1px solid var(--border)',
+              borderRadius: '6px',
+              cursor: 'pointer',
+              color: 'var(--text-main)',
+              fontWeight: 600
+            }}
+          >
+            ✕ Limpiar selección ({selectedDientes.length})
+          </button>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+            Seleccionados: {[...selectedDientes].sort((a, b) => a - b).join(', ')}
+          </span>
+        </div>
+      )}
+
+      {/* Arcada Superior */}
+      <div style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
+        Arcada Superior (Maxilar)
+      </div>
+      <div className="odontograma-arch">
+        <div className="odontograma-quadrant">
+          {q1.map(renderTooth)}
+        </div>
+        <div className="odontograma-divider" />
+        <div className="odontograma-quadrant">
+          {q2.map(renderTooth)}
+        </div>
+      </div>
+
+      {/* Arcada Inferior */}
+      <div style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', margin: '0.8rem 0 0.4rem 0' }}>
+        Arcada Inferior (Mandibular)
+      </div>
+      <div className="odontograma-arch" style={{ marginBottom: 0 }}>
+        <div className="odontograma-quadrant">
+          {q4.map(renderTooth)}
+        </div>
+        <div className="odontograma-divider" />
+        <div className="odontograma-quadrant">
+          {q3.map(renderTooth)}
+        </div>
+      </div>
+    </div>
+  );
+};
