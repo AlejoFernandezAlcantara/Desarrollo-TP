@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar,
+  CalendarDays,
   CalendarPlus,
   Users,
   Settings,
   Activity,
+  Stethoscope,
   Home,
   Menu,
   X,
@@ -73,6 +75,7 @@ export const Navbar: React.FC = () => {
   const canViewGenerarTurnos = user?.rol === 'ADMINISTRADOR' || user?.rol === 'ODONTOLOGO';
   const canViewMutuales = user?.rol === 'PACIENTE' || user?.rol === 'ODONTOLOGO';
   const canViewAgenda = true; // Todos pueden ver agenda o turnos según su contexto
+  const canViewAtenderTurnos = user?.rol === 'ODONTOLOGO';
   const canViewPerfil = user?.rol === 'PACIENTE' || user?.rol === 'ODONTOLOGO'; 
 
   return (
@@ -209,13 +212,36 @@ export const Navbar: React.FC = () => {
 
           {canViewAgenda && (
             <NavLink
-              to="/agenda"
+              to="/agenda/reservar"
               className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
               onClick={closeSidebar}
               end
             >
               <Calendar size={19} />
-              <span>Reservar Turnos</span>
+              <span>Reservar Turno</span>
+            </NavLink>
+          )}
+
+          {canViewAgenda && (
+            <NavLink
+              to="/agenda"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={closeSidebar}
+              end
+            >
+              <CalendarDays size={19} />
+              <span>Agenda</span>
+            </NavLink>
+          )}
+
+          {canViewAtenderTurnos && (
+            <NavLink
+              to="/atender-turnos"
+              className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}
+              onClick={closeSidebar}
+            >
+              <Stethoscope size={19} />
+              <span>Atender Turnos</span>
             </NavLink>
           )}
 

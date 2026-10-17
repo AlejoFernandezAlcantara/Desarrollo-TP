@@ -16,6 +16,7 @@ import { ReservarTurno } from './pages/agenda/ReservarTurno';
 import { GestionTurnos } from './pages/agenda/GestionTurnos';
 import { ConsultorioHoy } from './pages/consultorio/ConsultorioHoy';
 import { AtencionConsulta } from './pages/consultorio/AtencionConsulta';
+import { AtenderTurnos } from './pages/consultorio/AtenderTurnos';
 import { MutualesPage } from './pages/mutuales/MutualesPage';
 import { PerfilPage } from './pages/perfil/PerfilPage';
 import './App.css';
@@ -162,6 +163,16 @@ export const App: React.FC = () => {
                   element={
                     <ProtectedRoute allowedRoles={['ODONTOLOGO', 'ADMINISTRADOR']}>
                       <AtencionConsulta />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Atender Turnos: turnos sin atender de hoy del propio odontólogo (solo Odontólogos) */}
+                <Route
+                  path="/atender-turnos"
+                  element={
+                    <ProtectedRoute allowedRoles={['ODONTOLOGO']}>
+                      <AtenderTurnos />
                     </ProtectedRoute>
                   }
                 />

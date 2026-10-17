@@ -1068,7 +1068,7 @@ export const swaggerSpec = {
         tags: ['Reservas'],
         summary: 'Listar reservas',
         description:
-          'Roles: PACIENTE (sólo ve las propias), ODONTOLOGO, ADMINISTRADOR',
+          'Roles: PACIENTE (sólo ve las propias), ODONTOLOGO (sólo las de su agenda), ADMINISTRADOR (todas)',
         security: [SEG],
         parameters: [
           { name: 'pacienteId', in: 'query', required: false, schema: { type: 'integer' } },

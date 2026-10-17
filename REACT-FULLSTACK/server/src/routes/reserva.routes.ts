@@ -12,7 +12,7 @@ import { CreateReservaSchema, CancelarReservaSchema, FinalizarReservaSchema, IdP
 
 const router = Router();
 
-// Listado: odontólogo y administrador ven todo; el paciente solo sus reservas (el controller fuerza el filtro)
+// Listado: el administrador ve todo; el odontólogo solo las reservas de su agenda y el paciente solo las suyas (el service fuerza el filtro)
 router.get('/', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADMINISTRADOR'), validateQuery(ReservaQuerySchema), getReservas);
 // Detalle: odontólogo y administrador
 router.get('/:id', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), getReservaById);

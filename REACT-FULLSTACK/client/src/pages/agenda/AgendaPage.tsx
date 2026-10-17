@@ -27,6 +27,9 @@ import { formatFecha, formatHora } from '../../utils/fecha';
 export const AgendaPage: React.FC = () => {
   const { user } = useAuth();
   const esStaff = user?.rol === 'ODONTOLOGO' || user?.rol === 'ADMINISTRADOR';
+  // Solo el administrador ve (y puede filtrar) las agendas de todos los profesionales.
+  // El odontólogo ve únicamente la suya; el backend lo fuerza igualmente.
+  const esAdmin = user?.rol === 'ADMINISTRADOR';
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [odontologos, setOdontologos] = useState<Odontologo[]>([]);
   const [mutuales, setMutuales] = useState<Mutual[]>([]);
@@ -52,10 +55,10 @@ export const AgendaPage: React.FC = () => {
     setError(null);
     try {
       const odoId = selectedOdontologoId ? parseInt(selectedOdontologoId) : undefined;
-      // Sólo el personal puede listar odontólogos (el paciente recibiría 403)
+      // Sólo el administrador necesita el listado de odontólogos (para el filtro de profesional)
       const [resData, odoData] = await Promise.all([
         reservasApi.getAll({ odontologoId: odoId }),
-        esStaff
+        esAdmin
           ? odontologosApi.getAll(
               selectedMutualId && selectedMutualId !== 'particular'
                 ? parseInt(selectedMutualId)
@@ -76,9 +79,9 @@ export const AgendaPage: React.FC = () => {
     fetchAgenda();
   }, [selectedOdontologoId]);
 
-  // Si es staff y cambia la mutual seleccionada, acotar los profesionales a los que atienden esa mutual
+  // Si es administrador y cambia la mutual seleccionada, acotar los profesionales a los que atienden esa mutual
   useEffect(() => {
-    if (!esStaff) return;
+    if (!esAdmin) return;
     const mId = selectedMutualId && selectedMutualId !== 'particular' ? parseInt(selectedMutualId) : undefined;
     odontologosApi.getAll(mId).then((odos) => {
       setOdontologos(odos);
@@ -86,7 +89,7 @@ export const AgendaPage: React.FC = () => {
         setSelectedOdontologoId('');
       }
     }).catch(console.error);
-  }, [selectedMutualId, esStaff]);
+  }, [selectedMutualId, esAdmin]);
 
   const handleOpenCancel = (r: Reserva) => {
     setCancelingReserva(r);
@@ -108,16 +111,24 @@ export const AgendaPage: React.FC = () => {
     }
   };
 
-  // Filtrado de reservas en el cliente por mutual
-  const reservasFiltradas = reservas.filter((r) => {
-    if (selectedMutualId === 'particular') {
-      return !r.mutual_id;
-    }
-    if (selectedMutualId) {
-      return r.mutual_id === parseInt(selectedMutualId);
-    }
-    return true;
-  });
+  // Fecha del turno de la reserva (si no tiene turno asociado, se usa la fecha de creación)
+  const fechaDeReserva = (r: Reserva) => {
+    const turno = r.turnos && r.turnos[0];
+    return new Date(turno ? turno.fecha_hora_inicio : r.fecha_creacion).getTime();
+  };
+
+  // Filtrado de reservas en el cliente por mutual, ordenadas por fecha del turno (de la más próxima a la más lejana)
+  const reservasFiltradas = reservas
+    .filter((r) => {
+      if (selectedMutualId === 'particular') {
+        return !r.mutual_id;
+      }
+      if (selectedMutualId) {
+        return r.mutual_id === parseInt(selectedMutualId);
+      }
+      return true;
+    })
+    .sort((a, b) => fechaDeReserva(a) - fechaDeReserva(b));
 
   const hayFiltrosActivos = Boolean(selectedOdontologoId) || Boolean(selectedMutualId);
 
@@ -176,8 +187,8 @@ export const AgendaPage: React.FC = () => {
             </select>
           </div>
 
-          {/* Filtro por Profesional (Staff) */}
-          {esStaff && (
+          {/* Filtro por Profesional (solo Administrador) */}
+          {esAdmin && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Filter size={18} style={{ color: 'var(--primary)' }} />
               <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Profesional:</span>

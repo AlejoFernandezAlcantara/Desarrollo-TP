@@ -12,11 +12,13 @@ export const reservaService = {
   async getAll(paciente_id?: number, odontologo_id?: number, estado?: EstadoReserva, solicitante?: SolicitanteReserva) {
     // El paciente sólo ve sus propias reservas, sin importar el filtro que mande
     const pacienteFiltro = solicitante?.rol === 'PACIENTE' ? solicitante.personaId : paciente_id;
+    // El odontólogo sólo ve las reservas de su propia agenda, sin importar el filtro que mande
+    const odontologoFiltro = solicitante?.rol === 'ODONTOLOGO' ? solicitante.personaId : odontologo_id;
 
     return await prisma.reserva.findMany({
       where: {
         ...(pacienteFiltro !== undefined && { paciente_id: pacienteFiltro }),
-        ...(odontologo_id !== undefined && { odontologo_id }),
+        ...(odontologoFiltro !== undefined && { odontologo_id: odontologoFiltro }),
         ...(estado && { estado })
       },
       include: {
