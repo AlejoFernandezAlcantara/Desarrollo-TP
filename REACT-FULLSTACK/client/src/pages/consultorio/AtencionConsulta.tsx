@@ -15,7 +15,7 @@ import { useParams, useNavigate,  } from 'react-router-dom';
 import { BackButton } from '../../components/BackButton';
 import { reservasApi, practicasApi, detallesApi, dientesApi } from '../../services/api';
 import { Reserva, Practica, Detalle, Diente, ResultadoReserva } from '../../types';
-import { Odontograma } from './Odontograma';
+import { Odontograma, CaraSeleccionada } from './Odontograma';
 import './Consultorio.css';
 
 export const AtencionConsulta: React.FC = () => {
@@ -33,7 +33,9 @@ export const AtencionConsulta: React.FC = () => {
 
   // Practice registration form state (CUU 2)
   const [selectedPracticaId, setSelectedPracticaId] = useState<string>('');
-  const [selectedDientes, setSelectedDientes] = useState<number[]>([]); // ← Cambiado: array para múltiples dientes
+  const [carasSeleccionadas, setCarasSeleccionadas] = useState<CaraSeleccionada[]>([]);
+  // Piezas con al menos una cara marcada (el detalle se guarda por diente)
+  const selectedDientes = [...new Set(carasSeleccionadas.map((c) => c.diente))].sort((a, b) => a - b);
   const [practicaObservaciones, setPracticaObservaciones] = useState('');
   const [submittingPractica, setSubmittingPractica] = useState(false);
 
@@ -104,7 +106,7 @@ export const AtencionConsulta: React.FC = () => {
       }
 
       setPracticaObservaciones('');
-      setSelectedDientes([]); // Limpiar selección después de aplicar
+      setCarasSeleccionadas([]); // Limpiar selección después de aplicar
       // Recargar detalles
       const nuevosDetalles = await detallesApi.getAll(reservaId);
       setDetalles(nuevosDetalles);
@@ -213,8 +215,8 @@ export const AtencionConsulta: React.FC = () => {
 
       {/* Odontograma Interactivo - Actualizado para selección múltiple */}
       <Odontograma
-        selectedDientes={selectedDientes}
-        onSelectDientes={setSelectedDientes}
+        seleccionadas={carasSeleccionadas}
+        onChange={setCarasSeleccionadas}
         detalles={detalles}
         readOnly={isFinalizada}
       />
@@ -252,7 +254,7 @@ export const AtencionConsulta: React.FC = () => {
                       <>
                         <span>{selectedDientes.length} pieza(s):</span>
                         <span style={{ display: 'flex', gap: '0.25rem', flexWrap: 'wrap' }}>
-                          {selectedDientes.sort((a, b) => a - b).map(num => (
+                          {selectedDientes.map(num => (
                             <span key={num} style={{
                               background: 'var(--primary)',
                               color: 'white',
@@ -273,7 +275,7 @@ export const AtencionConsulta: React.FC = () => {
                     <button
                       type="button"
                       className="btn btn-ghost btn-sm"
-                      onClick={() => setSelectedDientes([])}
+                      onClick={() => setCarasSeleccionadas([])}
                     >
                       Limpiar
                     </button>

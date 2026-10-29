@@ -1,167 +1,198 @@
 import React from 'react';
 import { Detalle } from '../../types';
-import './Consultorio.css';
 
-interface OdontogramaProps {
-  selectedDientes: number[];  // Cambiado: ahora es array para selección múltiple
-  onSelectDientes: (numeros: number[]) => void;  // Cambiado
-  detalles: Detalle[];
-  readOnly?: boolean;  // Consulta finalizada: se puede ver pero no seleccionar
+// Una cara seleccionada: pieza FDI + nombre de la cara tal como está en la tabla `cara`
+export interface CaraSeleccionada {
+  diente: number;
+  cara: string;
 }
 
+interface OdontogramaProps {
+  seleccionadas: CaraSeleccionada[];
+  onChange: (next: CaraSeleccionada[]) => void;
+  detalles: Detalle[];
+  readOnly?: boolean; // consulta finalizada: se ve pero no se puede seleccionar
+}
+
+const LETRA: Record<string, string> = {
+  Vestibular: 'V',
+  Palatina: 'P',
+  Mesial: 'M',
+  Distal: 'D',
+  Incisal: 'I',
+  Oclusal: 'O',
+  Cruzal: 'C',
+  Lingual: 'L',
+};
+
+// Pieza de leche 5X equivale a la permanente 1X (51 = 11, 61 = 21, etc.)
+const equivalente = (n: number) => (n >= 50 ? n - 40 : n);
+
+// Cara del centro del círculo, según la pieza
+const caraCentral = (e: number): string => {
+  if ((e >= 11 && e <= 13) || (e >= 21 && e <= 23)) return 'Incisal';
+  if (e >= 14 && e <= 18) return 'Oclusal';
+  return 'Cruzal'; // 24 a 28
+};
+
+// Punto en el círculo de 100x100 (0° = derecha, sentido horario en pantalla)
+const polar = (r: number, grados: number): [number, number] => {
+  const rad = (grados * Math.PI) / 180;
+  return [50 + r * Math.cos(rad), 50 + r * Math.sin(rad)];
+};
+
+// Porción de anillo entre dos ángulos
+const porcion = (a0: number, a1: number): string => {
+  const [xo0, yo0] = polar(46, a0);
+  const [xo1, yo1] = polar(46, a1);
+  const [xi1, yi1] = polar(20, a1);
+  const [xi0, yi0] = polar(20, a0);
+  return `M ${xi0} ${yi0} L ${xo0} ${yo0} A 46 46 0 0 1 ${xo1} ${yo1} L ${xi1} ${yi1} A 20 20 0 0 0 ${xi0} ${yi0} Z`;
+};
+
+interface DienteProps {
+  numero: number;
+  carasSeleccionadas: Set<string>;
+  conPractica: boolean;
+  readOnly: boolean;
+  onToggle: (cara: string) => void;
+}
+
+const Diente: React.FC<DienteProps> = ({ numero, carasSeleccionadas, conPractica, readOnly, onToggle }) => {
+  const e = equivalente(numero);
+  // Cuadrante superior derecho del paciente (dientes 11 a 18): mesial queda hacia la derecha del dibujo
+  const superiorDerecho = e >= 11 && e <= 18;
+
+  const caras = [
+    { cara: 'Vestibular', a0: -135, a1: -45 },
+    { cara: superiorDerecho ? 'Mesial' : 'Distal', a0: -45, a1: 45 },
+    { cara: 'Palatina', a0: 45, a1: 135 },
+    { cara: superiorDerecho ? 'Distal' : 'Mesial', a0: 135, a1: 225 },
+  ];
+  const central = caraCentral(e);
+
+  const estilo = (cara: string): React.CSSProperties => ({
+    fill: carasSeleccionadas.has(cara) ? 'var(--primary-light, #bfdbfe)' : 'var(--bg-card, #ffffff)',
+    stroke: carasSeleccionadas.has(cara) ? 'var(--primary, #2563eb)' : '#94a3b8',
+    strokeWidth: 1.5,
+    cursor: readOnly ? 'default' : 'pointer',
+  });
+
+  const manejarTecla = (cara: string) => (ev: React.KeyboardEvent) => {
+    if (readOnly) return;
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ev.preventDefault();
+      onToggle(cara);
+    }
+  };
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+      <svg viewBox="0 0 100 100" width={46} height={46} aria-label={`Pieza ${numero}`}>
+        {caras.map(({ cara, a0, a1 }) => {
+          const [tx, ty] = polar(33, (a0 + a1) / 2);
+          return (
+            <g
+              key={cara}
+              role="button"
+              tabIndex={readOnly ? -1 : 0}
+              aria-label={`Diente ${numero}, cara ${cara}`}
+              aria-pressed={carasSeleccionadas.has(cara)}
+              onClick={() => !readOnly && onToggle(cara)}
+              onKeyDown={manejarTecla(cara)}
+            >
+              <title>{`Diente ${numero}: ${cara}`}</title>
+              <path d={porcion(a0, a1)} style={estilo(cara)} />
+              <text
+                x={tx}
+                y={ty}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize="11"
+                fontWeight={700}
+                fill="#334155"
+                style={{ pointerEvents: 'none' }}
+              >
+                {LETRA[cara]}
+              </text>
+            </g>
+          );
+        })}
+
+        <g
+          role="button"
+          tabIndex={readOnly ? -1 : 0}
+          aria-label={`Diente ${numero}, cara ${central}`}
+          aria-pressed={carasSeleccionadas.has(central)}
+          onClick={() => !readOnly && onToggle(central)}
+          onKeyDown={manejarTecla(central)}
+        >
+          <title>{`Diente ${numero}: ${central}`}</title>
+          <circle cx={50} cy={50} r={20} style={estilo(central)} />
+          <text
+            x={50}
+            y={50}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize="11"
+            fontWeight={700}
+            fill="#334155"
+            style={{ pointerEvents: 'none' }}
+          >
+            {LETRA[central]}
+          </text>
+        </g>
+
+        {conPractica && (
+          <circle cx={50} cy={50} r={48} fill="none" stroke="#d97706" strokeWidth={2} style={{ pointerEvents: 'none' }} />
+        )}
+      </svg>
+      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main, #1e293b)' }}>{numero}</span>
+    </div>
+  );
+};
+
 export const Odontograma: React.FC<OdontogramaProps> = ({
-  selectedDientes,
-  onSelectDientes,
+  seleccionadas,
+  onChange,
   detalles,
-  readOnly = false
+  readOnly = false,
 }) => {
-  // Cuadrantes FDI
-  const q1 = [18, 17, 16, 15, 14, 13, 12, 11];
-  const q2 = [21, 22, 23, 24, 25, 26, 27, 28];
-  const q4 = [48, 47, 46, 45, 44, 43, 42, 41];
-  const q3 = [31, 32, 33, 34, 35, 36, 37, 38];
+  const carasDe = (numero: number) =>
+    new Set(seleccionadas.filter((s) => s.diente === numero).map((s) => s.cara));
 
-  const renderTooth = (numero: number) => {
-    const isSelected = selectedDientes.includes(numero);
-    // Chequear si este diente tiene alguna práctica realizada en los detalles
-    const tratamientos = detalles.filter(d => d.diente?.numero === numero);
-    const hasTreatment = tratamientos.length > 0;
-
-    const handleClick = () => {
-      if (readOnly) return;
-
-      if (isSelected) {
-        // Si ya está seleccionado, lo quitamos del array
-        onSelectDientes(selectedDientes.filter(n => n !== numero));
-      } else {
-        // Si no está seleccionado, lo agregamos al array
-        onSelectDientes([...selectedDientes, numero]);
-      }
-    };
-
-    return (
-      <div
-        key={numero}
-        className={`tooth-item ${isSelected ? 'selected' : ''} ${hasTreatment ? 'has-treatment' : ''}`}
-        onClick={handleClick}
-        style={readOnly ? { cursor: 'default' } : undefined}
-        title={`Pieza dental N° ${numero}${hasTreatment ? ` (${tratamientos.length} práctica(s))` : ''}`}
-      >
-        {hasTreatment && <div className="tooth-badge" />}
-        <span className="tooth-number">{numero}</span>
-
-        {/* SVG simplificado que representa una muela o diente */}
-        <div className="tooth-icon">
-          <svg width="20" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M7 4C7 2.5 8.5 2 12 2C15.5 2 17 2.5 17 4C17 6 18 10 18 14C18 18 16.5 22 14.5 22C12.5 22 12.5 17 12 17C11.5 17 11.5 22 9.5 22C7.5 22 6 18 6 14C6 10 7 6 7 4Z"
-              fill={hasTreatment ? '#fef3c7' : isSelected ? 'var(--primary-light)' : 'var(--bg-card)'}
-            />
-          </svg>
-        </div>
-
-        <span style={{ fontSize: '0.65rem', color: hasTreatment ? 'var(--warning, #d97706)' : 'var(--text-subtle)', fontWeight: 600 }}>
-          {hasTreatment ? `${tratamientos.length}p` : 'Sano'}
-        </span>
-      </div>
+  const toggle = (numero: number, cara: string) => {
+    const existe = seleccionadas.some((s) => s.diente === numero && s.cara === cara);
+    onChange(
+      existe
+        ? seleccionadas.filter((s) => !(s.diente === numero && s.cara === cara))
+        : [...seleccionadas, { diente: numero, cara }]
     );
   };
 
-  // Verificar si hay selección múltiple para mostrar el indicador
-  const multipleSelection = selectedDientes.length > 1;
+  const conPractica = (numero: number) => detalles.some((d) => d.diente?.numero === numero);
+
+  const renderFila = (numeros: number[]) =>
+    numeros.map((n) => (
+      <Diente
+        key={n}
+        numero={n}
+        carasSeleccionadas={carasDe(n)}
+        conPractica={conPractica(n)}
+        readOnly={readOnly}
+        onToggle={(cara) => toggle(n, cara)}
+      />
+    ));
 
   return (
-    <div className="odontograma-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div>
-          <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--text-main)' }}>
-            Odontograma Dental Interactivo (FDI)
-            {multipleSelection && (
-              <span style={{
-                marginLeft: '0.5rem',
-                fontSize: '0.75rem',
-                background: 'var(--primary)',
-                color: 'white',
-                padding: '0.2rem 0.6rem',
-                borderRadius: '12px',
-                fontWeight: 600
-              }}>
-                {selectedDientes.length} seleccionados
-              </span>
-            )}
-          </h4>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            {readOnly
-              ? 'Consulta finalizada: el odontograma es de solo lectura.'
-              : 'Haz clic sobre varias piezas dentales para seleccionarlas y aplicar la misma práctica.'}
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem 0.75rem', fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-main)' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--bg-card)', border: '1.5px solid #cbd5e1' }} />
-            <span>Sin tratamientos</span>
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: '#fef3c7', border: '1.5px solid #f59e0b' }} />
-            <span>Con Práctica Realizada</span>
-          </span>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
-            <span style={{ width: 10, height: 10, borderRadius: 2, background: 'var(--primary-light)', border: '1.5px solid var(--primary)' }} />
-            <span>Seleccionado</span>
-          </span>
-        </div>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 6 }}>{renderFila([18, 17, 16, 15, 14, 13, 12, 11])}</div>
+        <div style={{ display: 'flex', gap: 6 }}>{renderFila([21, 22, 23, 24, 25, 26, 27, 28])}</div>
       </div>
-
-      {/* Botón para limpiar selección cuando hay dientes seleccionados */}
-      {selectedDientes.length > 0 && (
-        <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <button
-            onClick={() => onSelectDientes([])}
-            style={{
-              fontSize: '0.75rem',
-              padding: '0.4rem 0.8rem',
-              background: 'var(--bg-muted)',
-              border: '1px solid var(--border)',
-              borderRadius: '6px',
-              cursor: 'pointer',
-              color: 'var(--text-main)',
-              fontWeight: 600
-            }}
-          >
-            ✕ Limpiar selección ({selectedDientes.length})
-          </button>
-          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Seleccionados: {[...selectedDientes].sort((a, b) => a - b).join(', ')}
-          </span>
-        </div>
-      )}
-
-      {/* Arcada Superior */}
-      <div style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', marginBottom: '0.4rem' }}>
-        Arcada Superior (Maxilar)
-      </div>
-      <div className="odontograma-arch">
-        <div className="odontograma-quadrant">
-          {q1.map(renderTooth)}
-        </div>
-        <div className="odontograma-divider" />
-        <div className="odontograma-quadrant">
-          {q2.map(renderTooth)}
-        </div>
-      </div>
-
-      {/* Arcada Inferior */}
-      <div style={{ textAlign: 'center', fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-subtle)', textTransform: 'uppercase', margin: '0.8rem 0 0.4rem 0' }}>
-        Arcada Inferior (Mandibular)
-      </div>
-      <div className="odontograma-arch" style={{ marginBottom: 0 }}>
-        <div className="odontograma-quadrant">
-          {q4.map(renderTooth)}
-        </div>
-        <div className="odontograma-divider" />
-        <div className="odontograma-quadrant">
-          {q3.map(renderTooth)}
-        </div>
+      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+        <div style={{ display: 'flex', gap: 6 }}>{renderFila([55, 54, 53, 52, 51])}</div>
+        <div style={{ display: 'flex', gap: 6 }}>{renderFila([61, 62, 63, 64, 65])}</div>
       </div>
     </div>
   );
