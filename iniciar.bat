@@ -101,6 +101,8 @@ call npx tsx src/scripts/seed_auth.ts
 if errorlevel 1 (echo ERROR: Fallo la carga de usuarios de prueba. & goto :error)
 call npx tsx src/scripts/seed_dientes.ts
 if errorlevel 1 (echo ERROR: Fallo la carga de las piezas dentales. & goto :error)
+call npx tsx src/scripts/seed_ejemplos.ts
+if errorlevel 1 (echo ERROR: Fallo la carga de los datos de ejemplo. & goto :error)
 
 echo.
 echo === 6. Frontend: dependencias ===

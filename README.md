@@ -100,6 +100,10 @@ Se crean automáticamente al iniciar. Hay tres niveles de acceso:
 
 También se puede registrar un paciente nuevo desde la pantalla de registro.
 
+### Datos de ejemplo del odontograma
+
+El script `seed_ejemplos.ts` (lo ejecutan `iniciar.bat` e `iniciar.sh`, una sola vez) le carga a la paciente María Gómez dos consultas realizadas con prácticas sobre caras de los dientes 16, 21, 26 y 36, una extracción del 46 y un turno confirmado para hoy con el odontólogo de prueba. Se ven en la ficha del paciente (odontograma con las caras tratadas en amarillo) y en la atención del turno de hoy.
+
 ## Datos precargados: dientes y caras
 
 Las piezas dentales (numeración FDI), sus caras y la relación Diente-Cara son datos fijos. Se cargan automáticamente al iniciar el proyecto (script `seed_dientes.ts`, que ejecutan `iniciar.bat` e `iniciar.sh`) y por eso no tienen una pantalla de gestión. El backend igualmente expone sus endpoints REST completos, restringidos al rol Administrador y documentados en Swagger.

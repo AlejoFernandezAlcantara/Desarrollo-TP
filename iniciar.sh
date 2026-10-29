@@ -97,6 +97,7 @@ fi
 npx prisma generate || fallo "Fallo prisma generate."
 npx tsx src/scripts/seed_auth.ts || fallo "Fallo la carga de usuarios de prueba."
 npx tsx src/scripts/seed_dientes.ts || fallo "Fallo la carga de las piezas dentales."
+npx tsx src/scripts/seed_ejemplos.ts || fallo "Fallo la carga de los datos de ejemplo."
 
 paso "6. Frontend: dependencias"
 cd "$CLIENT" || exit 1
