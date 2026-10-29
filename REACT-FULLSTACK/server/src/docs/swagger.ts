@@ -1083,7 +1083,7 @@ export const swaggerSpec = {
       post: {
         tags: ['Reservas'],
         summary: 'Reservar un turno (CUU 1)',
-        description: 'Roles: PACIENTE (sólo para sí mismo), ADMINISTRADOR. El turno pasa a ocupado.',
+        description: 'Roles: PACIENTE (sólo para sí mismo), ODONTOLOGO, ADMINISTRADOR. El turno pasa a ocupado.',
         security: [SEG],
         requestBody: jsonBody('CreateReservaRequest'),
         responses: {

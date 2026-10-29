@@ -17,8 +17,8 @@ router.get('/', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADM
 // Detalle: odontólogo y administrador
 router.get('/:id', authenticateToken, authorizeRoles('ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), getReservaById);
 
-// Reservar turno (CUU 1): paciente y administrador
-router.post('/', authenticateToken, authorizeRoles('PACIENTE', 'ADMINISTRADOR'), validateRequest(CreateReservaSchema), createReserva);
+// Reservar turno (CUU 1): paciente, odontólogo y administrador
+router.post('/', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADMINISTRADOR'), validateRequest(CreateReservaSchema), createReserva);
 
 // Cancelar: paciente (su reserva), odontólogo y administrador
 router.put('/:id/cancelar', authenticateToken, authorizeRoles('PACIENTE', 'ODONTOLOGO', 'ADMINISTRADOR'), validateParams(IdParamsSchema), validateRequest(CancelarReservaSchema), cancelarReserva);
