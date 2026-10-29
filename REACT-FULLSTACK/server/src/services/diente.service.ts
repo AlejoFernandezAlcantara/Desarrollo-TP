@@ -4,7 +4,11 @@ import { AppError } from '../middlewares/error.middleware';
 
 export const dienteService = {
   async getAll() {
-    return await prisma.diente.findMany();
+    // Incluye las caras de cada pieza (tabla diente_cara) para dibujar el odontograma
+    return await prisma.diente.findMany({
+      orderBy: { numero: 'asc' },
+      include: { caras: { select: { cara: { select: { id: true, nombre: true } } } } },
+    });
   },
 
   async getById(id: number) { // puede devolver null

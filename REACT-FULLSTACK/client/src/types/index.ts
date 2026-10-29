@@ -116,6 +116,7 @@ export interface Diente {
   numero: number;
   nombre?: string | null;
   tipo: string;
+  caras?: { cara: Cara }[]; // caras cargadas en diente_cara
   detalles?: Detalle[];
 }
 

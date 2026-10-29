@@ -217,6 +217,7 @@ export const AtencionConsulta: React.FC = () => {
       <Odontograma
         seleccionadas={carasSeleccionadas}
         onChange={setCarasSeleccionadas}
+        dientes={dientes}
         detalles={detalles}
         readOnly={isFinalizada}
       />

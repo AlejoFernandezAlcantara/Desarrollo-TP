@@ -1,5 +1,5 @@
 import React from 'react';
-import { Detalle } from '../../types';
+import { Detalle, Diente as DienteBD } from '../../types';
 
 // Una cara seleccionada: pieza FDI + nombre de la cara tal como está en la tabla `cara`
 export interface CaraSeleccionada {
@@ -10,6 +10,7 @@ export interface CaraSeleccionada {
 interface OdontogramaProps {
   seleccionadas: CaraSeleccionada[];
   onChange: (next: CaraSeleccionada[]) => void;
+  dientes: DienteBD[]; // piezas con sus caras, tal como las carga seed_dientes
   detalles: Detalle[];
   readOnly?: boolean; // consulta finalizada: se ve pero no se puede seleccionar
 }
@@ -25,14 +26,26 @@ const LETRA: Record<string, string> = {
   Lingual: 'L',
 };
 
-// Pieza de leche 5X equivale a la permanente 1X (51 = 11, 61 = 21, etc.)
-const equivalente = (n: number) => (n >= 50 ? n - 40 : n);
+const INTERNAS = ['Palatina', 'Lingual'];
+const LATERALES = ['Vestibular', 'Mesial', 'Distal', ...INTERNAS];
 
-// Cara del centro del círculo, según la pieza
-const caraCentral = (e: number): string => {
-  if ((e >= 11 && e <= 13) || (e >= 21 && e <= 23)) return 'Incisal';
-  if (e >= 14 && e <= 18) return 'Oclusal';
-  return 'Cruzal'; // 24 a 28
+// Ubica las caras que tiene la pieza en el dibujo: vestibular hacia afuera de la boca,
+// palatina/lingual hacia adentro, mesial hacia la línea media. Lo que sobra va al centro.
+const ubicarCaras = (numero: number, caras: string[]) => {
+  const cuadrante = Math.floor(numero / 10);
+  const superior = [1, 2, 5, 6].includes(cuadrante);
+  // Cuadrantes que se dibujan a la izquierda de la línea media: mesial queda a la derecha
+  const mesialDerecha = [1, 4, 5, 8].includes(cuadrante);
+  const interna = caras.find((c) => INTERNAS.includes(c));
+  const tiene = (c: string) => (caras.includes(c) ? c : undefined);
+
+  return {
+    arriba: superior ? tiene('Vestibular') : interna,
+    derecha: tiene(mesialDerecha ? 'Mesial' : 'Distal'),
+    abajo: superior ? interna : tiene('Vestibular'),
+    izquierda: tiene(mesialDerecha ? 'Distal' : 'Mesial'),
+    central: caras.find((c) => !LATERALES.includes(c)),
+  };
 };
 
 // Punto en el círculo de 100x100 (0° = derecha, sentido horario en pantalla)
@@ -52,24 +65,26 @@ const porcion = (a0: number, a1: number): string => {
 
 interface DienteProps {
   numero: number;
+  carasDisponibles: string[];
   carasSeleccionadas: Set<string>;
   conPractica: boolean;
   readOnly: boolean;
   onToggle: (cara: string) => void;
 }
 
-const Diente: React.FC<DienteProps> = ({ numero, carasSeleccionadas, conPractica, readOnly, onToggle }) => {
-  const e = equivalente(numero);
-  // Cuadrante superior derecho del paciente (dientes 11 a 18): mesial queda hacia la derecha del dibujo
-  const superiorDerecho = e >= 11 && e <= 18;
+const Diente: React.FC<DienteProps> = ({ numero, carasDisponibles, carasSeleccionadas, conPractica, readOnly, onToggle }) => {
+  const pos = ubicarCaras(numero, carasDisponibles);
 
   const caras = [
-    { cara: 'Vestibular', a0: -135, a1: -45 },
-    { cara: superiorDerecho ? 'Mesial' : 'Distal', a0: -45, a1: 45 },
-    { cara: 'Palatina', a0: 45, a1: 135 },
-    { cara: superiorDerecho ? 'Distal' : 'Mesial', a0: 135, a1: 225 },
+    { pos: 'arriba', cara: pos.arriba, a0: -135, a1: -45 },
+    { pos: 'derecha', cara: pos.derecha, a0: -45, a1: 45 },
+    { pos: 'abajo', cara: pos.abajo, a0: 45, a1: 135 },
+    { pos: 'izquierda', cara: pos.izquierda, a0: 135, a1: 225 },
   ];
-  const central = caraCentral(e);
+  const central = pos.central;
+
+  // Zona sin cara cargada para esta pieza: se dibuja gris y no se puede seleccionar
+  const estiloVacio: React.CSSProperties = { fill: 'var(--bg-muted, #e2e8f0)', stroke: '#cbd5e1', strokeWidth: 1.5 };
 
   const estilo = (cara: string): React.CSSProperties => ({
     fill: carasSeleccionadas.has(cara) ? 'var(--primary-light, #bfdbfe)' : 'var(--bg-card, #ffffff)',
@@ -89,7 +104,8 @@ const Diente: React.FC<DienteProps> = ({ numero, carasSeleccionadas, conPractica
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
       <svg viewBox="0 0 100 100" width={46} height={46} aria-label={`Pieza ${numero}`}>
-        {caras.map(({ cara, a0, a1 }) => {
+        {caras.map(({ pos: p, cara, a0, a1 }) => {
+          if (!cara) return <path key={p} d={porcion(a0, a1)} style={estiloVacio} />;
           const [tx, ty] = polar(33, (a0 + a1) / 2);
           return (
             <g
@@ -119,6 +135,9 @@ const Diente: React.FC<DienteProps> = ({ numero, carasSeleccionadas, conPractica
           );
         })}
 
+        {!central ? (
+          <circle cx={50} cy={50} r={20} style={estiloVacio} />
+        ) : (
         <g
           role="button"
           tabIndex={readOnly ? -1 : 0}
@@ -142,6 +161,7 @@ const Diente: React.FC<DienteProps> = ({ numero, carasSeleccionadas, conPractica
             {LETRA[central]}
           </text>
         </g>
+        )}
 
         {conPractica && (
           <circle cx={50} cy={50} r={48} fill="none" stroke="#d97706" strokeWidth={2} style={{ pointerEvents: 'none' }} />
@@ -152,9 +172,18 @@ const Diente: React.FC<DienteProps> = ({ numero, carasSeleccionadas, conPractica
   );
 };
 
+// Filas del odontograma (FDI), de izquierda a derecha en pantalla
+const FILAS: [number[], number[]][] = [
+  [[18, 17, 16, 15, 14, 13, 12, 11], [21, 22, 23, 24, 25, 26, 27, 28]],
+  [[55, 54, 53, 52, 51], [61, 62, 63, 64, 65]],
+  [[85, 84, 83, 82, 81], [71, 72, 73, 74, 75]],
+  [[48, 47, 46, 45, 44, 43, 42, 41], [31, 32, 33, 34, 35, 36, 37, 38]],
+];
+
 export const Odontograma: React.FC<OdontogramaProps> = ({
   seleccionadas,
   onChange,
+  dientes,
   detalles,
   readOnly = false,
 }) => {
@@ -172,11 +201,15 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
 
   const conPractica = (numero: number) => detalles.some((d) => d.diente?.numero === numero);
 
+  // Caras de cada pieza según diente_cara
+  const carasPorNumero = new Map(dientes.map((d) => [d.numero, (d.caras ?? []).map((c) => c.cara.nombre)]));
+
   const renderFila = (numeros: number[]) =>
-    numeros.map((n) => (
+    numeros.filter((n) => carasPorNumero.has(n)).map((n) => (
       <Diente
         key={n}
         numero={n}
+        carasDisponibles={carasPorNumero.get(n)!}
         carasSeleccionadas={carasDe(n)}
         conPractica={conPractica(n)}
         readOnly={readOnly}
@@ -184,16 +217,18 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
       />
     ));
 
+  if (dientes.length === 0) {
+    return <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No hay piezas dentales cargadas.</p>;
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', gap: 6 }}>{renderFila([18, 17, 16, 15, 14, 13, 12, 11])}</div>
-        <div style={{ display: 'flex', gap: 6 }}>{renderFila([21, 22, 23, 24, 25, 26, 27, 28])}</div>
-      </div>
-      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', gap: 6 }}>{renderFila([55, 54, 53, 52, 51])}</div>
-        <div style={{ display: 'flex', gap: 6 }}>{renderFila([61, 62, 63, 64, 65])}</div>
-      </div>
+      {FILAS.map(([izquierda, derecha]) => (
+        <div key={izquierda[0]} style={{ display: 'flex', gap: '1.5rem', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: 6 }}>{renderFila(izquierda)}</div>
+          <div style={{ display: 'flex', gap: 6 }}>{renderFila(derecha)}</div>
+        </div>
+      ))}
     </div>
   );
 };

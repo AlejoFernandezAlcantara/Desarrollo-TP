@@ -147,11 +147,10 @@ async function seedDientes() {
     }
   }
 
-  const antes = await prisma.dienteCara.count();
-  // skipDuplicates evita duplicar las que ya existen (requiere restricción única en la tabla)
-  await prisma.dienteCara.createMany({ data: relaciones, skipDuplicates: true });
-  const despues = await prisma.dienteCara.count();
-  console.log(`🔗 Relaciones diente-cara: ${despues - antes} nuevas (total: ${despues}).`);
+  // Se borran todas las relaciones y se vuelven a cargar, así la tabla queda igual al mapa
+  const borradas = await prisma.dienteCara.deleteMany();
+  await prisma.dienteCara.createMany({ data: relaciones });
+  console.log(`🔗 Relaciones diente-cara: ${borradas.count} borradas, ${relaciones.length} cargadas según el mapa.`);
 }
 
 seedDientes()
