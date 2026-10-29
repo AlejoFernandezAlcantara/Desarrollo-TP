@@ -1,10 +1,11 @@
 import React from 'react';
 import { Detalle, Diente as DienteBD } from '../../types';
 
-// Una cara seleccionada: pieza FDI + nombre de la cara tal como está en la tabla `cara`
+// Una selección: pieza FDI + nombre de la cara tal como está en la tabla `cara`.
+// cara = null es la pieza entera (extracción, corona, conducto...)
 export interface CaraSeleccionada {
   diente: number;
-  cara: string;
+  cara: string | null;
 }
 
 interface OdontogramaProps {
@@ -26,9 +27,13 @@ const LETRA: Record<string, string> = {
   Lingual: 'L',
 };
 
-// Amarillo de las caras con práctica realizada
+// Amarillo de las caras con práctica realizada; azul de lo seleccionado
 const COLOR_PRACTICA = '#fde68a';
 const BORDE_PRACTICA = '#d97706';
+const COLOR_SELECCION = '#bfdbfe';
+const BORDE_SELECCION = '#2563eb';
+// Letras sobre caras pintadas (fondo claro en los dos temas)
+const TEXTO_SOBRE_COLOR = '#1e293b';
 
 const INTERNAS = ['Palatina', 'Lingual'];
 const LATERALES = ['Vestibular', 'Mesial', 'Distal', ...INTERNAS];
@@ -72,12 +77,22 @@ interface DienteProps {
   carasDisponibles: string[];
   carasSeleccionadas: Set<string>;
   carasConPractica: Set<string>; // caras con alguna práctica registrada (se pintan de amarillo)
-  conPractica: boolean; // práctica sobre la pieza entera, sin cara: se marca con un anillo
+  piezaSeleccionada: boolean; // pieza entera seleccionada: anillo azul
+  conPractica: boolean; // práctica sobre la pieza entera, sin cara: anillo amarillo
   readOnly: boolean;
-  onToggle: (cara: string) => void;
+  onToggle: (cara: string | null) => void;
 }
 
-const Diente: React.FC<DienteProps> = ({ numero, carasDisponibles, carasSeleccionadas, carasConPractica, conPractica, readOnly, onToggle }) => {
+const Diente: React.FC<DienteProps> = ({
+  numero,
+  carasDisponibles,
+  carasSeleccionadas,
+  carasConPractica,
+  piezaSeleccionada,
+  conPractica,
+  readOnly,
+  onToggle,
+}) => {
   const pos = ubicarCaras(numero, carasDisponibles);
 
   const caras = [
@@ -89,23 +104,26 @@ const Diente: React.FC<DienteProps> = ({ numero, carasDisponibles, carasSeleccio
   const central = pos.central;
 
   // Zona sin cara cargada para esta pieza: se dibuja gris y no se puede seleccionar
-  const estiloVacio: React.CSSProperties = { fill: 'var(--bg-muted, #e2e8f0)', stroke: '#cbd5e1', strokeWidth: 1.5 };
+  const estiloVacio: React.CSSProperties = { fill: 'var(--bg-muted, #e2e8f0)', stroke: '#94a3b8', strokeWidth: 1.5 };
 
-  // Prioridad: seleccionada (azul) > con práctica (amarillo) > libre (blanco)
+  // Prioridad: seleccionada (azul) > con práctica (amarillo) > libre (color de la tarjeta)
+  const pintada = (cara: string) => carasSeleccionadas.has(cara) || carasConPractica.has(cara);
   const estilo = (cara: string): React.CSSProperties => {
     const seleccionada = carasSeleccionadas.has(cara);
     const tratada = carasConPractica.has(cara);
     return {
-      fill: seleccionada ? 'var(--primary-light, #bfdbfe)' : tratada ? COLOR_PRACTICA : 'var(--bg-card, #ffffff)',
-      stroke: seleccionada ? 'var(--primary, #2563eb)' : tratada ? BORDE_PRACTICA : '#94a3b8',
+      fill: seleccionada ? COLOR_SELECCION : tratada ? COLOR_PRACTICA : 'var(--bg-card, #ffffff)',
+      stroke: seleccionada ? BORDE_SELECCION : tratada ? BORDE_PRACTICA : '#94a3b8',
       strokeWidth: 1.5,
       cursor: readOnly ? 'default' : 'pointer',
     };
   };
+  const colorLetra = (cara: string) => (pintada(cara) ? TEXTO_SOBRE_COLOR : 'var(--text-main, #1e293b)');
   const titulo = (cara: string) =>
     `Diente ${numero}: ${cara}${carasConPractica.has(cara) ? ' (práctica registrada)' : ''}`;
+  const tituloPieza = `Diente ${numero}${conPractica ? ': práctica en la pieza entera' : ''}`;
 
-  const manejarTecla = (cara: string) => (ev: React.KeyboardEvent) => {
+  const manejarTecla = (cara: string | null) => (ev: React.KeyboardEvent) => {
     if (readOnly) return;
     if (ev.key === 'Enter' || ev.key === ' ') {
       ev.preventDefault();
@@ -113,9 +131,13 @@ const Diente: React.FC<DienteProps> = ({ numero, carasDisponibles, carasSeleccio
     }
   };
 
+  // Anillo exterior: azul si la pieza entera está seleccionada, amarillo si tiene una práctica sin cara
+  const anillo = piezaSeleccionada ? BORDE_SELECCION : conPractica ? BORDE_PRACTICA : undefined;
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
       <svg viewBox="0 0 100 100" width={46} height={46} aria-label={`Pieza ${numero}`}>
+        <title>{tituloPieza}</title>
         {caras.map(({ pos: p, cara, a0, a1 }) => {
           if (!cara) return <path key={p} d={porcion(a0, a1)} style={estiloVacio} />;
           const [tx, ty] = polar(33, (a0 + a1) / 2);
@@ -138,7 +160,7 @@ const Diente: React.FC<DienteProps> = ({ numero, carasDisponibles, carasSeleccio
                 dominantBaseline="central"
                 fontSize="11"
                 fontWeight={700}
-                fill="#334155"
+                fill={colorLetra(cara)}
                 style={{ pointerEvents: 'none' }}
               >
                 {LETRA[cara]}
@@ -150,36 +172,55 @@ const Diente: React.FC<DienteProps> = ({ numero, carasDisponibles, carasSeleccio
         {!central ? (
           <circle cx={50} cy={50} r={20} style={estiloVacio} />
         ) : (
-        <g
-          role="button"
-          tabIndex={readOnly ? -1 : 0}
-          aria-label={`Diente ${numero}, cara ${central}`}
-          aria-pressed={carasSeleccionadas.has(central)}
-          onClick={() => !readOnly && onToggle(central)}
-          onKeyDown={manejarTecla(central)}
-        >
-          <title>{titulo(central)}</title>
-          <circle cx={50} cy={50} r={20} style={estilo(central)} />
-          <text
-            x={50}
-            y={50}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize="11"
-            fontWeight={700}
-            fill="#334155"
-            style={{ pointerEvents: 'none' }}
+          <g
+            role="button"
+            tabIndex={readOnly ? -1 : 0}
+            aria-label={`Diente ${numero}, cara ${central}`}
+            aria-pressed={carasSeleccionadas.has(central)}
+            onClick={() => !readOnly && onToggle(central)}
+            onKeyDown={manejarTecla(central)}
           >
-            {LETRA[central]}
-          </text>
-        </g>
+            <title>{titulo(central)}</title>
+            <circle cx={50} cy={50} r={20} style={estilo(central)} />
+            <text
+              x={50}
+              y={50}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize="11"
+              fontWeight={700}
+              fill={colorLetra(central)}
+              style={{ pointerEvents: 'none' }}
+            >
+              {LETRA[central]}
+            </text>
+          </g>
         )}
 
-        {conPractica && (
-          <circle cx={50} cy={50} r={48} fill="none" stroke="#d97706" strokeWidth={2} style={{ pointerEvents: 'none' }} />
+        {anillo && (
+          <circle cx={50} cy={50} r={48} fill="none" stroke={anillo} strokeWidth={3} style={{ pointerEvents: 'none' }} />
         )}
       </svg>
-      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-main, #1e293b)' }}>{numero}</span>
+      {/* El número selecciona la pieza entera */}
+      <span
+        role={readOnly ? undefined : 'button'}
+        tabIndex={readOnly ? undefined : 0}
+        aria-pressed={readOnly ? undefined : piezaSeleccionada}
+        title={readOnly ? tituloPieza : `Seleccionar la pieza ${numero} entera`}
+        onClick={() => !readOnly && onToggle(null)}
+        onKeyDown={manejarTecla(null)}
+        style={{
+          fontSize: '0.75rem',
+          fontWeight: 700,
+          padding: '0 6px',
+          borderRadius: 4,
+          cursor: readOnly ? 'default' : 'pointer',
+          color: piezaSeleccionada ? '#ffffff' : 'var(--text-main, #1e293b)',
+          background: piezaSeleccionada ? BORDE_SELECCION : 'transparent',
+        }}
+      >
+        {numero}
+      </span>
     </div>
   );
 };
@@ -192,6 +233,21 @@ const FILAS: [number[], number[]][] = [
   [[48, 47, 46, 45, 44, 43, 42, 41], [31, 32, 33, 34, 35, 36, 37, 38]],
 ];
 
+const Muestra: React.FC<{ fondo: string; borde: string; redonda?: boolean; texto: string }> = ({ fondo, borde, redonda, texto }) => (
+  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+    <span
+      style={{
+        width: 12,
+        height: 12,
+        background: fondo,
+        border: `${redonda ? 2 : 1}px solid ${borde}`,
+        borderRadius: redonda ? '50%' : 2,
+      }}
+    />
+    {texto}
+  </span>
+);
+
 export const Odontograma: React.FC<OdontogramaProps> = ({
   seleccionadas = [],
   onChange = () => {},
@@ -200,15 +256,20 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
   readOnly = false,
 }) => {
   const carasDe = (numero: number) =>
-    new Set(seleccionadas.filter((s) => s.diente === numero).map((s) => s.cara));
+    new Set(seleccionadas.filter((s) => s.diente === numero && s.cara !== null).map((s) => s.cara!));
+  const piezaEntera = (numero: number) => seleccionadas.some((s) => s.diente === numero && s.cara === null);
 
-  const toggle = (numero: number, cara: string) => {
+  // La pieza entera y sus caras se excluyen: elegir una quita la otra
+  const toggle = (numero: number, cara: string | null) => {
     const existe = seleccionadas.some((s) => s.diente === numero && s.cara === cara);
-    onChange(
-      existe
-        ? seleccionadas.filter((s) => !(s.diente === numero && s.cara === cara))
-        : [...seleccionadas, { diente: numero, cara }]
+    if (existe) {
+      onChange(seleccionadas.filter((s) => !(s.diente === numero && s.cara === cara)));
+      return;
+    }
+    const resto = seleccionadas.filter(
+      (s) => s.diente !== numero || (cara === null ? false : s.cara !== null)
     );
+    onChange([...resto, { diente: numero, cara }]);
   };
 
   // Prácticas sin cara (pieza entera) y caras con práctica, por número de pieza
@@ -227,6 +288,7 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
         carasDisponibles={carasPorNumero.get(n)!}
         carasSeleccionadas={carasDe(n)}
         carasConPractica={carasConPractica(n)}
+        piezaSeleccionada={piezaEntera(n)}
         conPractica={conPractica(n)}
         readOnly={readOnly}
         onToggle={(cara) => toggle(n, cara)}
@@ -245,17 +307,11 @@ export const Odontograma: React.FC<OdontogramaProps> = ({
           <div style={{ display: 'flex', gap: 6 }}>{renderFila(derecha)}</div>
         </div>
       ))}
-      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span style={{ width: 12, height: 12, background: COLOR_PRACTICA, border: `1px solid ${BORDE_PRACTICA}`, borderRadius: 2 }} />
-          Práctica realizada
-        </span>
-        {!readOnly && (
-          <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <span style={{ width: 12, height: 12, background: 'var(--primary-light, #bfdbfe)', border: '1px solid var(--primary, #2563eb)', borderRadius: 2 }} />
-            Seleccionada
-          </span>
-        )}
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+        <Muestra fondo={COLOR_PRACTICA} borde={BORDE_PRACTICA} texto="Práctica en la cara" />
+        <Muestra fondo="transparent" borde={BORDE_PRACTICA} redonda texto="Práctica en la pieza entera" />
+        {!readOnly && <Muestra fondo={COLOR_SELECCION} borde={BORDE_SELECCION} texto="Cara seleccionada" />}
+        {!readOnly && <Muestra fondo="transparent" borde={BORDE_SELECCION} redonda texto="Pieza entera seleccionada (clic en el número)" />}
       </div>
     </div>
   );

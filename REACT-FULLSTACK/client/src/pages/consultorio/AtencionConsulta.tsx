@@ -36,6 +36,13 @@ export const AtencionConsulta: React.FC = () => {
   const [carasSeleccionadas, setCarasSeleccionadas] = useState<CaraSeleccionada[]>([]);
   // Piezas con al menos una cara marcada
   const selectedDientes = [...new Set(carasSeleccionadas.map((c) => c.diente))].sort((a, b) => a - b);
+  // Resumen para los textos: "2 cara(s) y 1 pieza(s) entera(s)"
+  const cantCaras = carasSeleccionadas.filter((c) => c.cara !== null).length;
+  const cantPiezasEnteras = carasSeleccionadas.length - cantCaras;
+  const resumenSeleccion = [
+    cantCaras > 0 && `${cantCaras} cara(s)`,
+    cantPiezasEnteras > 0 && `${cantPiezasEnteras} pieza(s) entera(s)`,
+  ].filter(Boolean).join(' y ');
   const [practicaObservaciones, setPracticaObservaciones] = useState('');
   const [submittingPractica, setSubmittingPractica] = useState(false);
 
@@ -90,11 +97,11 @@ export const AtencionConsulta: React.FC = () => {
           observaciones: practicaObservaciones || undefined
         });
       } else {
-        // Crear un detalle por cada cara seleccionada (diente + cara)
+        // Crear un detalle por cada selección: diente + cara, o diente solo si es la pieza entera
         for (const { diente: numeroDiente, cara } of carasSeleccionadas) {
           const foundDiente = dientes.find(d => d.numero === numeroDiente);
           if (!foundDiente) continue;
-          const caraId = foundDiente.caras?.find(c => c.cara.nombre === cara)?.cara.id;
+          const caraId = cara === null ? undefined : foundDiente.caras?.find(c => c.cara.nombre === cara)?.cara.id;
 
           await detallesApi.create({
             reserva_id: reservaId,
@@ -234,7 +241,7 @@ export const AtencionConsulta: React.FC = () => {
                 </h3>
                 <p className="card-subtitle">
                   {selectedDientes.length > 0
-                    ? `Se aplicará a ${carasSeleccionadas.length} cara(s) en ${selectedDientes.length} pieza(s) dental(es)`
+                    ? `Se aplicará a ${resumenSeleccion}`
                     : 'Aplica tratamientos y asócialos al odontograma del paciente'}
                 </p>
               </div>
@@ -323,7 +330,7 @@ export const AtencionConsulta: React.FC = () => {
                   {submittingPractica
                     ? 'Registrando...'
                     : selectedDientes.length > 0
-                      ? `Aplicar a ${carasSeleccionadas.length} cara(s)`
+                      ? `Aplicar a ${resumenSeleccion}`
                       : 'Registrar Práctica General'}
                 </span>
               </button>
