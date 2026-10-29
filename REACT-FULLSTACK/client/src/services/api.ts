@@ -263,6 +263,7 @@ export const detallesApi = {
     reserva_id: number;
     practica_id: number;
     diente_id?: number;
+    cara_id?: number;
     observaciones?: string;
   }) =>
     request<Detalle>('/detalles', {

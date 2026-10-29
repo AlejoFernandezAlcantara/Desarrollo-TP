@@ -143,10 +143,11 @@ model Diente {
 }
 
 model Cara {
-  id      Int          @id @default(autoincrement())
-  nombre  String       @db.VarChar(30)
-  detalle String?      @db.VarChar(100)
-  dientes DienteCara[]
+  id       Int          @id @default(autoincrement())
+  nombre   String       @db.VarChar(30)
+  detalle  String?      @db.VarChar(100)
+  dientes  DienteCara[]
+  detalles Detalle[]
 
   @@map("cara")
 }
@@ -201,12 +202,13 @@ model Detalle {
   odontograma_id    Int
   practica_id       Int
   diente_id         Int?
+  cara_id           Int?
   reserva_id        Int
   odontograma       Odontograma @relation(fields: [odontograma_id], references: [id])
   practica          Practica    @relation(fields: [practica_id], references: [id])
   diente            Diente?     @relation(fields: [diente_id], references: [id])
+  cara              Cara?       @relation(fields: [cara_id], references: [id])
   reserva           Reserva     @relation(fields: [reserva_id], references: [id_reserva])
 
   @@map("detalle")
 }
-

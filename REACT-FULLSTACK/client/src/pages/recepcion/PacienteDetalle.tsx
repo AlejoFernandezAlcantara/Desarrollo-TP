@@ -15,9 +15,10 @@ import {
   CheckCircle2,
   AlertTriangle
 } from 'lucide-react';
-import { pacientesApi, mutualesApi, reservasApi } from '../../services/api';
-import { Paciente, Mutual, Reserva } from '../../types';
+import { pacientesApi, mutualesApi, reservasApi, dientesApi } from '../../services/api';
+import { Paciente, Mutual, Reserva, Diente } from '../../types';
 import { Modal } from '../../components/Modal';
+import { Odontograma } from '../consultorio/Odontograma';
 import './Recepcion.css';
 import { formatFecha } from '../../utils/fecha';
 
@@ -28,6 +29,7 @@ export const PacienteDetalle: React.FC = () => {
   const [paciente, setPaciente] = useState<Paciente | null>(null);
   const [reservas, setReservas] = useState<Reserva[]>([]);
   const [mutuales, setMutuales] = useState<Mutual[]>([]);
+  const [dientes, setDientes] = useState<Diente[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -44,14 +46,16 @@ export const PacienteDetalle: React.FC = () => {
     if (!pacienteId) return;
     setLoading(true);
     try {
-      const [pacData, resData, mutData] = await Promise.all([
+      const [pacData, resData, mutData, dientesData] = await Promise.all([
         pacientesApi.getById(pacienteId),
         reservasApi.getAll({ pacienteId }),
-        mutualesApi.getAll()
+        mutualesApi.getAll(),
+        dientesApi.getAll().catch(() => [])
       ]);
       setPaciente(pacData);
       setReservas(resData);
       setMutuales(mutData);
+      setDientes(dientesData);
       if (mutData.length > 0) {
         setMutualFormData(prev => ({ ...prev, mutual_id: mutData[0].id.toString() }));
       }
@@ -117,6 +121,9 @@ export const PacienteDetalle: React.FC = () => {
   }
 
   const fullName = `${paciente.usuario?.nombre} ${paciente.usuario?.apellido}`;
+  // Todas las prácticas del paciente, de todas sus consultas, para marcar el odontograma
+  const detallesPaciente = reservas.flatMap((r) => r.detalles ?? []);
+
   const initials = `${paciente.usuario?.nombre?.charAt(0) || ''}${paciente.usuario?.apellido?.charAt(0) || ''}`.toUpperCase();
 
   return (
@@ -161,6 +168,19 @@ export const PacienteDetalle: React.FC = () => {
             <Calendar size={18} />
             <span>Agendar Turno</span>
           </Link>
+        </div>
+      </div>
+
+      {/* Odontograma del paciente: caras con prácticas realizadas en amarillo */}
+      <div className="card">
+        <div className="card-header">
+          <div>
+            <h3 className="card-title" style={{ fontSize: '1.15rem' }}>Odontograma</h3>
+            <p className="card-subtitle">Piezas y caras con prácticas realizadas en todas las consultas</p>
+          </div>
+        </div>
+        <div style={{ overflowX: 'auto' }}>
+          <Odontograma dientes={dientes} detalles={detallesPaciente} readOnly />
         </div>
       </div>
 
@@ -288,7 +308,7 @@ export const PacienteDetalle: React.FC = () => {
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.25rem' }}>
                           {r.detalles.map((d) => (
                             <span key={d.id} className="badge badge-secondary" style={{ fontSize: '0.75rem' }}>
-                              {d.practica?.codigo}: {d.practica?.detalle} {d.diente ? `(Diente #${d.diente.numero})` : ''}
+                              {d.practica?.codigo}: {d.practica?.detalle} {d.diente ? `(Diente #${d.diente.numero}${d.cara ? `, cara ${d.cara.nombre}` : ''})` : ''}
                             </span>
                           ))}
                         </div>

@@ -37,7 +37,8 @@ export const reservaService = {
         detalles: {
           include: {
             practica: true,
-            diente: true
+            diente: true,
+            cara: true
           }
         }
       },
@@ -67,7 +68,8 @@ export const reservaService = {
         detalles: {
           include: {
             practica: true,
-            diente: true
+            diente: true,
+            cara: true
           }
         }
       }
@@ -258,7 +260,8 @@ export const reservaService = {
         detalles: {
           include: {
             practica: true,
-            diente: true
+            diente: true,
+            cara: true
           }
         }
       }

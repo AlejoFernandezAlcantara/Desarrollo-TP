@@ -19,6 +19,7 @@ export const detalleService = {
       include: {
         practica: true,
         diente: true,
+        cara: true,
         odontograma: true,
         reserva: true
       },
@@ -34,6 +35,7 @@ export const detalleService = {
       include: {
         practica: true,
         diente: true,
+        cara: true,
         odontograma: true,
         reserva: true
       }
@@ -57,6 +59,7 @@ export const detalleService = {
     practica_id?: number;
     practica_personalizada?: string;
     diente_id?: number;
+    cara_id?: number;
     observaciones?: string;
   }) {
     // Validar que la reserva exista
@@ -100,6 +103,16 @@ export const detalleService = {
       await dienteService.getByIdOrThrow(data.diente_id);
     }
 
+    // Validar que la cara corresponda a ese diente (tabla diente_cara)
+    if (data.cara_id !== undefined) {
+      const dienteCara = await prisma.dienteCara.findUnique({
+        where: { diente_id_cara_id: { diente_id: data.diente_id!, cara_id: data.cara_id } }
+      });
+      if (!dienteCara) {
+        throw new AppError(400, 'La cara indicada no corresponde a ese diente');
+      }
+    }
+
     // El odontograma siempre es el del paciente de la reserva; si no tiene, se crea
     const odontograma = reserva.paciente.odontograma
       ?? await prisma.odontograma.create({
@@ -115,11 +128,13 @@ export const detalleService = {
         practica_id: finalPracticaId,
         odontograma_id: odontograma.id,
         diente_id: data.diente_id,
+        cara_id: data.cara_id,
         observaciones: data.observaciones
       },
       include: {
         practica: true,
         diente: true,
+        cara: true,
         odontograma: true
       }
     });

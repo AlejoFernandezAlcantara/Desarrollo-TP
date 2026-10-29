@@ -103,7 +103,24 @@ function construirDientes() {
   return dientes;
 }
 
+// Bases creadas antes de guardar la cara en las prácticas: agrega detalle.cara_id si falta
+// (init.sql sólo se ejecuta al crear el volumen de la base, no en una base ya existente)
+async function asegurarColumnaCara() {
+  const columnas = await prisma.$queryRaw<{ total: bigint }[]>`
+    SELECT COUNT(*) AS total FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'detalle' AND COLUMN_NAME = 'cara_id'`;
+  if (Number(columnas[0].total) > 0) return;
+
+  await prisma.$executeRawUnsafe('ALTER TABLE `detalle` ADD COLUMN `cara_id` int unsigned DEFAULT NULL AFTER `diente_id`');
+  await prisma.$executeRawUnsafe(
+    'ALTER TABLE `detalle` ADD CONSTRAINT `fk_detalle_cara` FOREIGN KEY (`cara_id`) REFERENCES `cara` (`id`) ON DELETE SET NULL ON UPDATE CASCADE'
+  );
+  console.log('🛠️  Se agregó la columna detalle.cara_id.');
+}
+
 async function seedDientes() {
+  await asegurarColumnaCara();
+
   console.log('Revisando piezas dentales (FDI)...');
 
   // 1. Piezas dentales

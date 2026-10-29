@@ -34,7 +34,7 @@ export const AtencionConsulta: React.FC = () => {
   // Practice registration form state (CUU 2)
   const [selectedPracticaId, setSelectedPracticaId] = useState<string>('');
   const [carasSeleccionadas, setCarasSeleccionadas] = useState<CaraSeleccionada[]>([]);
-  // Piezas con al menos una cara marcada (el detalle se guarda por diente)
+  // Piezas con al menos una cara marcada
   const selectedDientes = [...new Set(carasSeleccionadas.map((c) => c.diente))].sort((a, b) => a - b);
   const [practicaObservaciones, setPracticaObservaciones] = useState('');
   const [submittingPractica, setSubmittingPractica] = useState(false);
@@ -81,8 +81,8 @@ export const AtencionConsulta: React.FC = () => {
     setError(null);
 
     try {
-      // Si no hay dientes seleccionados, creamos una práctica general
-      if (selectedDientes.length === 0) {
+      // Si no hay caras seleccionadas, creamos una práctica general
+      if (carasSeleccionadas.length === 0) {
         await detallesApi.create({
           reserva_id: reservaId,
           practica_id: parseInt(selectedPracticaId),
@@ -90,16 +90,17 @@ export const AtencionConsulta: React.FC = () => {
           observaciones: practicaObservaciones || undefined
         });
       } else {
-        // Crear un detalle por cada diente seleccionado
-        for (const numeroDiente of selectedDientes) {
-          // Buscar ID del diente correspondiente al número
+        // Crear un detalle por cada cara seleccionada (diente + cara)
+        for (const { diente: numeroDiente, cara } of carasSeleccionadas) {
           const foundDiente = dientes.find(d => d.numero === numeroDiente);
-          const dienteId = foundDiente ? foundDiente.id : numeroDiente;
+          if (!foundDiente) continue;
+          const caraId = foundDiente.caras?.find(c => c.cara.nombre === cara)?.cara.id;
 
           await detallesApi.create({
             reserva_id: reservaId,
             practica_id: parseInt(selectedPracticaId),
-            diente_id: dienteId,
+            diente_id: foundDiente.id,
+            cara_id: caraId,
             observaciones: practicaObservaciones || undefined
           });
         }
@@ -233,7 +234,7 @@ export const AtencionConsulta: React.FC = () => {
                 </h3>
                 <p className="card-subtitle">
                   {selectedDientes.length > 0
-                    ? `Se aplicará a ${selectedDientes.length} pieza(s) dental(es)`
+                    ? `Se aplicará a ${carasSeleccionadas.length} cara(s) en ${selectedDientes.length} pieza(s) dental(es)`
                     : 'Aplica tratamientos y asócialos al odontograma del paciente'}
                 </p>
               </div>
@@ -322,7 +323,7 @@ export const AtencionConsulta: React.FC = () => {
                   {submittingPractica
                     ? 'Registrando...'
                     : selectedDientes.length > 0
-                      ? `Aplicar a ${selectedDientes.length} diente(s)`
+                      ? `Aplicar a ${carasSeleccionadas.length} cara(s)`
                       : 'Registrar Práctica General'}
                 </span>
               </button>
@@ -388,6 +389,7 @@ export const AtencionConsulta: React.FC = () => {
 
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
                       {d.diente ? `Pieza Dental N° ${d.diente.numero}` : 'General / Sin pieza'}
+                      {d.cara && ` • Cara ${d.cara.nombre}`}
                       {d.observaciones && ` • ${d.observaciones}`}
                     </div>
                   </div>

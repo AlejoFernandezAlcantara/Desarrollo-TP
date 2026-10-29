@@ -271,9 +271,11 @@ export const swaggerSpec = {
           odontograma_id: { type: 'integer', description: 'Lo asigna el servidor a partir de la reserva' },
           practica_id: { type: 'integer' },
           diente_id: { type: 'integer', nullable: true },
+          cara_id: { type: 'integer', nullable: true },
           reserva_id: { type: 'integer' },
           practica: ref('Practica'),
-          diente: ref('Diente')
+          diente: ref('Diente'),
+          cara: { type: 'object', nullable: true, properties: { id: { type: 'integer' }, nombre: { type: 'string' } } }
         }
       },
 
@@ -533,6 +535,7 @@ export const swaggerSpec = {
           practica_id: { type: 'integer' },
           practica_personalizada: { type: 'string', maxLength: 100 },
           diente_id: { type: 'integer' },
+          cara_id: { type: 'integer', description: 'Cara del diente tratada; requiere diente_id' },
           observaciones: { type: 'string' }
         }
       }

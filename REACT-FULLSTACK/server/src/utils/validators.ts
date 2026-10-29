@@ -170,6 +170,7 @@ export const CreateDetalleSchema = z.object({
   practica_id: z.number().int().positive().optional(),
   practica_personalizada: z.string().trim().min(1).max(100).optional(),
   diente_id: z.number().int().positive().optional(),
+  cara_id: z.number().int().positive().optional(), // cara del diente tratada (requiere diente_id)
   observaciones: z.string().trim().optional(),
 }).refine(
   (data) => data.practica_id !== undefined || (data.practica_personalizada && data.practica_personalizada.trim().length > 0),
@@ -177,7 +178,10 @@ export const CreateDetalleSchema = z.object({
     message: 'Debe seleccionar una práctica precargada o ingresar una práctica personalizada',
     path: ['practica_id']
   }
-);
+).refine((data) => data.cara_id === undefined || data.diente_id !== undefined, {
+  message: 'Para indicar una cara hay que indicar también el diente',
+  path: ['cara_id']
+});
 
 // ─── Usuario (gestión de cuentas, sólo administrador) ─────────────────────
 

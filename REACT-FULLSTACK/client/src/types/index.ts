@@ -92,9 +92,11 @@ export interface Detalle {
   odontograma_id: number;
   practica_id: number;
   diente_id?: number | null;
+  cara_id?: number | null;
   reserva_id: number;
   practica?: Practica;
   diente?: Diente | null;
+  cara?: Cara | null; // cara del diente tratada
 }
 
 export interface Odontograma {
